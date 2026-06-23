@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Proyectos SUBDERE — Illapel</title>
+<style>
+  :root {
+    --azul: #1a3a5c;
+    --azul-medio: #2563a8;
+    --azul-claro: #e8f0f9;
+    --rojo: #c0392b;
+    --verde: #1a7a4a;
+    --amarillo: #e67e22;
+    --gris: #f4f6f8;
+    --gris-borde: #dde3ea;
+    --texto: #1c2b3a;
+    --texto-suave: #5a6e82;
+    --blanco: #ffffff;
+
+    /* Estados colores */
+    --c-en-revision: #2563a8;
+    --c-observado: #e67e22;
+    --c-elegible: #8e44ad;
+    --c-aprobado: #1a7a4a;
+    --c-ejecucion: #16a085;
+    --c-girado: #27ae60;
+    --c-cerrado: #7f8c8d;
+    --c-termino: #c0392b;
+    --c-dejado: #95a5a6;
+    --c-terminado: #2980b9;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, 'Helvetica Neue', sans-serif;
+    background: var(--gris);
+    color: var(--texto);
+    font-size: 15px;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--azul);
+    color: var(--blanco);
+    padding: 18px 20px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+  }
+  header .eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 3px;
+  }
+  header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  header .subtitle {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  /* RESUMEN KPIs */
+  .kpis {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px 14px 0;
+  }
+  .kpi {
+    background: var(--blanco);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--gris-borde);
+  }
+  .kpi-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--texto-suave);
+    margin-bottom: 4px;
+  }
+  .kpi-valor {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--azul);
+    line-height: 1;
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--texto-suave);
+    margin-top: 3px;
+  }
+  .kpi.wide {
+    grid-column: 1 / -1;
+  }
+  .kpi-valor.verde { color: var(--verde); }
+  .kpi-valor.rojo { color: var(--rojo); }
+
+  /* SECCIÓN ESTADOS */
+  .seccion {
+    padding: 16px 14px 0;
+  }
+  .seccion-titulo {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--texto-suave);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--azul-medio);
+    display: inline-block;
+  }
+
+  /* BARRAS DE ESTADO */
+  .estados-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .estado-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--blanco);
+    border-radius: 8px;
+    padding: 9px 12px;
+    border: 1px solid var(--gris-borde);
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+  }
+  .estado-row:active { box-shadow: inset 0 0 0 2px var(--azul-medio); }
+  .estado-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .estado-nombre {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .estado-barra-wrap {
+    flex: 2;
+    height: 6px;
+    background: var(--gris);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .estado-barra {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .estado-count {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--texto);
+    min-width: 24px;
+    text-align: right;
+  }
+
+  /* BUSCADOR Y FILTROS */
+  .controles {
+    padding: 14px 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .buscador {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--gris-borde);
+    border-radius: 8px;
+    font-size: 15px;
+    background: var(--blanco);
+    color: var(--texto);
+    outline: none;
+    -webkit-appearance: none;
+  }
+  .buscador:focus { border-color: var(--azul-medio); }
+
+  .filtros-scroll {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .filtros-scroll::-webkit-scrollbar { display: none; }
+  .chip {
+    flex-shrink: 0;
+    padding: 6px 13px;
+    border-radius: 20px;
+    border: 1.5px solid var(--gris-borde);
+    background: var(--blanco);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--texto-suave);
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.15s;
+  }
+  .chip.activo {
+    background: var(--azul);
+    border-color: var(--azul);
+    color: var(--blanco);
+  }
+
+  /* TABLA PROYECTOS */
+  .proyectos-wrap {
+    padding: 12px 14px 30px;
+  }
+  .proyecto-card {
+    background: var(--blanco);
+    border-radius: 10px;
+    border: 1px solid var(--gris-borde);
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    transition: box-shadow 0.15s;
+  }
+  .proyecto-card:active { box-shadow: 0 2px 12px rgba(26,58,92,0.15); }
+
+  .proyecto-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .proyecto-nombre {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    flex: 1;
+    text-transform: capitalize;
+  }
+  .estado-badge {
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 12px;
+    color: var(--blanco);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .proyecto-meta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    font-size: 11px;
+    color: var(--texto-suave);
+  }
+  .meta-item strong {
+    color: var(--texto);
+    font-weight: 600;
+  }
+  .proyecto-monto {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--azul-medio);
+    margin-top: 6px;
+  }
+  .proyecto-dias {
+    font-size: 11px;
+    color: var(--texto-suave);
+    margin-top: 2px;
+  }
+
+  .resultado-count {
+    font-size: 12px;
+    color: var(--texto-suave);
+    text-align: right;
+    margin-bottom: 8px;
+  }
+
+  .filtro-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--texto-suave);
+    padding: 2px 2px 0;
+  }
+
+  /* VACIO */
+  .vacio {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--texto-suave);
+    font-size: 14px;
+  }
+
+  /* PIE */
+  footer {
+    background: var(--azul);
+    color: rgba(255,255,255,0.5);
+    font-size: 10px;
+    text-align: center;
+    padding: 14px;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow">SUBDERE · URS Coquimbo</div>
+  <h1>Proyectos Illapel</h1>
+  <div class="subtitle">106 proyectos · Choapa · actualizado 2026</div>
+</header>
+
+<!-- KPIs -->
+<div class="kpis">
+  <div class="kpi">
+    <div class="kpi-label">Total proyectos</div>
+    <div class="kpi-valor">106</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Activos ahora</div>
+    <div class="kpi-valor verde">12</div>
+    <div class="kpi-sub">En revisión, obs., ejecución</div>
+  </div>
+  <div class="kpi wide">
+    <div class="kpi-label">Aporte SUBDERE total</div>
+    <div class="kpi-valor" style="font-size:22px">$5.863.405.117</div>
+    <div class="kpi-sub">Pesos chilenos · todos los estados</div>
+  </div>
+</div>
+
+<!-- ESTADOS -->
+<div class="seccion">
+  <div class="seccion-titulo">Por estado</div>
+  <div class="estados-lista" id="estados-lista"></div>
+</div>
+
+<!-- CONTROLES -->
+<div class="controles">
+  <input class="buscador" type="search" id="buscador" placeholder="Buscar proyecto, programa, tipo…" autocomplete="off" autocorrect="off" spellcheck="false">
+  <div class="filtros-scroll" id="filtros-estado">
+    <div class="chip activo" data-filtro="">Todos</div>
+  </div>
+  <div class="filtro-label">Año de creación</div>
+  <div class="filtros-scroll" id="filtros-año">
+    <div class="chip chip-año activo" data-año="">Todos</div>
+  </div>
+</div>
+
+<!-- PROYECTOS -->
+<div class="proyectos-wrap">
+  <div class="resultado-count" id="resultado-count"></div>
+  <div id="lista-proyectos"></div>
+</div>
+
+<footer>SUBDERE · URS · Illapel · Región de Coquimbo</footer>
+
+<script>
+const PROYECTOS = [
+  {año:2026,nombre:"Mejoramiento de baches en áreas urbanas de Illapel",tipo:"Vialidad",programa:"Tradicional",monto:79138067,estado:"En Revisión URS",dias:5,id:"1-B-2026-278"},
+  {año:2025,nombre:"Construcción Sede Social Cuz Cuz Norte, comuna de Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:168511871,estado:"Observado URS",dias:270,id:"1-C-2025-802"},
+  {año:2025,nombre:"Mejoramiento de baches en áreas urbanas de Illapel",tipo:"Vialidad",programa:"Tradicional",monto:21919087,estado:"Observado URS",dias:288,id:"1-B-2025-426"},
+  {año:2025,nombre:"Mejoramiento Plazoleta Río Illapel, comuna de Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:162658763,estado:"Observado URS",dias:284,id:"1-C-2025-807"},
+  {año:2022,nombre:"[SATE] Mejoramiento Multicancha Coyuntagua Sur, comuna de Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:153042584,estado:"Observado Programa",dias:475,id:"1-C-2022-2447"},
+  {año:2025,nombre:"Mejoramiento Multicancha Coyuntagua Sur, comuna de Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:164845959,estado:"Elegible",dias:21,id:"1-C-2025-768"},
+  {año:2015,nombre:"Construcción Colector Avda. La Concepción, Illapel",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:11416410,estado:"Aprobado",dias:3876,id:"4201140702-1"},
+  {año:2014,nombre:"Construcción y Reposición Aceras Varias Calles Sector Centro, Illapel",tipo:"Vialidad",programa:"Emergencia",monto:49933941,estado:"En Ejecución",dias:3078,id:"1-C-2014-2086"},
+  {año:2014,nombre:"Construcción y Reposición de Aceras Sector Urbano, Illapel",tipo:"Vialidad",programa:"Emergencia",monto:49997115,estado:"En Ejecución",dias:3128,id:"1-C-2014-2024"},
+  {año:2024,nombre:"Construcción Sistema de Impulsión de Agua Potable APR Los Perales de Céspedes",tipo:"Obra",programa:"PMB Tradicional",monto:106183331,estado:"100% Girado",dias:554,id:"4201240701-B"},
+  {año:2025,nombre:"Mejoramiento Plaza Peralillo, La Posada, comuna de Illapel",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:97372823,estado:"100% Girado",dias:270,id:"1-B-2025-74"},
+  {año:2025,nombre:"Mejoramiento Sistema de Impulsión de Agua Potable Rural Cañas de Michio",tipo:"Obra",programa:"PMB Tradicional",monto:55945270,estado:"100% Girado",dias:230,id:"4201250701-B"},
+  {año:2024,nombre:"Plan Nacional de Esterilizaciones Responsabilidad Compartida 2024, Illapel",tipo:"Plan Esterilización",programa:"Prog. Tenencia Responsable",monto:56000000,estado:"100% Girado",dias:175,id:"42010206"},
+  {año:2018,nombre:"Plan Nacional de Esterilización Responsabilidad Compartida 2018, Illapel",tipo:"Plan Esterilización",programa:"Prog. Tenencia Responsable",monto:22994370,estado:"Proyecto Cerrado",dias:2498,id:"42010073"},
+  {año:2019,nombre:"Plan Nacional de Esterilización Responsabilidad Compartida 2019, Illapel",tipo:"Plan Esterilización",programa:"Prog. Tenencia Responsable",monto:22994370,estado:"Proyecto Cerrado",dias:1499,id:"42010125"},
+  {año:2015,nombre:"Construcción Casetas Sanitarias, Limahuida",tipo:"Obra",programa:"Saneamiento Sanitario",monto:189186984,estado:"Proyecto Cerrado",dias:2603,id:"4201150704"},
+  {año:2014,nombre:"Construcción Colector Avda. La Concepción y Mejoramiento Agua Potable y Alcantarillado Unión Las Majaditas",tipo:"Inspección Técnica",programa:"Programa Mejoramiento de Barrios",monto:15015000,estado:"Proyecto Cerrado",dias:3289,id:"4201140502"},
+  {año:2013,nombre:"Construcción Colector Avda. La Concepción, Illapel",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:76273325,estado:"Proyecto Cerrado",dias:3330,id:"4201140702"},
+  {año:2015,nombre:"Construcción de 30 Nichos en Cementerio Municipal, Illapel",tipo:"Servicios Básicos",programa:"Tradicional",monto:14355250,estado:"Proyecto Cerrado",dias:3323,id:"1-B-2015-268"},
+  {año:2013,nombre:"Construcción Escaleras Peatonales Sector Alto 1",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:48063000,estado:"Proyecto Cerrado",dias:3304,id:"1-C-2013-2734"},
+  {año:2013,nombre:"Construcción Escaleras Peatonales Sector Alto 2",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:47844841,estado:"Proyecto Cerrado",dias:3002,id:"1-C-2013-2733"},
+  {año:2013,nombre:"Construcción Escaleras Peatonales Sector Alto 3",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:48343702,estado:"Proyecto Cerrado",dias:3035,id:"1-C-2013-2735"},
+  {año:2016,nombre:"Construcción Escaleras Peatonales Sector Alto 4",tipo:"Servicios Básicos",programa:"Emergencia",monto:59473245,estado:"Proyecto Cerrado",dias:2647,id:"1-C-2016-1734"},
+  {año:2018,nombre:"Construcción Escaleras Peatonales Sector Alto 5",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:59983610,estado:"Proyecto Cerrado",dias:2512,id:"1-C-2018-61"},
+  {año:2023,nombre:"Construcción Espacio Deportivo Cerrano, Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:154409809,estado:"Proyecto Cerrado",dias:566,id:"1-C-2023-700"},
+  {año:2022,nombre:"Construcción Paradero Acera Calle Esmeralda, Illapel",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:31027513,estado:"Proyecto Cerrado",dias:847,id:"1-B-2022-432"},
+  {año:2011,nombre:"Construcción Paraderos Urbanos con Bahía, Illapel",tipo:"Vialidad",programa:"Min. Transporte",monto:17200000,estado:"Proyecto Cerrado",dias:1527,id:"1-J-2011-447"},
+  {año:2011,nombre:"Construcción Plaza Acceso Villa San Rafael",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49900000,estado:"Proyecto Cerrado",dias:3002,id:"1-C-2011-944"},
+  {año:2024,nombre:"Construcción Resaltos Reductores de Velocidad y Demarcación Vial, Illapel",tipo:"Vialidad",programa:"Tradicional",monto:19355754,estado:"Proyecto Cerrado",dias:284,id:"1-B-2024-383"},
+  {año:2015,nombre:"Construcción Sede Club Deportivo Victoria",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:59834829,estado:"Proyecto Cerrado",dias:2037,id:"1-C-2015-1821"},
+  {año:2015,nombre:"Construcción Sede Social Cabanillas",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:59999622,estado:"Proyecto Cerrado",dias:2405,id:"1-C-2015-1824"},
+  {año:2013,nombre:"Construcción Sede Social El Aguerrido, Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49591354,estado:"Proyecto Cerrado",dias:3242,id:"1-C-2013-2727"},
+  {año:2015,nombre:"Construcción Sede Social Paseo Central",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:59998848,estado:"Proyecto Cerrado",dias:2675,id:"1-C-2015-1823"},
+  {año:2019,nombre:"Construcción Sistema de Agua Potable Rural por Acarreo, Lanco Alto",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:142273010,estado:"Proyecto Cerrado",dias:1152,id:"4201190704-C"},
+  {año:2021,nombre:"Construcción Sistema de Agua Potable Rural por Acarreo, Quebrada de Cárcamo",tipo:"Obra",programa:"Saneamiento Sanitario",monto:107763534,estado:"Proyecto Cerrado",dias:1091,id:"4201210702-C"},
+  {año:2016,nombre:"Contratación de Profesionales para Formulación y Desarrollo de Proyectos",tipo:"Asistencia Técnica",programa:"Programa Mejoramiento de Barrios",monto:61200000,estado:"Proyecto Cerrado",dias:2021,id:"4201161002"},
+  {año:2015,nombre:"Contratación de Profesionales para Proyectos de Reconstrucción",tipo:"Asistencia Técnica",programa:"Programa Mejoramiento de Barrios",monto:36000000,estado:"Proyecto Cerrado",dias:2744,id:"4201151001"},
+  {año:2016,nombre:"Elaboración y Gestión de Proyectos para Mejoramiento Sanitario y APR",tipo:"Asistencia Técnica",programa:"Programa Mejoramiento de Barrios",monto:36000000,estado:"Proyecto Cerrado",dias:2021,id:"4201161003-C"},
+  {año:2018,nombre:"Habilitación Cancha Deportes Extremos (Skate-Bike) Villa San Rafael",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49322025,estado:"Proyecto Cerrado",dias:2141,id:"1-C-2018-1135"},
+  {año:2017,nombre:"Habilitación de Caminos Rurales en Distintas Localidades",tipo:"Vialidad",programa:"Emergencia",monto:59903030,estado:"Proyecto Cerrado",dias:2982,id:"1-C-2017-741"},
+  {año:2017,nombre:"Habilitación de Espacios Públicos, Illapel",tipo:"Vialidad",programa:"Emergencia",monto:10318128,estado:"Proyecto Cerrado",dias:3060,id:"1-C-2017-755"},
+  {año:2015,nombre:"Habilitación Escuela Villa Los Naranjos",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:59900000,estado:"Proyecto Cerrado",dias:3444,id:"1-A-2015-687"},
+  {año:2017,nombre:"Habilitación Planta de Tratamiento Localidad de Canelillo",tipo:"Servicios Básicos",programa:"Emergencia",monto:13018610,estado:"Proyecto Cerrado",dias:3015,id:"1-C-2017-737"},
+  {año:2017,nombre:"Habilitación Senderos Sector Urbano, Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:52634995,estado:"Proyecto Cerrado",dias:3014,id:"1-C-2017-735"},
+  {año:2016,nombre:"Instalación de Juegos Infantiles en Diversos Sectores",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:59206659,estado:"Proyecto Cerrado",dias:1720,id:"1-C-2016-1114"},
+  {año:2024,nombre:"Instalación de Luminarias Acceso Norte, Illapel",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:96847053,estado:"Proyecto Cerrado",dias:469,id:"1-B-2024-65"},
+  {año:2019,nombre:"Instalación Máquinas de Ejercicio en Sectores Urbanos",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:31997421,estado:"Proyecto Cerrado",dias:1394,id:"1-B-2019-501"},
+  {año:2018,nombre:"Letras Volumétricas Bienvenida Illapel",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:20488800,estado:"Proyecto Cerrado",dias:1926,id:"1-B-2018-351"},
+  {año:2013,nombre:"Mejoramiento Agua Potable y Aguas Servidas Unión Diego Portales",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:128728654,estado:"Proyecto Cerrado",dias:2393,id:"4201130705"},
+  {año:2016,nombre:"Mejoramiento de Iluminación Urbana y Rural de Illapel",tipo:"Servicios Básicos",programa:"Tradicional",monto:19708801,estado:"Proyecto Cerrado",dias:2063,id:"1-B-2016-576"},
+  {año:2020,nombre:"Mejoramiento de Servicio de Agua Potable Rural, Los Perales de Céspedes",tipo:"Obra",programa:"PMB Tradicional",monto:83194524,estado:"Proyecto Cerrado",dias:1681,id:"4201200702-B"},
+  {año:2018,nombre:"Mejoramiento Luminarias Plaza de Armas y Plaza de Abastos",tipo:"Servicios Básicos",programa:"Emergencia",monto:57684560,estado:"Proyecto Cerrado",dias:2063,id:"1-C-2018-72"},
+  {año:2017,nombre:"Mejoramiento Luminarias Varios Sectores de la Comuna",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:15969964,estado:"Proyecto Cerrado",dias:2108,id:"1-B-2017-573"},
+  {año:2021,nombre:"Mejoramiento Multicancha Mundo Nuevo Sur",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:58582868,estado:"Proyecto Cerrado",dias:860,id:"1-C-2021-1885"},
+  {año:2021,nombre:"Mejoramiento Multicancha República, Illapel",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:33340091,estado:"Proyecto Cerrado",dias:1117,id:"1-B-2021-432"},
+  {año:2022,nombre:"Mejoramiento Plaza Las Majaditas",tipo:"Recuperación Espacios Públicos",programa:"Subsec. Prevención del Delito",monto:74970827,estado:"Proyecto Cerrado",dias:785,id:"1-SPD-2022-215"},
+  {año:2022,nombre:"Mejoramiento Plaza Regimiento Arica",tipo:"Recuperación Espacios Públicos",programa:"Subsec. Prevención del Delito",monto:58283057,estado:"Proyecto Cerrado",dias:826,id:"1-SPD-2022-193"},
+  {año:2015,nombre:"Obras de Mejoramiento en Escuela Valle del Choapa",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:59900000,estado:"Proyecto Cerrado",dias:3444,id:"1-A-2015-659"},
+  {año:2014,nombre:"Pasos de Servidumbre Alcantarillado de Cuz Cuz, Illapel",tipo:"Asistencia Legal",programa:"Programa Mejoramiento de Barrios",monto:30946496,estado:"Proyecto Cerrado",dias:2580,id:"4201140601"},
+  {año:2016,nombre:"Plan Nacional de Atención Veterinaria Canina y Felina 2016",tipo:"Servicios Veterinarios",programa:"Prog. Tenencia Responsable",monto:45705156,estado:"Proyecto Cerrado",dias:2059,id:"42010001"},
+  {año:2016,nombre:"Plan Nacional de Esterilización Municipal Canina y Felina",tipo:"Esterilizaciones",programa:"Prog. Tenencia Responsable",monto:21021624,estado:"Proyecto Cerrado",dias:3423,id:"4201010005"},
+  {año:2022,nombre:"Plan Nacional de Esterilizaciones Responsabilidad Compartida 2022",tipo:"Plan Esterilización",programa:"Prog. Tenencia Responsable",monto:22971266,estado:"Proyecto Cerrado",dias:873,id:"42010180"},
+  {año:2023,nombre:"Plan Nacional de Esterilizaciones Responsabilidad Compartida 2023",tipo:"Plan Esterilización",programa:"Prog. Tenencia Responsable",monto:29800000,estado:"Proyecto Cerrado",dias:280,id:"42010200"},
+  {año:2015,nombre:"Proyectos de Demolición Viviendas Afectadas e Instalación Viviendas Emergencia",tipo:"Inspección Técnica",programa:"Programa Mejoramiento de Barrios",monto:14000000,estado:"Proyecto Cerrado",dias:3471,id:"4201150503"},
+  {año:2016,nombre:"Recuperación Espacio Público Avenida Vial Recabarren",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:59977241,estado:"Proyecto Cerrado",dias:2195,id:"1-C-2016-1124"},
+  {año:2017,nombre:"Suministro e Instalación de Pasamanos Varios Sectores",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:16178036,estado:"Proyecto Cerrado",dias:2651,id:"1-B-2017-578"},
+  {año:2016,nombre:"Plan de Registro Año 2016, Illapel",tipo:"Servicios Veterinarios",programa:"Prog. Tenencia Responsable",monto:8000000,estado:"Proyecto Cerrado",dias:2762,id:"42010019"},
+  {año:2011,nombre:"Construcción Relleno Sanitario Interprovincial",tipo:"Estudio",programa:"Residuos Sólidos",monto:34000000,estado:"Proyecto Con Término Anticipado",dias:2946,id:"4201120401"},
+  {año:2016,nombre:"Instalación de Contenedores de Basura Sector Urbano Illapel",tipo:"Servicios Básicos",programa:"Tradicional",monto:19170879,estado:"Proyecto Con Término Anticipado",dias:187,id:"1-B-2016-666"},
+  {año:2020,nombre:"Mejoramiento Áreas Verdes Javiera Carrera, Illapel",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:31758828,estado:"Proyecto Con Término Anticipado",dias:186,id:"1-B-2020-465"},
+  {año:2013,nombre:"Mejoramiento Luminarias Públicas",tipo:"Servicios Básicos",programa:"Tradicional",monto:5736000,estado:"Proyecto Con Término Anticipado",dias:3444,id:"1-B-2013-475"},
+  {año:2020,nombre:"Construcción Espacio Deportivo Cerrano, Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:59999430,estado:"Proyecto Dejado sin Efecto",dias:1223,id:"1-C-2020-1103"},
+  {año:2016,nombre:"Extensión de Redes de Agua Potable y Alcantarillado Pasajes Céntricos",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:55665752,estado:"Proyecto Dejado sin Efecto",dias:1677,id:"4201160705"},
+  {año:2011,nombre:"Ampliación Camping Municipal, Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:179900000,estado:"Proyecto Terminado",dias:3865,id:"1-C-2011-976"},
+  {año:2010,nombre:"C.C.S. Sector Río Choapa Complementario",tipo:"Estudio",programa:"Programa Mejoramiento de Barrios",monto:17700000,estado:"Proyecto Terminado",dias:4389,id:"40240"},
+  {año:2009,nombre:"CCS de Cuz Cuz",tipo:"Inspección Técnica",programa:"Saneamiento Sanitario",monto:25200000,estado:"Proyecto Terminado",dias:4285,id:"40197"},
+  {año:2012,nombre:"Construcción 16 Nichos Cementerio Illapel",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:8052000,estado:"Proyecto Terminado",dias:4247,id:"1-B-2012-354"},
+  {año:2012,nombre:"Construcción 72 Nichos Cementerio Municipal",tipo:"Habilitación Servicios Públicos",programa:"Emergencia",monto:47500000,estado:"Proyecto Terminado",dias:3842,id:"1-C-2012-949"},
+  {año:2010,nombre:"Construcción Colector de Alcantarillado Avenida Subida Concepción",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:34266490,estado:"Proyecto Terminado",dias:4268,id:"40218"},
+  {año:2011,nombre:"Construcción Paraderos Urbanos, Illapel",tipo:"Vialidad",programa:"Min. Transporte",monto:45000000,estado:"Proyecto Terminado",dias:4248,id:"1-J-2011-445"},
+  {año:2011,nombre:"Construcción PMB Cuz Cuz",tipo:"Inspección Técnica",programa:"Programa Mejoramiento de Barrios",monto:24522000,estado:"Proyecto Terminado",dias:4361,id:"4201110501"},
+  {año:2011,nombre:"Construcción Salón Uso Múltiple La Capilla, Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49800000,estado:"Proyecto Terminado",dias:4411,id:"1-C-2011-977"},
+  {año:2013,nombre:"Construcción Sede Social Comunidad y Progreso",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49607850,estado:"Proyecto Terminado",dias:3842,id:"1-C-2013-2725"},
+  {año:2013,nombre:"Construcción Sede Social El Peumo, Illapel",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49964449,estado:"Proyecto Terminado",dias:3842,id:"1-C-2013-2837"},
+  {año:2013,nombre:"Construcción Sede Social Los Conquistadores",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49958437,estado:"Proyecto Terminado",dias:3842,id:"1-C-2013-2724"},
+  {año:2013,nombre:"Construcción Sede Social Mallacura",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:49880742,estado:"Proyecto Terminado",dias:3633,id:"1-C-2013-2726"},
+  {año:2009,nombre:"Construcción Sistema de Agua Potable Alternativo Los Loros",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:36721000,estado:"Proyecto Terminado",dias:4407,id:"40194"},
+  {año:2009,nombre:"Construcción Sistema Agua Potable Alternativo Quebrada de Cárcamo",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:42030000,estado:"Proyecto Terminado",dias:4039,id:"40192"},
+  {año:2009,nombre:"Construcción Sistema Agua Potable Alternativo Tunquén",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:49949000,estado:"Proyecto Terminado",dias:4383,id:"40191"},
+  {año:2009,nombre:"Construcción Sistema Agua Potable Sector Doña Juana",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:43227000,estado:"Proyecto Terminado",dias:4039,id:"40193"},
+  {año:2012,nombre:"Cubierta Patio Central Escuela Básica Valle del Choapa",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:49800000,estado:"Proyecto Terminado",dias:3844,id:"1-A-2012-301"},
+  {año:2012,nombre:"EVS Eje Acceso Complejo Deportivo Bernardo O'Higgins",tipo:"Equipamiento Comunal",programa:"Emergencia",monto:29952000,estado:"Proyecto Terminado",dias:4029,id:"1-C-2012-2001"},
+  {año:2015,nombre:"Habilitación Escuelas Rurales",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:59900000,estado:"Proyecto Terminado",dias:3588,id:"1-A-2015-686"},
+  {año:2015,nombre:"Habilitación Sala de Clases, SSHHH Escuela de Adultos",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:48927697,estado:"Proyecto Terminado",dias:3702,id:"1-A-2015-705"},
+  {año:2015,nombre:"Habilitación Salas y SSHHH Jardín Infantil Mi Pequeño Tesoro",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:48927697,estado:"Proyecto Terminado",dias:3702,id:"1-A-2015-704"},
+  {año:2013,nombre:"Mejoramiento Agua Potable y Aguas Servidas Unión Las Majaditas",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:186772491,estado:"Proyecto Terminado",dias:3854,id:"4201140703"},
+  {año:2015,nombre:"Mejoramiento Plaza Manuel de Gorotizaga",tipo:"Equipamiento Comunal",programa:"Tradicional",monto:14591750,estado:"Proyecto Terminado",dias:3638,id:"1-B-2015-269"},
+  {año:2013,nombre:"Mejoramiento Sistema Extracción de Agua Pozo Municipal",tipo:"Servicios Básicos",programa:"Tradicional",monto:8799081,estado:"Proyecto Terminado",dias:4085,id:"1-B-2013-477"},
+  {año:2011,nombre:"Obras Complementarias Alcantarillado Cuz Cuz",tipo:"Obra",programa:"Programa Mejoramiento de Barrios",monto:174858000,estado:"Proyecto Terminado",dias:4039,id:"4201120701"},
+  {año:2015,nombre:"Obras de Mejoramiento en Edificio Consistorial",tipo:"Habilitación Servicios Públicos",programa:"Emergencia",monto:59900000,estado:"Proyecto Terminado",dias:3702,id:"1-C-2015-1933"},
+  {año:2015,nombre:"Obras de Mejoramiento en Escuela Jorge Aracena Ramos",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:59900000,estado:"Proyecto Terminado",dias:3738,id:"1-A-2015-663"},
+  {año:2015,nombre:"Obras de Mejoramiento en Liceo Domingo Ortiz de Rosas",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:59900000,estado:"Proyecto Terminado",dias:3829,id:"1-A-2015-661"},
+  {año:2015,nombre:"Obras de Mejoramiento en Liceo Politécnico",tipo:"Habilitación Servicios Públicos",programa:"Emerg. Infraestructura Educacional",monto:49900000,estado:"Proyecto Terminado",dias:3801,id:"1-A-2015-664"},
+  {año:2014,nombre:"Proyecto de Paisajismo Áreas Verdes Camping Municipal",tipo:"Habilitación Servicios Públicos",programa:"Tradicional",monto:14489467,estado:"Proyecto Terminado",dias:3938,id:"1-B-2014-577"},
+  {año:2012,nombre:"Reposición Equipos Eléctricos Iluminación Pública, Illapel",tipo:"Habilitación Servicios Públicos",programa:"Tradicional",monto:6515000,estado:"Proyecto Terminado",dias:4247,id:"1-B-2012-423"},
+  {año:2010,nombre:"Sistema APR Sector Las Cañas Sur",tipo:"Estudio",programa:"Programa Mejoramiento de Barrios",monto:22015000,estado:"Proyecto Terminado",dias:3604,id:"40247"}
+];
+
+const COLORES_ESTADO = {
+  "En Revisión URS": "#2563a8",
+  "Observado URS": "#e67e22",
+  "Observado Programa": "#d35400",
+  "Elegible": "#8e44ad",
+  "Aprobado": "#1a7a4a",
+  "En Ejecución": "#16a085",
+  "100% Girado": "#27ae60",
+  "Proyecto Cerrado": "#7f8c8d",
+  "Proyecto Con Término Anticipado": "#c0392b",
+  "Proyecto Dejado sin Efecto": "#95a5a6",
+  "Proyecto Terminado": "#2980b9"
+};
+
+function formatCLP(n) {
+  return '$' + n.toLocaleString('es-CL');
+}
+
+// Construir resumen de estados
+const conteoEstados = {};
+PROYECTOS.forEach(p => {
+  conteoEstados[p.estado] = (conteoEstados[p.estado] || 0) + 1;
+});
+const maxEstado = Math.max(...Object.values(conteoEstados));
+
+const estadosLista = document.getElementById('estados-lista');
+Object.entries(conteoEstados)
+  .sort((a,b) => b[1] - a[1])
+  .forEach(([estado, count]) => {
+    const color = COLORES_ESTADO[estado] || '#999';
+    const pct = Math.round(count / maxEstado * 100);
+    const row = document.createElement('div');
+    row.className = 'estado-row';
+    row.innerHTML = `
+      <div class="estado-dot" style="background:${color}"></div>
+      <div class="estado-nombre">${estado}</div>
+      <div class="estado-barra-wrap"><div class="estado-barra" style="width:${pct}%;background:${color}"></div></div>
+      <div class="estado-count">${count}</div>
+    `;
+    row.addEventListener('click', () => filtrarPorEstado(estado, row));
+    estadosLista.appendChild(row);
+  });
+
+// Chips de filtro por estado (solo activos relevantes)
+const filtrosContainer = document.getElementById('filtros-estado');
+const estadosFiltro = ["", "En Revisión URS", "Observado URS", "Observado Programa", "Elegible", "Aprobado", "En Ejecución", "100% Girado", "Proyecto Terminado", "Proyecto Cerrado"];
+estadosFiltro.forEach(est => {
+  if (est === "") return; // ya existe el "Todos"
+  const chip = document.createElement('div');
+  chip.className = 'chip';
+  chip.dataset.filtro = est;
+  chip.textContent = est;
+  chip.addEventListener('click', () => {
+    filtrarPorChip(est, chip);
+  });
+  filtrosContainer.appendChild(chip);
+});
+
+let filtroActivo = "";
+let filtroAño = "";
+let busqueda = "";
+
+// Chips de año
+const añosUnicos = [...new Set(PROYECTOS.map(p => p.año))].sort((a,b) => b - a);
+const filtrosAñoContainer = document.getElementById('filtros-año');
+añosUnicos.forEach(año => {
+  const chip = document.createElement('div');
+  chip.className = 'chip chip-año';
+  chip.dataset.año = año;
+  chip.textContent = año;
+  chip.addEventListener('click', () => {
+    filtroAño = (filtroAño === String(año)) ? "" : String(año);
+    document.querySelectorAll('.chip-año').forEach(c => {
+      c.classList.toggle('activo', c.dataset.año === filtroAño);
+    });
+    renderProyectos();
+  });
+  filtrosAñoContainer.appendChild(chip);
+});
+document.querySelector('.chip-año[data-año=""]').addEventListener('click', () => {
+  filtroAño = "";
+  document.querySelectorAll('.chip-año').forEach(c => {
+    c.classList.toggle('activo', c.dataset.año === "");
+  });
+  renderProyectos();
+});
+
+function filtrarPorEstado(estado, row) {
+  if (filtroActivo === estado) {
+    filtroActivo = "";
+  } else {
+    filtroActivo = estado;
+  }
+  // sync chips estado
+  document.querySelectorAll('#filtros-estado .chip').forEach(c => {
+    c.classList.toggle('activo', c.dataset.filtro === filtroActivo);
+  });
+  renderProyectos();
+}
+
+function filtrarPorChip(estado, chip) {
+  filtroActivo = (filtroActivo === estado) ? "" : estado;
+  document.querySelectorAll('#filtros-estado .chip').forEach(c => {
+    c.classList.toggle('activo', c.dataset.filtro === filtroActivo);
+  });
+  renderProyectos();
+}
+
+document.querySelector('#filtros-estado .chip[data-filtro=""]').addEventListener('click', () => {
+  filtroActivo = "";
+  document.querySelectorAll('#filtros-estado .chip').forEach(c => {
+    c.classList.toggle('activo', c.dataset.filtro === "");
+  });
+  renderProyectos();
+});
+
+document.getElementById('buscador').addEventListener('input', e => {
+  busqueda = e.target.value.toLowerCase().trim();
+  renderProyectos();
+});
+
+function renderProyectos() {
+  const lista = document.getElementById('lista-proyectos');
+  const count = document.getElementById('resultado-count');
+
+  let filtrados = PROYECTOS.filter(p => {
+    const matchEstado = !filtroActivo || p.estado === filtroActivo;
+    const matchAño = !filtroAño || String(p.año) === filtroAño;
+    const matchBusqueda = !busqueda || 
+      p.nombre.toLowerCase().includes(busqueda) ||
+      p.programa.toLowerCase().includes(busqueda) ||
+      p.tipo.toLowerCase().includes(busqueda) ||
+      p.id.toLowerCase().includes(busqueda);
+    return matchEstado && matchAño && matchBusqueda;
+  });
+
+  count.textContent = filtrados.length === PROYECTOS.length
+    ? `${PROYECTOS.length} proyectos`
+    : `${filtrados.length} de ${PROYECTOS.length} proyectos`;
+
+  if (filtrados.length === 0) {
+    lista.innerHTML = '<div class="vacio">No hay proyectos con ese criterio.</div>';
+    return;
+  }
+
+  lista.innerHTML = filtrados.map(p => {
+    const color = COLORES_ESTADO[p.estado] || '#999';
+    return `
+      <div class="proyecto-card">
+        <div class="proyecto-top">
+          <div class="proyecto-nombre">${p.nombre.toLowerCase().replace(/^\w/, c => c.toUpperCase())}</div>
+          <div class="estado-badge" style="background:${color}">${p.estado.replace('Proyecto ', '')}</div>
+        </div>
+        <div class="proyecto-meta">
+          <div class="meta-item"><strong>${p.año}</strong> · ${p.tipo}</div>
+          <div class="meta-item">${p.programa}</div>
+        </div>
+        <div class="proyecto-monto">${formatCLP(p.monto)}</div>
+        <div class="proyecto-dias">${p.dias} días en estado · ID ${p.id}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+renderProyectos();
+</script>
+</body>
+</html>
