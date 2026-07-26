@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUBDERE Coquimbo — Dashboard de Proyectos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg:#0f141b; --panel:#161e27; --panel-2:#1c2530; --border:#28323f;
+  --ink:#eef2f6; --ink-dim:#8fa0b3; --accent:#4fb2a8; --accent-2:#d68c45;
+  --accent-3:#7c93b0; --danger:#c9576b;
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
+header { padding:22px 32px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; }
+header h1 { font-size:1.3rem; margin:0; }
+header .sub { color:var(--ink-dim); font-size:0.82rem; }
+
+.filters { display:flex; flex-wrap:wrap; gap:10px; align-items:end; padding:16px 32px; background:var(--panel); border-bottom:1px solid var(--border); }
+.filter-group { display:flex; flex-direction:column; gap:4px; min-width:150px; }
+.filter-group label { font-size:0.72rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em; }
+select { background:var(--panel-2); color:var(--ink); border:1px solid var(--border); border-radius:6px; padding:7px 8px; font-size:0.85rem; }
+.btn { border:none; border-radius:6px; padding:8px 16px; font-size:0.85rem; cursor:pointer; font-weight:600; }
+.btn-primary { background:var(--accent); color:#08211d; }
+.btn-ghost { background:transparent; color:var(--ink-dim); border:1px solid var(--border); }
+.result-count { color:var(--ink-dim); font-size:0.8rem; margin-left:auto; align-self:center; }
+
+.tabs { display:flex; gap:2px; padding:0 32px; background:var(--bg); border-bottom:1px solid var(--border); }
+.tab { padding:12px 18px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-bottom:2px solid transparent; }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+
+.view { display:none; padding:22px 32px 40px; }
+.view.active { display:block; }
+
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
+.kpi { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+.kpi .value { font-size:1.6rem; font-weight:700; color:var(--accent); }
+.kpi .label { color:var(--ink-dim); font-size:0.75rem; text-transform:uppercase; letter-spacing:.05em; margin-top:4px; }
+
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:16px; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+.panel h2 { font-size:0.9rem; margin:0 0 10px; font-weight:600; }
+.panel.wide { grid-column:1/-1; }
+canvas { max-height:320px; }
+
+table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
+th { color:var(--ink-dim); font-weight:600; cursor:pointer; user-select:none; white-space:nowrap; }
+th:hover { color:var(--ink); }
+tbody tr:hover { background:var(--panel-2); }
+.num { text-align:right; font-variant-numeric:tabular-nums; }
+
+.table-controls { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; flex-wrap:wrap; }
+input[type=text] { background:var(--panel-2); border:1px solid var(--border); color:var(--ink); border-radius:6px; padding:7px 10px; font-size:0.85rem; min-width:220px; }
+.pager { display:flex; gap:8px; align-items:center; font-size:0.8rem; color:var(--ink-dim); }
+.pager button { background:var(--panel-2); border:1px solid var(--border); color:var(--ink); border-radius:6px; padding:4px 10px; cursor:pointer; }
+.pager button:disabled { opacity:.4; cursor:default; }
+.loading, .error { padding:60px 32px; text-align:center; color:var(--ink-dim); }
+.error { color:var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>SUBDERE en Línea — Dashboard de Proyectos (Región de Coquimbo)</h1>
+  <div class="sub" id="header-sub">Módulo: Presentación de Proyectos · Cargando datos...</div>
+</header>
+
+<div id="app" style="display:none">
+  <div class="filters">
+    <div class="filter-group"><label>Provincia</label><select id="f-provincia"><option value="">Todas</option></select></div>
+    <div class="filter-group"><label>Comuna</label><select id="f-comuna"><option value="">Todas</option></select></div>
+    <div class="filter-group"><label>Programa</label><select id="f-programa"><option value="">Todos</option></select></div>
+    <div class="filter-group"><label>Estado</label><select id="f-estado"><option value="">Todos</option></select></div>
+    <div class="filter-group"><label>Año Aprobación</label><select id="f-anio"><option value="">Todos</option></select></div>
+    <button class="btn btn-primary" onclick="applyFilters()">Aplicar</button>
+    <button class="btn btn-ghost" onclick="clearFilters()">✕ Limpiar</button>
+    <div class="result-count" id="result-count"></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-view="resumen">Resumen</div>
+    <div class="tab" data-view="provincias">Provincias / Comunas</div>
+    <div class="tab" data-view="programas">Programas</div>
+    <div class="tab" data-view="evolucion">Evolución</div>
+    <div class="tab" data-view="tabla">Tabla dinámica</div>
+  </div>
+
+  <div class="view active" id="view-resumen">
+    <div class="kpis" id="kpis"></div>
+    <div class="grid">
+      <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado"></canvas></div>
+      <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
+      <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
+      <div class="panel"><h2>Tipo de acción (top 10)</h2><canvas id="chartTipoAccion"></canvas></div>
+      <div class="panel wide"><h2>Aporte promedio por estado ($)</h2><canvas id="chartPromedioEstado"></canvas></div>
+    </div>
+  </div>
+
+  <div class="view" id="view-provincias">
+    <div class="grid">
+      <div class="panel wide">
+        <h2>Aporte por provincia y comuna</h2>
+        <table id="tbl-provincia"><thead><tr><th>Provincia / Comuna</th><th class="num">N° Proyectos</th><th class="num">Aporte Total ($)</th><th class="num">Promedio ($)</th><th class="num">%</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-programas">
+    <div class="grid">
+      <div class="panel"><h2>Aporte por programa (%)</h2><canvas id="chartProgramaPct"></canvas></div>
+      <div class="panel">
+        <h2>Aporte por programa</h2>
+        <table id="tbl-programa"><thead><tr><th>Programa</th><th class="num">N° Proyectos</th><th class="num">Aporte Total ($)</th><th class="num">%</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-evolucion">
+    <div class="grid">
+      <div class="panel wide"><h2>Evolución del aporte por año de aprobación ($)</h2><canvas id="chartEvolucionMonto"></canvas></div>
+      <div class="panel wide"><h2>Proyectos aprobados por año</h2><canvas id="chartEvolucionCantidad"></canvas></div>
+    </div>
+  </div>
+
+  <div class="view" id="view-tabla">
+    <div class="table-controls">
+      <input type="text" id="tabla-search" placeholder="Buscar por nombre de proyecto, comuna, id..." oninput="renderTabla()">
+      <div class="pager">
+        <span id="pager-info"></span>
+        <button onclick="pagerPrev()">‹ Anterior</button>
+        <button onclick="pagerNext()">Siguiente ›</button>
+      </div>
+    </div>
+    <table id="tbl-proyectos">
+      <thead><tr>
+        <th onclick="sortTabla('id_proyecto')">ID</th>
+        <th onclick="sortTabla('nombre_proyecto')">Proyecto</th>
+        <th onclick="sortTabla('comuna')">Comuna</th>
+        <th onclick="sortTabla('programa')">Programa</th>
+        <th onclick="sortTabla('estado')">Estado</th>
+        <th onclick="sortTabla('anio_aprobacion')">Año Aprob.</th>
+        <th class="num" onclick="sortTabla('monto_subdere')">Aporte ($)</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="loading" id="loading">Cargando datos del dashboard...</div>
+
+<script>
+// ========================================================================
+// CONFIGURACIÓN: reemplaza estos dos valores una vez que tengas tu API Key
+// de Google Cloud y el ID del archivo en Drive (ver README.md, sección
+// "Configurar la lectura desde Google Drive").
+// ========================================================================
+const DRIVE_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_DRIVE";
+const DRIVE_API_KEY = "PEGA_AQUI_TU_API_KEY_DE_GOOGLE_CLOUD";
+const DRIVE_URL = `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media&key=${DRIVE_API_KEY}`;
+
+let RAW_DATA = [];
+const fmtCLP = n => '$' + Math.round(n).toLocaleString('es-CL');
+const palette = ['#4fb2a8','#d68c45','#7c93b0','#c9576b','#8e6bc4','#6fae4f','#c9a94f','#4f8ec9','#e08fa0','#5fc48a'];
+Chart.defaults.color = '#8fa0b3';
+Chart.defaults.borderColor = '#28323f';
+
+let charts = {};
+let filtered = [];
+let tablaSort = { col:'monto_subdere', dir:-1 };
+let tablaPage = 0;
+const PAGE_SIZE = 40;
+
+// ---------- Carga inicial (en vivo desde Google Drive) ----------
+fetch(DRIVE_URL)
+  .then(r => {
+    if (!r.ok) throw new Error('No se pudo leer el archivo desde Drive (HTTP ' + r.status + '). Revisa que el archivo esté compartido como "Cualquiera con el enlace" y que la API Key sea correcta.');
+    return r.json();
+  })
+  .then(payload => {
+    RAW_DATA = payload.proyectos;
+    filtered = RAW_DATA;
+    document.getElementById('header-sub').textContent =
+      `Módulo: Presentación de Proyectos · Datos al ${payload.fecha_actualizacion} · ${payload.total_proyectos} proyectos · fuente: Google Drive`;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    refreshFilterOptions();
+    renderAll();
+  })
+  .catch(err => {
+    document.getElementById('loading').className = 'error';
+    document.getElementById('loading').textContent = 'Error cargando los datos: ' + err.message;
+  });
+
+// ---------- Tabs ----------
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById('view-' + t.dataset.view).classList.add('active');
+}));
+
+// ---------- Filtros ----------
+function unique(arr, key) {
+  return [...new Set(arr.map(d => d[key]).filter(v => v !== null && v !== undefined && v !== ''))].sort();
+}
+
+function populateSelect(id, values) {
+  const sel = document.getElementById(id);
+  const current = sel.value;
+  sel.innerHTML = '<option value="">' + sel.dataset.allLabel + '</option>' +
+    values.map(v => `<option value="${v}">${v}</option>`).join('');
+  if (values.includes(current)) sel.value = current;
+}
+
+document.getElementById('f-provincia').dataset.allLabel = 'Todas';
+document.getElementById('f-comuna').dataset.allLabel = 'Todas';
+document.getElementById('f-programa').dataset.allLabel = 'Todos';
+document.getElementById('f-estado').dataset.allLabel = 'Todos';
+document.getElementById('f-anio').dataset.allLabel = 'Todos';
+
+function refreshFilterOptions() {
+  const provinciaVal = document.getElementById('f-provincia').value;
+  const base = provinciaVal ? RAW_DATA.filter(d => d.provincia === provinciaVal) : RAW_DATA;
+  populateSelect('f-provincia', unique(RAW_DATA, 'provincia'));
+  populateSelect('f-comuna', unique(base, 'comuna'));
+  populateSelect('f-programa', unique(RAW_DATA, 'programa'));
+  populateSelect('f-estado', unique(RAW_DATA, 'estado'));
+  populateSelect('f-anio', unique(RAW_DATA, 'anio_aprobacion'));
+}
+
+document.getElementById('f-provincia').addEventListener('change', () => {
+  document.getElementById('f-comuna').value = '';
+  refreshFilterOptions();
+});
+
+function applyFilters() {
+  const f = {
+    provincia: document.getElementById('f-provincia').value,
+    comuna: document.getElementById('f-comuna').value,
+    programa: document.getElementById('f-programa').value,
+    estado: document.getElementById('f-estado').value,
+    anio: document.getElementById('f-anio').value,
+  };
+  filtered = RAW_DATA.filter(d =>
+    (!f.provincia || d.provincia === f.provincia) &&
+    (!f.comuna || d.comuna === f.comuna) &&
+    (!f.programa || d.programa === f.programa) &&
+    (!f.estado || d.estado === f.estado) &&
+    (!f.anio || String(d.anio_aprobacion) === f.anio)
+  );
+  tablaPage = 0;
+  renderAll();
+}
+
+function clearFilters() {
+  ['f-provincia','f-comuna','f-programa','f-estado','f-anio'].forEach(id => document.getElementById(id).value = '');
+  filtered = RAW_DATA;
+  refreshFilterOptions();
+  tablaPage = 0;
+  renderAll();
+}
+
+// ---------- Agregaciones ----------
+function groupBy(arr, key) {
+  const m = new Map();
+  for (const d of arr) {
+    const k = d[key] ?? 'Sin dato';
+    if (!m.has(k)) m.set(k, { n:0, monto:0 });
+    const g = m.get(k);
+    g.n++; g.monto += (d.monto_subdere || 0);
+  }
+  return [...m.entries()].map(([k,v]) => ({ key:k, n:v.n, monto:v.monto }));
+}
+
+function makeChart(id, type, labels, datasets, opts={}) {
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(document.getElementById(id), {
+    type, data: { labels, datasets },
+    options: Object.assign({ plugins:{ legend:{ display:type==='doughnut' } },
+      scales: type==='doughnut' ? {} : { x:{ grid:{ color:'#1c2530' } }, y:{ grid:{ color:'#1c2530' } } } }, opts)
+  });
+}
+
+function renderKPIs() {
+  const total = filtered.length;
+  const monto = filtered.reduce((s,d) => s + (d.monto_subdere||0), 0);
+  const comunas = unique(filtered, 'comuna').length;
+  const promedio = total ? monto/total : 0;
+  document.getElementById('kpis').innerHTML = `
+    <div class="kpi"><div class="value">${total.toLocaleString('es-CL')}</div><div class="label">Proyectos</div></div>
+    <div class="kpi"><div class="value">${fmtCLP(monto)}</div><div class="label">Aporte SUBDERE total</div></div>
+    <div class="kpi"><div class="value">${fmtCLP(promedio)}</div><div class="label">Aporte promedio / proyecto</div></div>
+    <div class="kpi"><div class="value">${comunas}</div><div class="label">Comunas con proyectos</div></div>
+  `;
+  document.getElementById('result-count').textContent = `${total.toLocaleString('es-CL')} proyectos filtrados de ${RAW_DATA.length.toLocaleString('es-CL')}`;
+}
+
+function renderResumen() {
+  const porEstado = groupBy(filtered,'estado').sort((a,b)=>b.n-a.n);
+  makeChart('chartEstado','bar', porEstado.map(d=>d.key), [{ data:porEstado.map(d=>d.n), backgroundColor:palette[0], borderRadius:4 }]);
+
+  const porPrograma = groupBy(filtered,'programa').sort((a,b)=>b.n-a.n).slice(0,8);
+  makeChart('chartProgramaDonut','doughnut', porPrograma.map(d=>d.key), [{ data:porPrograma.map(d=>d.n), backgroundColor:palette }]);
+
+  const porProvincia = groupBy(filtered,'provincia').sort((a,b)=>b.monto-a.monto);
+  makeChart('chartAportePorProvincia','bar', porProvincia.map(d=>d.key), [{ data:porProvincia.map(d=>d.monto), backgroundColor:palette[1], borderRadius:4 }]);
+
+  const porTipo = groupBy(filtered,'tipo_accion').sort((a,b)=>b.n-a.n).slice(0,10);
+  makeChart('chartTipoAccion','bar', porTipo.map(d=>d.key), [{ data:porTipo.map(d=>d.n), backgroundColor:palette[2], borderRadius:4 }], { indexAxis:'y' });
+
+  const promEstado = porEstado.map(d => ({ key:d.key, prom: d.n ? d.monto/d.n : 0 }));
+  makeChart('chartPromedioEstado','bar', promEstado.map(d=>d.key), [{ data:promEstado.map(d=>d.prom), backgroundColor:palette[3], borderRadius:4 }]);
+}
+
+function renderProvincias() {
+  const totalMonto = filtered.reduce((s,d)=>s+(d.monto_subdere||0),0) || 1;
+  const rows = groupBy(filtered,'provincia').sort((a,b)=>b.monto-a.monto);
+  const tbody = document.querySelector('#tbl-provincia tbody');
+  tbody.innerHTML = rows.map(r => `<tr>
+    <td><strong>${r.key}</strong></td>
+    <td class="num">${r.n.toLocaleString('es-CL')}</td>
+    <td class="num">${fmtCLP(r.monto)}</td>
+    <td class="num">${fmtCLP(r.n?r.monto/r.n:0)}</td>
+    <td class="num">${(100*r.monto/totalMonto).toFixed(1)}%</td>
+  </tr>` + groupBy(filtered.filter(d=>d.provincia===r.key),'comuna').sort((a,b)=>b.monto-a.monto).map(c => `<tr>
+    <td style="padding-left:24px;color:var(--ink-dim)">${c.key}</td>
+    <td class="num">${c.n.toLocaleString('es-CL')}</td>
+    <td class="num">${fmtCLP(c.monto)}</td>
+    <td class="num">${fmtCLP(c.n?c.monto/c.n:0)}</td>
+    <td class="num">${(100*c.monto/totalMonto).toFixed(1)}%</td>
+  </tr>`).join('')).join('');
+}
+
+function renderProgramas() {
+  const totalMonto = filtered.reduce((s,d)=>s+(d.monto_subdere||0),0) || 1;
+  const rows = groupBy(filtered,'programa').sort((a,b)=>b.monto-a.monto);
+  makeChart('chartProgramaPct','doughnut', rows.map(r=>r.key), [{ data: rows.map(r=>r.monto), backgroundColor:palette }]);
+  document.querySelector('#tbl-programa tbody').innerHTML = rows.map(r => `<tr>
+    <td>${r.key}</td>
+    <td class="num">${r.n.toLocaleString('es-CL')}</td>
+    <td class="num">${fmtCLP(r.monto)}</td>
+    <td class="num">${(100*r.monto/totalMonto).toFixed(1)}%</td>
+  </tr>`).join('');
+}
+
+function renderEvolucion() {
+  const rows = groupBy(filtered.filter(d=>d.anio_aprobacion), 'anio_aprobacion').sort((a,b)=>a.key-b.key);
+  makeChart('chartEvolucionMonto','line', rows.map(r=>r.key), [{ data: rows.map(r=>r.monto), borderColor:palette[1], backgroundColor:'rgba(214,140,69,0.15)', fill:true, tension:.3 }]);
+  makeChart('chartEvolucionCantidad','bar', rows.map(r=>r.key), [{ data: rows.map(r=>r.n), backgroundColor:palette[0], borderRadius:4 }]);
+}
+
+function sortTabla(col) {
+  if (tablaSort.col === col) tablaSort.dir *= -1; else tablaSort = { col, dir:1 };
+  renderTabla();
+}
+
+function pagerPrev() { if (tablaPage>0) { tablaPage--; renderTabla(); } }
+function pagerNext() {
+  const rows = filteredTablaRows();
+  if ((tablaPage+1)*PAGE_SIZE < rows.length) { tablaPage++; renderTabla(); }
+}
+
+function filteredTablaRows() {
+  const q = document.getElementById('tabla-search').value.trim().toLowerCase();
+  let rows = filtered;
+  if (q) rows = rows.filter(d =>
+    String(d.nombre_proyecto||'').toLowerCase().includes(q) ||
+    String(d.comuna||'').toLowerCase().includes(q) ||
+    String(d.id_proyecto||'').toLowerCase().includes(q));
+  rows = [...rows].sort((a,b) => {
+    const av=a[tablaSort.col], bv=b[tablaSort.col];
+    if (av===null||av===undefined) return 1;
+    if (bv===null||bv===undefined) return -1;
+    if (typeof av === 'number') return (av-bv)*tablaSort.dir;
+    return String(av).localeCompare(String(bv)) * tablaSort.dir;
+  });
+  return rows;
+}
+
+function renderTabla() {
+  const rows = filteredTablaRows();
+  const start = tablaPage*PAGE_SIZE;
+  const page = rows.slice(start, start+PAGE_SIZE);
+  document.querySelector('#tbl-proyectos tbody').innerHTML = page.map(d => `<tr>
+    <td>${d.id_proyecto ?? ''}</td>
+    <td>${d.nombre_proyecto ?? ''}</td>
+    <td>${d.comuna ?? ''}</td>
+    <td>${d.programa ?? ''}</td>
+    <td>${d.estado ?? ''}</td>
+    <td>${d.anio_aprobacion ?? ''}</td>
+    <td class="num">${fmtCLP(d.monto_subdere||0)}</td>
+  </tr>`).join('');
+  const totalPages = Math.max(1, Math.ceil(rows.length/PAGE_SIZE));
+  document.getElementById('pager-info').textContent = `Página ${tablaPage+1} de ${totalPages} (${rows.length.toLocaleString('es-CL')} filas)`;
+}
+
+function renderAll() {
+  renderKPIs();
+  renderResumen();
+  renderProvincias();
+  renderProgramas();
+  renderEvolucion();
+  renderTabla();
+}
+</script>
+</body>
+</html>
