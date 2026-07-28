@@ -158,7 +158,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 // ========================================================================
 const DRIVE_FILE_ID = "1OV-XknayXWkHtXfc6Y77Jfb564M1h3Yq";
 const DRIVE_API_KEY = "AIzaSyCVf_tVnaPxqp5MBPclSDz58mW2qt2uTlo";
-const DRIVE_URL = `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media&key=${DRIVE_API_KEY}`;
+const DRIVE_URL = `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media&key=${DRIVE_API_KEY}&_ts=${Date.now()}`;
 
 let RAW_DATA = [];
 const fmtCLP = n => '$' + Math.round(n).toLocaleString('es-CL');
