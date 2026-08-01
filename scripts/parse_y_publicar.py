@@ -46,7 +46,7 @@ COLUMN_MAP = {
 
 COMUNA_A_PROVINCIA = {
     "LA SERENA": "Elqui", "COQUIMBO": "Elqui", "ANDACOLLO": "Elqui",
-    "LA HIGUERA": "Elqui", "PAIHUANO": "Elqui", "VICUÑA": "Elqui",
+    "LA HIGUERA": "Elqui", "PAIGUANO": "Elqui", "VICUÑA": "Elqui",
     "OVALLE": "Limarí", "COMBARBALÁ": "Limarí", "MONTE PATRIA": "Limarí",
     "PUNITAQUI": "Limarí", "RÍO HURTADO": "Limarí",
     "ILLAPEL": "Choapa", "CANELA": "Choapa", "LOS VILOS": "Choapa", "SALAMANCA": "Choapa",
