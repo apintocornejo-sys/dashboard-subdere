@@ -1,0 +1,5 @@
+# NUNCA subir credenciales a GitHub
+.env
+client_secret.json
+token.json
+agente_log.txt
