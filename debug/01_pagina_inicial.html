@@ -1,0 +1,400 @@
+<!DOCTYPE html><html><head>
+        <title>Ingreso Sistema de Seguimiento de Proyectos</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=charset=iso-8859-1">
+        <meta http-equiv="imagetoolbar" content="no">
+        <script type="text/javascript" async="" src="https://www.google-analytics.com/analytics.js"></script><script type="text/javascript" async="" src="https://www.googletagmanager.com/gtag/js?id=G-XTWRXVH2CG&amp;cx=c&amp;gtm=4e68v0h2"></script><script type="text/javascript" src="jquery/jquery.js"></script>
+        <script type="text/javascript" src="jquery/jquery-ui-1.8.23.custom.min.js"></script>
+        <script type="text/javascript" src="include/inicial.js"></script>
+        <script type="text/javascript" src="include/md5.js"></script>
+        <script type="text/javascript" src="index.js?r=<?php echo rand(1,9999999); ?>"></script>
+        <script type="text/javascript" src="include/procesos_comunes.js"></script><script src="../../include/ga_events.js"></script>
+        <script type="text/javascript" src="index.i2k.js?r5"></script>
+        <script type="text/javascript" src="js/browser.js"></script>
+        <link rel="stylesheet" type="text/css" href="jquery/shadowbox/shadowbox.css">
+        <script type="text/javascript" src="jquery/shadowbox/shadowbox.js"></script> 
+        <script type="text/javascript">
+            Shadowbox.init({
+                language: "es", players: ['img', 'html', 'iframe', 'qt', 'wmp', 'swf', 'flv']
+            });
+
+            function verPoliticas() {
+                $(document).ready(function () {
+
+                    Shadowbox.open({
+                        content: "politicaPrivacidad.htm",
+												player:   "iframe",
+                        title: "Pol&iacute;ticas de Privacidad 2017",
+                        width: 750,
+                        height: 800
+                    });
+                });
+            }
+            ;
+
+            function verInforme() {
+                $(document).ready(function () {
+
+                    Shadowbox.open({
+                        content: '<div><img src="imagenes/calendario2018.PNG"></div>',
+                        player: "html",
+                        title: "Calendario Res. 30/2015 CGR",
+                        width: 330,
+                        height: 350
+                    });
+                });
+            }
+            ;
+
+            function popup() {
+                return; // Impide que se ejecute funcion que abre pop-up. Quitar lÃ­nea para habilitar.
+                $(document).ready(function () {
+                    Shadowbox.open({
+                        content: '<div><img src="imagenes/mantencion.png"></div>',
+                        player: 'html',
+                        title: 'Aviso Importante',
+                        width: 905,
+                        height: 603
+                    });
+                });
+            }
+            ;
+
+        </script>
+        <link rel="stylesheet" href="css/estilos1.css" type="text/css">
+        <link rel="stylesheet" href="css/formularios.css" type="text/css">
+        <link rel="stylesheet" href="css/smoothness/jquery-ui-1.8.24.custom.css">
+        <link rel="stylesheet" href="css/index.css">
+        <link href="home/css/estilos.css" rel="stylesheet" type="text/css">
+        <style type="text/css">
+
+            body {
+                background: url('imagenes/background.jpg') no-repeat center top #f1f1f1; 
+            }
+
+            #error-login {
+                text-align: center;
+                background: red;
+                color: white;
+                padding: 5px;
+                display: none;
+                border: solid 1px black;
+            }
+
+            .marco {
+                background: #fff;
+                box-shadow: 0px 0px 10px #ccc;
+                -moz-box-shadow: 0px 0px 10px #ccc;
+                -webkit-box-shadow: 0px 0px 10px #ccc;
+
+                }
+
+            h1.titulo {
+                color: #006cb7 !important;
+                font-size: 24px;
+                text-transform: uppercase;
+                font-style: normal;
+                margin: 0;
+            }
+
+            h2.subtitulo {
+                color: #666;
+                font-size: 18px;
+                font-style: normal;
+                margin-top: 0;
+                margin-bottom: 40px;
+            }
+
+            .sup-container {
+                margin: 0 auto;
+                padding-top: 40px;
+                width: 900px;
+            }
+
+            .home-container {
+                width: 800px;
+                margin-bottom: 15px;
+            }
+
+            .title-container {
+            }
+
+            .title-logo {
+                width: 180px;
+                float: left;
+                padding: 10px;
+            }
+
+            .title-text {
+                font-size: 30px;
+                color: #5D7B9D;
+            }
+
+            .uppercase {
+                text-transform: uppercase;
+            }
+
+            .clearboth {
+                clear: both;
+            }
+
+            .enlaces-list {
+                padding: 0px;
+                margin-top: 10px;
+                margin-left: 10px;
+            }
+
+            .enlaces-list > li {
+                list-style-type: square;
+                margin-left: 10px;
+                padding: 3px;
+            }
+
+            a {
+                background-color: transparent;
+            }
+
+            a:active,
+            a:hover {
+                outline-width: 0;
+            }
+
+            a {
+                color: #0275d8;
+                text-decoration: none;
+            }
+
+            a:focus, a:hover {
+                color: #014c8c;
+                text-decoration: underline;
+            }
+
+            a:focus {
+                outline: 5px auto -webkit-focus-ring-color;
+                outline-offset: -2px;
+            }
+
+            a:not([href]):not([tabindex]) {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            a:not([href]):not([tabindex]):focus, a:not([href]):not([tabindex]):hover {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            a:not([href]):not([tabindex]):focus {
+                outline: none;
+            }
+
+            .footer {
+                font-size: 12px;
+            }
+        </style>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+                var accesoBrowser = 1;
+                if (BrowserDetect["browser"] == "Explorer" && BrowserDetect["version"] < 8)
+                    accesoBrowser = 0;
+                if (BrowserDetect["browser"] == "Firefox" && BrowserDetect["version"] < 18)
+                    accesoBrowser = 0;
+                if (BrowserDetect["browser"] == "Chrome" && BrowserDetect["version"] < 23)
+                    accesoBrowser = 0;
+
+                if (accesoBrowser == 0) {
+                    //setTimeout('$(".ingreso").slideUp("slow", function(){ $(".browserDesactualizado").fadeIn("slow"); });', 100 );
+                    $(".browserDesactualizado").slideDown("slow");
+                } else {
+                    $(".ingreso").fadeIn("slow");
+                }
+            });
+        </script>
+        <!-- Global site tag (gtag.js) - Google Analytics -->
+        <script async="" src="https://www.googletagmanager.com/gtag/js?id=UA-114944168-2"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+
+            gtag('config', 'UA-114944168-2');
+        </script>
+
+    <script src="https://www.googletagmanager.com/gtag/js?id=UA-114944168-2"></script></head>
+    <body onload="popup();">
+
+
+        <div class="browserDesactualizado" style="width: 525px; margin: 0 auto; clear: both; text-align: center; display: none;">
+            Hemos detectado que tu browser esta desactualizado.<br>
+            Para el correcto funcionamiento del sistema debes descargar la versión actualizada de tu browser.
+
+            <div style="clear: both: display: block; text-align: center; width: 370px; margin: 0 auto; margin-top: 40px;">
+                <div style="width: 120px; float: left;">
+                    <a target="_blank" href="http://windows.microsoft.com/es-es/internet-explorer/download-ie"><img src="imagenes/icon-ie.png" border="0"></a>
+                    <div>IE v8+</div>
+                </div>
+                <div style="width: 120px; float: left;">
+                    <a target="_blank" href="http://www.mozilla.com"><img src="imagenes/icon-firefox.png" border="0"></a>
+                    <div>Firefox v18+</div>
+                </div>
+                <div style="width: 120px; float: left;">
+                    <a target="_blank" href="https://www.google.com/intl/es/chrome/"><img src="imagenes/icon-chrome.png" border="0"></a>
+                    <div>Chrome v23+</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sup-container ingreso">
+
+            <div class="home-container marco">
+
+                <div class="title-container">
+                    <div class="title-title">
+                        <h1 class="titulo">Subdere en Línea</h1>
+                        <h2 class="subtitulo">Sistema de Seguimiento de Proyectos</h2>
+                    </div>
+                    <div class="clearboth"></div>
+                </div>
+
+                <div class="login-container" style="width: 500px; margin: 0 auto;">
+
+                    <form name="formulario_index" method="post" action="" class="ingreso">
+
+                        <div style="padding: 2px; background: #5D7B9D; color: white; text-indent: 5px;">Iniciar Sesión</div>
+
+                        
+                        
+
+                        <table style="width: 70%; margin-top: 15px;" align="left">
+                            <tbody><tr>
+                                <td>Usuario:</td>
+                                <td><input style="width: 100%;" name="e_usuario" type="text" maxlength="15" title="Digite su nombre de usuario"><br></td>
+                            </tr>
+                            <tr>
+                                <td>Contraseña:</td>
+                                <td><input style="width: 100%;" name="e_clave" type="password" maxlength="15" id="Password1" title="Digite su contraseña"><br></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><input style="width: 100%;" name="b_acceso" id="b_acceso" class="entrar" type="button" value="Entrar"></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><div id="error-login"></div></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><a href="#" title="Esta opción permite cambiar la contraseña del usuario" onclick="ver_cc();">Cambiar contraseña</a></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><a href="#" title="Esta opción permite recuperar la contraseña del usuario" id="recuperar-cc">Recuperar Contraseña</a></td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><a href="#" title="Esta opción permite recuperar la contraseña del usuario" id="desbloquear-cc">Desbloquear Credencial</a></td>
+                            </tr>
+                        </tbody></table>
+
+                        <input type="hidden" name="nnumero" value="" style="">
+                        <input type="hidden" name="usuario" value="" style="">
+                        <input type="hidden" name="id_usuario" value="" style="">
+                        <input type="hidden" name="rut_usuario" value="" style="">
+                        <input type="hidden" name="uscl" value="" style="">
+                        <input type="hidden" name="cambio_ok" value="" style="">
+
+                    </form>
+
+                    <div class="clearboth"></div>
+                    <br>
+                    <h1 class="titulo" style="text-align: center; text-decoration-line:underline; font-size: 15px">INFORMACIÓN RELEVANTE</h1>
+                    <h2 class="subtitulo" style="text-align: center">LA POSTULACIÓN Y ELEGIBILIDAD DE LOS PROYECTOS NO GARANTIZA SU POSTERIOR FINANCIAMIENTO.</h2>
+
+                </div>
+
+                <div style="width: 500px; margin: 0 auto;">
+
+                    <div style="padding: 2px; background: #5D7B9D; color: white; text-indent: 5px;">Enlaces de Interés</div>
+
+                    <div class="enl-r" style="float: right; width: 250px;">
+                        <ul class="enlaces-list">
+                            <li><a href="#" title="Esta opción permite cambiar acceder al Módulo de Administración" onclick="verifica_login(9);">Administración</a></li>
+                            <li><a href="#" title="Esta opción permite cambiar acceder al Módulo de Administración" onclick="verifica_login(2);">Administración Biblioteca</a></li>
+                            <li><a href="#" title="Permite visualizar las políticas de Privacidad que rigen el sistema" onclick="verPoliticas();">Políticas de Privacidad 2017</a></li>
+                        </ul>
+                    </div>
+                    <div class="enl-l" style="float: left; width: 250px;">
+                        <ul class="enlaces-list">
+                            <li><a href="utilitarios/videos-tutoriales/index.html" title="Esta opción permite ver material de apoyo en videos sobre el sistema">Videos Tutoriales</a></li>
+                            <li><a href="#" title="" onclick="verInforme();">Calendario Res. 30/2015 CGR</a></li>
+                            <li><a href="modulo_biblioteca/biblioteca.php" title="Esta opción permite ver material de apoyo sobre el sistema">Material de Apoyo</a></li>
+                            <li><a target="_blank" href="utilitarios/Manual_PMU_versiocarta_ok.pdf" title="Esta opción permite descargar material">Guía de postulación para fondos del plan de recuperación económica de SUBDERE</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="clearboth"></div>
+
+
+                <div class="footer" style="width: 500px; margin: 0 auto; padding-top: 50px; text-align: center;">
+
+                    <hr>
+                    Sistema optimizado para Internet Explorer v8+, Firefox v18+, Chrome v23+ <br>
+                    Resolucion 1024x768
+                    <br>
+                    <br>
+                </div>
+            </div>
+        </div>
+
+        <div id="Layercambio" style="position:absolute; left:346px; top:280px; width:300px; height:200; z-index:1; background-color: #FFFFFF; layer-background-color: #FFFFFF; background-image: url(imagenes/fondo_cambioclave.jpg); layer-background-image: url(imagenes/fondo_cambioclave.gif); border: 1px none #000000; visibility: hidden;">
+            <form name="formcambio" method="post" action="">
+                <table width="92%" border="0" align="center" cellpadding="0" cellspacing="2" bordercolor="#FFFFFF" class="tabla">
+                    <tbody><tr>
+                        <td height="22" colspan="2"><img src="imagenes/spacer.gif" width="10" height="35"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><input name="imageField" type="image" src="imagenes/spacer.gif" width="100" height="4" style=""></td>
+                    </tr>
+                    <tr>
+                        <td class="textomenu">&nbsp;Usuario</td>
+                        <td> <input name="usuario1" type="text" style="width: 100px; height: 20px;" class="tabla" id="usuario1" size="23" maxlength="16" title="Digite su nombre de usuario"></td>
+                    </tr>
+                    <tr>
+                        <td class="textomenu">&nbsp;Contraseña actual</td>
+                        <td><input name="clave1" type="password" style="width: 100px; height: 20px;" class="tabla" id="clave1" size="23" maxlength="16" title="Digite su contraseña actual"></td>
+                    </tr>
+                    <tr>
+                        <td class="textomenu">&nbsp;Nueva Contraseña</td>
+                        <td><input name="clave2" type="password" style="width: 100px; height: 20px;" class="tabla" id="clave2" size="23" maxlength="14" title="Digite su nueva contraseña"></td>
+                    </tr>
+                    <tr>
+                        <td class="textomenu">&nbsp;Nueva Contraseña (repetir)</td>
+                        <td><input name="clave22" type="password" style="width: 100px; height: 20px;" class="tabla" id="clave22" size="23" maxlength="14" title="Digite nuevamente su nueva contraseña"></td>
+                    </tr>
+                    <tr>
+                        <td><input name="imageField" type="image" src="imagenes/spacer.gif" width="150" height="10" style=""></td>
+                        <td><input name="imageField" type="image" src="imagenes/spacer.gif" width="50" height="10" style=""></td>
+                    </tr>
+                    <tr align="center">
+                        <td height="25" colspan="2" valign="bottom">
+                            <input name="grabar" type="button" class="tabla" style="cursor: pointer;" onclick="cambiar_clave();limpia_textoclave();" value="Grabar cambio" title="Graba la nueva contraseña en la base de datos">
+                            &nbsp;
+                            <input name="cancelar" type="button" class="tabla" style="cursor: pointer;" onclick="MM_showHideLayers('Layercambio', '', 'hide');limpia_textoclave();" value="    Cancelar    " title="Cancela el proceso de cambio de clave">
+                    </td></tr>
+                    <tr>
+                        <td colspan="2"><input name="imageField" type="image" src="imagenes/spacer.gif" width="100" height="15" style=""></td>
+                    </tr>
+                </tbody></table>
+                <input type="hidden" name="nnumero" value="" style="">
+            </form>
+
+        </div>
+        
+        <iframe id="ilogin" name="ilogin" src="" frameborder="0" width="0%" height="0px"></iframe>
+
+
+
+    
+
+<div class="ui-dialog ui-widget ui-widget-content ui-corner-all ui-draggable ui-resizable" tabindex="-1" role="dialog" aria-labelledby="ui-dialog-title-form-recupera" style="display: none; z-index: 1000; outline: 0px; position: absolute;"><div class="ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix"><span class="ui-dialog-title" id="ui-dialog-title-form-recupera">Recuperar contraseña</span><a href="#" class="ui-dialog-titlebar-close ui-corner-all" role="button"><span class="ui-icon ui-icon-closethick">close</span></a></div><div id="form-recupera" class="ui-dialog-content ui-widget-content"><p>Ingrese su nombre de usuario</p><input type="text" name="username" value="" style=""><input type="button" value="Recuperar" name="enviar" style=""></div><div class="ui-resizable-handle ui-resizable-n" style="z-index: 1000;"></div><div class="ui-resizable-handle ui-resizable-e" style="z-index: 1000;"></div><div class="ui-resizable-handle ui-resizable-s" style="z-index: 1000;"></div><div class="ui-resizable-handle ui-resizable-w" style="z-index: 1000;"></div><div class="ui-resizable-handle ui-resizable-se ui-icon ui-icon-gripsmall-diagonal-se ui-icon-grip-diagonal-se" style="z-index: 1000;"></div><div class="ui-resizable-handle ui-resizable-sw" style="z-index: 1000;"></div><div class="ui-resizable-handle ui-resizable-ne" style="z-index: 1000;"></div><div class="ui-resizable-handle ui-resizable-nw" style="z-index: 1000;"></div></div><div id="sb-container"><div id="sb-overlay"></div><div id="sb-wrapper"><div id="sb-title"><div id="sb-title-inner"></div></div><div id="sb-wrapper-inner"><div id="sb-body"><div id="sb-body-inner"></div><div id="sb-loading"><div id="sb-loading-inner"><span>cargando</span></div></div></div></div><div id="sb-info"><div id="sb-info-inner"><div id="sb-counter"></div><div id="sb-nav"><a id="sb-nav-close" title="Cerrar" onclick="Shadowbox.close()"></a><a id="sb-nav-next" title="Siguiente" onclick="Shadowbox.next()"></a><a id="sb-nav-play" title="Reproducir" onclick="Shadowbox.play()"></a><a id="sb-nav-pause" title="Pausa" onclick="Shadowbox.pause()"></a><a id="sb-nav-previous" title="Anterior" onclick="Shadowbox.previous()"></a></div></div></div></div></div></body></html>

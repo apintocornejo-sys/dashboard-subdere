@@ -52,7 +52,7 @@ CLIENT_SECRET_PATH = BASE_DIR / "client_secret.json"
 TOKEN_PATH = BASE_DIR / "token.json"
 DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive"]
 
-LOGIN_URL = "http://www.subdereenlinea.gov.cl/inversiones/index.php"
+LOGIN_URL = "http://www.subdereenlinea.gov.cl/"
 
 
 def log(msg):
@@ -90,40 +90,111 @@ def descargar_excel_subdere() -> Path:
         )
 
     RAW_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    debug_dir = BASE_DIR / "debug"
+    debug_dir.mkdir(exist_ok=True)
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        context = browser.new_context(accept_downloads=True)
+        headless = os.environ.get("AGENTE_HEADLESS", "false").lower() != "false"
+        browser = p.chromium.launch(
+            headless=headless,
+            args=["--disable-blink-features=AutomationControlled"],
+        )
+        context = browser.new_context(
+            accept_downloads=True,
+            user_agent=(
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+            ),
+            viewport={"width": 1400, "height": 900},
+        )
         page = context.new_page()
 
         log("Abriendo el portal de SUBDERE en Línea...")
-        page.goto(LOGIN_URL, wait_until="networkidle", timeout=60000)
+        page.goto(LOGIN_URL, wait_until="domcontentloaded", timeout=60000)
+        page.wait_for_load_state("load", timeout=30000)
 
-        page.fill('input[type="text"]', usuario)
-        page.fill('input[type="password"]', clave)
+        page.screenshot(path=str(debug_dir / "01_pagina_inicial.png"), full_page=True)
+        (debug_dir / "01_pagina_inicial.html").write_text(page.content(), encoding="utf-8")
+        log(f"Debug: título de la página cargada = '{page.title()}' / URL final = {page.url}")
+
+        try:
+            page.fill('input[type="text"]', usuario, timeout=15000)
+            page.fill('input[type="password"]', clave, timeout=15000)
+        except Exception as e:
+            page.screenshot(path=str(debug_dir / "02_error_login.png"), full_page=True)
+            (debug_dir / "02_error_login.html").write_text(page.content(), encoding="utf-8")
+            raise RuntimeError(
+                f"No se encontraron los campos de login. Revisa debug/01_pagina_inicial.png "
+                f"y debug/02_error_login.png para ver qué cargó realmente. Detalle: {e}"
+            )
         page.click("text=Entrar")
+        page.wait_for_timeout(2000)
 
         # Pantalla de selección de perfil (aparece si tienes más de un perfil activo)
         try:
             page.wait_for_selector("text=Selección de Perfiles", timeout=8000)
             log("Seleccionando perfil: Funcionario Técnico URS")
-            page.click("text=Funcionario Técnico URS")
+            # "Funcionario Técnico URS" es siempre la primera opción de la lista
+            page.locator('input[type="radio"]').first.check()
+            page.wait_for_timeout(500)
             page.click("text=Continuar")
+            page.wait_for_timeout(2000)
         except PWTimeout:
             log("No apareció selección de perfiles (cuenta con un solo perfil activo).")
 
-        log("Navegando a Presentación de Proyectos...")
-        page.wait_for_selector("text=Presentación Proyectos", timeout=20000)
-        page.click("text=Presentación Proyectos")
+        page.screenshot(path=str(debug_dir / "03_tras_login.png"), full_page=True)
+        (debug_dir / "03_tras_login.html").write_text(page.content(), encoding="utf-8")
+        log(f"Debug: título tras login = '{page.title()}' / URL = {page.url}")
+
+        # El menú lateral (MÓDULOS / INFORMES) vive en la página principal,
+        # como íconos-imagen (no texto). El grupo "MÓDULOS" es #imenu1, y
+        # "Presentación Proyectos" es el 3er ítem del grupo: #imenu1_5.
+        log("Abriendo el grupo MÓDULOS...")
+        page.click("#imenu1", timeout=10000)
+        page.wait_for_timeout(1500)
+        page.screenshot(path=str(debug_dir / "04_tras_click_modulos.png"), full_page=True)
+
+        log("Haciendo clic en Presentación Proyectos...")
+        page.click("#imenu1_5", timeout=10000)
+        page.wait_for_timeout(3000)
+        page.screenshot(path=str(debug_dir / "05_tras_click_presentacion.png"), full_page=True)
+
+        # El contenido del módulo (filtros, tabla, botones) vive en un frame
+        # anidado cuyo nombre puede variar según el módulo. En vez de asumir
+        # un nombre fijo, buscamos el frame que realmente contiene el botón
+        # "Cargar Proyectos".
+        page.wait_for_timeout(2000)
+        frame = None
+        for _ in range(10):  # reintenta hasta 10 veces mientras el frame termina de cargar
+            for f in page.frames:
+                try:
+                    if f.get_by_text("Cargar Proyectos").count() > 0:
+                        frame = f
+                        break
+                except Exception:
+                    continue
+            if frame:
+                break
+            page.wait_for_timeout(1000)
+
+        if frame is None:
+            page.screenshot(path=str(debug_dir / "06_error_frame.png"), full_page=True)
+            nombres = [f.name for f in page.frames]
+            raise RuntimeError(
+                f"No se encontró ningún frame con el botón 'Cargar Proyectos'. "
+                f"Frames disponibles: {nombres}. Revisa debug/05_tras_click_presentacion.png"
+            )
+
+        (debug_dir / "07_frame_presentacion.html").write_text(frame.content(), encoding="utf-8")
+        log(f"Frame de trabajo encontrado: '{frame.name}'")
 
         log("Cargando el listado de proyectos...")
-        page.wait_for_selector("text=Cargar Proyectos", timeout=20000)
-        page.click("text=Cargar Proyectos")
-        page.wait_for_timeout(4000)  # deja que la tabla termine de renderizar
+        frame.click("text=Cargar Proyectos")
+        frame.wait_for_timeout(4000)  # deja que la tabla termine de renderizar
 
         log("Exportando a Excel...")
         with page.expect_download(timeout=60000) as download_info:
-            page.click("text=Exportar Excel")
+            frame.click("text=Exportar Excel")
         download = download_info.value
 
         fecha = datetime.now().strftime("%Y%m%d_%H%M%S")

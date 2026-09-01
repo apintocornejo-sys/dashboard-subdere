@@ -1,0 +1,278 @@
+<html><head><script>
+function tamano_pantalla() {
+   if (window.innerHeight){       var alto1 = window.innerHeight;      document.form_plantilla.ancho_iframe.value = window.innerWidth-213;   } else {      if (document.body.clientHeight){         var alto1 = document.body.clientHeight;         document.form_plantilla.ancho_iframe.value = document.body.clientWidth-213;      }   }   var obj=document.getElementById('mpagina');   pat = /px/;   if(pat.test(obj.height)) {      var aalto1=parseInt(obj.height.substring(0,obj.height.length-2));      if (aalto1<(alto1-120)) {aalto1=alto1-120;}   } else {      var aalto1=parseInt(obj.height);      if (aalto1<(alto1-120)) {aalto1=alto1-120;}   }   obj.height=aalto1;   document.form_plantilla.alto_iframe.value=obj.height;}</script>
+
+
+<title>Sistema Seguimiento de Proyectos</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="../css/plantilla1.css" rel="stylesheet" type="text/css">
+<script language="JavaScript" src="../include/plantilla1.js"></script>
+<script language="JavaScript" src="../include/procesos_js.js"></script>
+
+				<link rel="stylesheet" type="text/css" href="../jquery/shadowbox/shadowbox.css">
+
+				<script type="text/javascript" src="../jquery/shadowbox/shadowbox.js"></script>
+ 
+				<script type="text/javascript">
+ 
+					Shadowbox.init({
+ 
+						language: 'es', players:  ['img', 'html', 'iframe', 'qt', 'wmp', 'swf', 'flv']
+ 
+					});
+ 
+
+					function popup_index2(){ 
+					    Shadowbox.open({  
+					        content:    '<div><img src="imagenes/cambio_data.png"></div>',  
+					        player:     'html',  
+					        title:      'Aviso Importante',  
+					        width:      724,  
+					        height:     484  
+					    });  
+					}; 
+				</script>
+  
+	<script>  var modulo=1;  var nmenu=6;  var smenu=0;  var ssubmenu=0;  var alto_menuv=130;  var alto=796;</script></head>
+<body leftmargin="5" topmargin="0" marginwidth="5" marginheight="0" style="overflow:hidden">
+<form name="form_plantilla" method="post" action="paginas/pagina1_3_1.php" target="mpagina">
+  <table width="100%" border="0" cellspacing="0" cellpadding="0">
+    <tbody><tr>
+      <td colspan="4"><table width="100%" height="84" border="0" cellpadding="0" cellspacing="0">
+          <tbody><tr>
+            <td><img src="../imagenes/logo.png"></td>
+            <td width="100%"><table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tbody><tr>
+                  <td colspan="3"> <div align="center"><img src="imagenes/plantilla1/spacer.gif" width="50" height="10"></div></td>
+                </tr>
+                <tr>
+                  <td height="20" colspan="3" class="tituloppal" align="center">Sistema Seguimiento de Proyectos</td>
+                </tr>
+                <tr>
+                  <td width="50%" align="center" class="usuariofecha"><div align="right">CARLOS PINTO</div></td>
+                  <td><div align="center"><img src="imagenes/plantilla1/spacer.gif" width="80" height="10"></div></td>
+                  <td width="50%" align="center" class="usuariofecha"><div align="left">31/08/2026</div></td>
+                </tr>
+              </tbody></table></td>
+            <td>
+              <table class="usuariofecha" width="100%" border="0" cellpadding="0" cellspacing="0">
+                 <tbody><tr><td valign="top" colspan="2">
+                     <select name="perfil" onchange="document.formulario_index.perfil.value=this.value;document.formulario_index.submit();">
+								<option value="0">--Seleccione--</option>PMB_TPerfiles Object
+(
+    [conector] =&gt; Resource id #13
+    [mensaje_error] =&gt; 
+    [nroregistros] =&gt; 0
+    [c_perfil] =&gt; 01080101
+    [n_perfil] =&gt; Funcionario Técnico URS
+    [d_perfil] =&gt; Funcionario Técnico URS
+    [estado] =&gt; 0
+    [resultado1] =&gt; 
+    [resultado2] =&gt; 
+    [c_rol] =&gt; 
+)
+<option value="01080101" selected="">Funcionario Técnico URS</option>PMB_TPerfiles Object
+(
+    [conector] =&gt; Resource id #13
+    [mensaje_error] =&gt; 
+    [nroregistros] =&gt; 0
+    [c_perfil] =&gt; 01080103
+    [n_perfil] =&gt; Funcionario Contable URS
+    [d_perfil] =&gt; Profesional de la Unidad Regional SUBDERE con atributos para evaluar transferencias y gestionar giro
+    [estado] =&gt; 0
+    [resultado1] =&gt; 
+    [resultado2] =&gt; 
+    [c_rol] =&gt; 
+)
+<option value="01080103">Funcionario Contable URS</option>PMB_TPerfiles Object
+(
+    [conector] =&gt; Resource id #13
+    [mensaje_error] =&gt; 
+    [nroregistros] =&gt; 0
+    [c_perfil] =&gt; 01080104
+    [n_perfil] =&gt; Gestor Transferencia Anticipo contra Resolución
+    [d_perfil] =&gt; 
+    [estado] =&gt; 0
+    [resultado1] =&gt; 
+    [resultado2] =&gt; 
+    [c_rol] =&gt; 
+)
+<option value="01080104">Gestor Transferencia Anticipo contra Resolución</option></select>
+<br><br>                 </td></tr>                 <tr height="10px">
+                 <td align="right">
+                 <img src="../imagenes/cerrar_sesion.jpg" width="69" height="13" title="Salir del sistema de manera segura" style="cursor:pointer" onclick="cerrar_sesion();">
+                 </td>
+                 <td align="right">
+                 <img src="../imagenes/spacer.gif" width="15" height="13">
+                 </td>
+               </tr>              </tbody></table>
+            </td>
+          </tr>
+        </tbody></table></td>
+    </tr>
+    <tr>
+      <td height="5" colspan="2"> <img src="imagenes/plantilla1/i11.jpg" width="189" height="17"></td>
+      <td height="5" colspan="2"> <table width="100%" border="0" cellspacing="0" cellpadding="0">
+          <tbody><tr>
+            <td width="10"><img src="imagenes/plantilla1/i12.jpg" width="6" height="17"></td>
+            <td width="100%" background="imagenes/plantilla1/i13.jpg"><img src="imagenes/plantilla1/i13.jpg" width="1" height="17"></td>
+            <td width="19"><img src="imagenes/plantilla1/i14.jpg" width="19" height="17"></td>
+          </tr>
+        </tbody></table></td>
+    </tr>
+    <tr>
+      <td height="20" background="imagenes/plantilla1/i16.jpg"><img src="imagenes/plantilla1/spacer.gif" width="19" height="20"></td>
+      <td width="169" rowspan="2" valign="top" bgcolor="#6597D2"><table width="161" border="0" align="right" cellpadding="0" cellspacing="0" bgcolor="#6597D2">
+          <tbody><tr>
+             <td><img id="ititu_submenu" src="imagenes/plantilla1/menu1_3t.jpg" width="161" height="40"></td>
+          </tr>
+          <tr>
+            <td><img src="imagenes/plantilla1/spacer.gif" width="161" height="100">
+              <div id="menu1_l" style="position:absolute; width:161px; height:1150px; z-index:1; left: 33px; top: 145px; visibility: hidden;">
+                <table width="161" border="0" align="left" cellpadding="0" cellspacing="0" bgcolor="#6597D2">
+                  <tbody><tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,3);"><img id="imenu1_3" src="imagenes/plantilla1/menu1_1_3b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,4);"><img id="imenu1_4" src="imagenes/plantilla1/menu1_1_4b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,5);"><img id="imenu1_5" src="imagenes/plantilla1/menu1_1_5b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,8);"><img id="imenu1_8" src="imagenes/plantilla1/menu1_1_8b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,10);"><img id="imenu1_10" src="imagenes/plantilla1/menu1_1_10b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,11);"><img id="imenu1_11" src="imagenes/plantilla1/menu1_1_11b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,12);"><img id="imenu1_12" src="imagenes/plantilla1/menu1_1_12b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(1,13);"><img id="imenu1_13" src="imagenes/plantilla1/menu1_1_13b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                </tbody></table>
+              </div>
+              <div id="menu3_l" style="position: absolute; width: 161px; height: 500px; z-index: 1; left: 33px; top: 145px; visibility: visible;">
+                <table width="161" border="0" align="left" cellpadding="0" cellspacing="0" bgcolor="#6597D2">
+                  <tbody><tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(3,1);"><img id="imenu3_1" src="imagenes/plantilla1/menu1_3_1a.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(3,5);"><img id="imenu3_5" src="imagenes/plantilla1/menu1_3_5b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(3,6);"><img id="imenu3_6" src="imagenes/plantilla1/menu1_3_6b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                  <tr>
+                    <td onclick="selecciona_submenu(3,9);"><img id="imenu3_9" src="imagenes/plantilla1/menu1_3_9b.jpg" style="cursor:pointer" width="161" height="40"></td>
+                  </tr>
+                  <tr>
+                    <td><img src="imagenes/plantilla1/spacer.gif" width="60" height="10"></td>
+                  </tr>
+                </tbody></table>
+              </div>
+          </td></tr>
+        </tbody></table></td>
+      <td width="9999" height="20" rowspan="2" valign="top" bgcolor="#EEEEE7" class="tituloppal">
+         <table width="100%" border="0" cellspacing="0" cellpadding="0">
+           <tbody><tr>
+             <td><img src="imagenes/plantilla1/spacer.gif" width="6" height="10"></td>
+             <td width="100%">
+                <script>document.write('<iframe name="mpagina" id="mpagina" src="area_ppal.htm" frameborder="0" width="100%" height="'+(alto-130)+'px" scrolling="NO"></iframe>');</script><iframe name="mpagina" id="mpagina" src="area_ppal.htm" frameborder="0" width="100%" height="780" scrolling="NO"></iframe>
+		   </td>
+           </tr>
+         </tbody></table>
+      </td>
+      <td width="8" rowspan="2" valign="top" background="imagenes/plantilla1/i15.jpg" bgcolor="#EEEEE7"><img src="imagenes/plantilla1/i15.jpg" width="8" height="1"></td>
+    </tr>
+    <tr>
+      <td valign="top">
+        <table width="20" border="0" cellspacing="0" cellpadding="0">
+			        <tbody><tr>
+				  <td id="menu1" height="131" onclick="selecciona_menu(1);"><img id="imenu1" src="imagenes/plantilla1/menu1_1b.jpg" style="cursor:pointer" width="20" height="130"></td>
+			        </tr>
+			        <tr>
+				  <td id="menu3" height="131" onclick="selecciona_menu(3);"><img id="imenu3" src="imagenes/plantilla1/menu1_3a.jpg" style="cursor:pointer" width="20" height="130"></td>
+			        </tr>
+          <tr>
+            <td height="100%" background="imagenes/plantilla1/i16.jpg"><img src="imagenes/plantilla1/spacer.gif" width="19" height="5px"></td>
+          </tr>
+        </tbody></table>
+	  </td>
+    </tr>
+    <tr>
+      <td colspan="2"><img src="imagenes/plantilla1/i17.jpg" width="189" height="17"></td>
+      <td height="17" colspan="2" valign="top"> <table width="100%" border="0" cellspacing="0" cellpadding="0">
+          <tbody><tr>
+            <td width="100%" background="imagenes/plantilla1/i18.jpg"><img src="imagenes/plantilla1/i18.jpg" width="1" height="17"></td>
+            <td><img src="imagenes/plantilla1/i19.jpg" width="16" height="17"></td>
+          </tr>
+        </tbody></table></td>
+    </tr>
+  </tbody></table>
+  <iframe name="grabacion" id="grabacion" src="" frameborder="0" width="0px" height="0px" scrolling="NO"></iframe>
+  <input type="hidden" name="nsistema" value="1" style="">
+  <input type="hidden" name="uscl" value="aa27824b948bb9b699cd799482434c4a" style="">
+  <input type="hidden" name="usuario" value="CARLOS PINTO" style="">
+  <input type="hidden" name="id_usuario" value="5799" style="">
+  <input type="hidden" name="perfil" value="01080101" style="">
+  <input type="hidden" name="color1" value="#6597D2" style="">
+  <input type="hidden" name="color2" value="#A9C0DC" style="">
+  <input type="hidden" name="color3" value="#EEEEE7" style="">
+  <input type="hidden" name="alto_iframe" value="780" style="">
+  <input type="hidden" name="ancho_iframe" value="1187" style="">
+  <input type="hidden" name="titulo_ventana" value="Sistema Seguimiento de Proyectos" style="">
+</form>
+<script>tamano_pantalla();selecciona_menu(3);
+</script>
+<form name="formulario_index" id="formulario_index" method="post" action="../login/cambia_perfil.php">
+		  <input type="hidden" name="e_usuario" value="u15016893" style="">
+		  <input type="hidden" name="e_clave" value="Subdere2026" style="">
+		  <input type="hidden" name="e_numero" value="" style="">
+		  <input type="hidden" name="perfil" value="01080101" style="">
+		  </form>
+
+<div id="sb-container"><div id="sb-overlay"></div><div id="sb-wrapper"><div id="sb-title"><div id="sb-title-inner"></div></div><div id="sb-wrapper-inner"><div id="sb-body"><div id="sb-body-inner"></div><div id="sb-loading"><div id="sb-loading-inner"><span>cargando</span></div></div></div></div><div id="sb-info"><div id="sb-info-inner"><div id="sb-counter"></div><div id="sb-nav"><a id="sb-nav-close" title="Cerrar" onclick="Shadowbox.close()"></a><a id="sb-nav-next" title="Siguiente" onclick="Shadowbox.next()"></a><a id="sb-nav-play" title="Reproducir" onclick="Shadowbox.play()"></a><a id="sb-nav-pause" title="Pausa" onclick="Shadowbox.pause()"></a><a id="sb-nav-previous" title="Anterior" onclick="Shadowbox.previous()"></a></div></div></div></div></div></body></html>
