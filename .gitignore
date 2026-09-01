@@ -3,3 +3,5 @@
 client_secret.json
 token.json
 agente_log.txt
+__pycache__/
+*.pyc
