@@ -203,6 +203,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         <th onclick="sortTabla('comuna')">Comuna</th>
         <th onclick="sortTabla('programa')">Programa</th>
         <th onclick="sortTabla('estado')">Estado</th>
+        <th onclick="sortTabla('dias_en_estado')">Días en Estado</th>
         <th onclick="sortTabla('evento')">Evento</th>
         <th onclick="sortTabla('anio_aprobacion')">Año Aprob.</th>
         <th onclick="sortTabla('anio_postulacion')">Año Postul.</th>
@@ -565,6 +566,7 @@ function renderTabla() {
     <td>${d.comuna ?? ''}</td>
     <td>${d.programa ?? ''}</td>
     <td>${d.estado ?? ''}</td>
+    <td class="num">${d.dias_en_estado ?? ''}</td>
     <td>${d.evento ?? ''}</td>
     <td>${d.anio_aprobacion ?? ''}</td>
     <td>${d.anio_postulacion ?? ''}</td>
@@ -758,6 +760,7 @@ function construirMinutaHTML(proyecto, extra) {
       ${row('Subprograma', proyecto.subprograma)}
       ${row('Tipo de acción', proyecto.tipo_accion)}
       ${row('Estado', proyecto.estado)}
+      ${row('Días en Estado', proyecto.dias_en_estado)}
       ${row('Año de creación', proyecto.anio_creacion)}
       ${row('Año de aprobación', proyecto.anio_aprobacion)}
       ${row('Año de postulación', proyecto.anio_postulacion)}
@@ -844,12 +847,12 @@ function generarPDFConLogo(jsPDF, filasDatos, logoW, logoH) {
 
   const filas = filasDatos.map(d => [
     d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '',
-    d.estado ?? '', d.evento ?? '', d.anio_aprobacion ?? '', fmtCLP(d.monto_subdere || 0),
+    d.estado ?? '', d.dias_en_estado ?? '', d.evento ?? '', d.anio_aprobacion ?? '', fmtCLP(d.monto_subdere || 0),
   ]);
 
   doc.autoTable({
     startY: 36,
-    head: [['ID', 'Proyecto', 'Comuna', 'Programa', 'Estado', 'Evento', 'Año Aprob.', 'Aporte ($)']],
+    head: [['ID', 'Proyecto', 'Comuna', 'Programa', 'Estado', 'Días en Estado', 'Evento', 'Año Aprob.', 'Aporte ($)']],
     body: filas,
     styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fillColor: [35, 49, 108] },
