@@ -132,6 +132,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="filter-group"><label>Comuna</label><select id="f-comuna"><option value="">Todas</option></select></div>
     <div class="filter-group"><label>Programa</label><select id="f-programa"><option value="">Todos</option></select></div>
     <div class="filter-group"><label>Estado</label><select id="f-estado"><option value="">Todos</option></select></div>
+    <div class="filter-group"><label>Evento</label><select id="f-evento-filtro"><option value="">Todos</option></select></div>
     <div class="filter-group"><label>Año Aprobación</label><select id="f-anio"><option value="">Todos</option></select></div>
     <button class="btn btn-primary" onclick="applyFilters()">Aplicar</button>
     <button class="btn btn-ghost" onclick="clearFilters()">✕ Limpiar</button>
@@ -154,6 +155,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
       <div class="panel"><h2>Tipo de acción (top 10)</h2><canvas id="chartTipoAccion"></canvas></div>
+      <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento"></canvas></div>
       <div class="panel wide"><h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2><canvas id="chartComunaEstadosClave"></canvas></div>
     </div>
   </div>
@@ -201,6 +203,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         <th onclick="sortTabla('comuna')">Comuna</th>
         <th onclick="sortTabla('programa')">Programa</th>
         <th onclick="sortTabla('estado')">Estado</th>
+        <th onclick="sortTabla('evento')">Evento</th>
         <th onclick="sortTabla('anio_aprobacion')">Año Aprob.</th>
         <th onclick="sortTabla('anio_postulacion')">Año Postul.</th>
         <th class="num" onclick="sortTabla('monto_subdere')">Aporte ($)</th>
@@ -223,6 +226,10 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div id="extra-form-wrap" style="display:none">
         <div class="selected-project-banner" id="selected-project-banner"></div>
         <div class="form-grid">
+          <div class="form-field">
+            <label>Evento</label>
+            <input type="text" id="f-evento" placeholder="Ej: Temporal de lluvias 2026">
+          </div>
           <div class="form-field">
             <label>Profesional a cargo</label>
             <select id="f-profesional">
@@ -284,6 +291,13 @@ const DRIVE_API_KEY = "AIzaSyCVf_tVnaPxqp5MBPclSDz58mW2qt2uTlo";
 // reutiliza una respuesta guardada en caché de una semana anterior.
 const DRIVE_URL = `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media&key=${DRIVE_API_KEY}&_ts=${Date.now()}`;
 
+// Archivo de "Datos adicionales" (creado desde la pestaña homónima). Se lee
+// de forma PÚBLICA (solo con la API Key, sin login) para que campos como
+// "Evento" aparezcan en filtros/gráficos/tabla para cualquier visitante.
+// El login con Google solo hace falta para EDITAR estos datos.
+const DATOS_EXTRA_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_DATOS_ADICIONALES";
+const DATOS_EXTRA_URL = `https://www.googleapis.com/drive/v3/files/${DATOS_EXTRA_FILE_ID}?alt=media&key=${DRIVE_API_KEY}&_ts=${Date.now()}`;
+
 let RAW_DATA = [];
 const fmtCLP = n => '$' + Math.round(n).toLocaleString('es-CL');
 const palette = ['#4fb2a8','#d68c45','#7c93b0','#c9576b','#8e6bc4','#6fae4f','#c9a94f','#4f8ec9','#e08fa0','#5fc48a'];
@@ -297,13 +311,29 @@ let tablaPage = 0;
 const PAGE_SIZE = 40;
 
 // ---------- Carga inicial (en vivo desde Google Drive) ----------
-fetch(DRIVE_URL)
-  .then(r => {
+async function cargarDatosExtraPublico() {
+  // Best-effort: si el ID no está configurado, o el archivo aún no existe,
+  // o falla la lectura, el dashboard sigue funcionando igual sin "Evento".
+  try {
+    if (DATOS_EXTRA_FILE_ID.startsWith('PEGA_AQUI')) return {};
+    const r = await fetch(DATOS_EXTRA_URL);
+    if (!r.ok) return {};
+    return await r.json();
+  } catch (e) {
+    return {};
+  }
+}
+
+Promise.all([
+  fetch(DRIVE_URL).then(r => {
     if (!r.ok) throw new Error('No se pudo leer el archivo desde Drive (HTTP ' + r.status + '). Revisa que el archivo esté compartido como "Cualquiera con el enlace" y que la API Key sea correcta.');
     return r.json();
-  })
-  .then(payload => {
-    RAW_DATA = payload.proyectos;
+  }),
+  cargarDatosExtraPublico(),
+])
+  .then(([payload, extraPublico]) => {
+    datosExtra = extraPublico || {};
+    RAW_DATA = payload.proyectos.map(p => Object.assign({}, p, { evento: datosExtra[p.id_proyecto]?.evento || '' }));
     filtered = RAW_DATA;
     document.getElementById('header-sub').textContent =
       `Módulo: Presentación de Proyectos · Datos al ${payload.fecha_actualizacion} · ${payload.total_proyectos} proyectos · fuente: Google Drive`;
@@ -342,6 +372,7 @@ document.getElementById('f-provincia').dataset.allLabel = 'Todas';
 document.getElementById('f-comuna').dataset.allLabel = 'Todas';
 document.getElementById('f-programa').dataset.allLabel = 'Todos';
 document.getElementById('f-estado').dataset.allLabel = 'Todos';
+document.getElementById('f-evento-filtro').dataset.allLabel = 'Todos';
 document.getElementById('f-anio').dataset.allLabel = 'Todos';
 
 function refreshFilterOptions() {
@@ -351,6 +382,7 @@ function refreshFilterOptions() {
   populateSelect('f-comuna', unique(base, 'comuna'));
   populateSelect('f-programa', unique(RAW_DATA, 'programa'));
   populateSelect('f-estado', unique(RAW_DATA, 'estado'));
+  populateSelect('f-evento-filtro', unique(RAW_DATA, 'evento'));
   populateSelect('f-anio', unique(RAW_DATA, 'anio_aprobacion'));
 }
 
@@ -365,6 +397,7 @@ function applyFilters() {
     comuna: document.getElementById('f-comuna').value,
     programa: document.getElementById('f-programa').value,
     estado: document.getElementById('f-estado').value,
+    evento: document.getElementById('f-evento-filtro').value,
     anio: document.getElementById('f-anio').value,
   };
   filtered = RAW_DATA.filter(d =>
@@ -372,6 +405,7 @@ function applyFilters() {
     (!f.comuna || d.comuna === f.comuna) &&
     (!f.programa || d.programa === f.programa) &&
     (!f.estado || d.estado === f.estado) &&
+    (!f.evento || d.evento === f.evento) &&
     (!f.anio || String(d.anio_aprobacion) === f.anio)
   );
   tablaPage = 0;
@@ -379,7 +413,7 @@ function applyFilters() {
 }
 
 function clearFilters() {
-  ['f-provincia','f-comuna','f-programa','f-estado','f-anio'].forEach(id => document.getElementById(id).value = '');
+  ['f-provincia','f-comuna','f-programa','f-estado','f-evento-filtro','f-anio'].forEach(id => document.getElementById(id).value = '');
   filtered = RAW_DATA;
   refreshFilterOptions();
   tablaPage = 0;
@@ -433,6 +467,13 @@ function renderResumen() {
 
   const porTipo = groupBy(filtered,'tipo_accion').sort((a,b)=>b.n-a.n).slice(0,10);
   makeChart('chartTipoAccion','bar', porTipo.map(d=>d.key), [{ data:porTipo.map(d=>d.n), backgroundColor:palette[2], borderRadius:4 }], { indexAxis:'y' });
+
+  const porEvento = groupBy(filtered.filter(d => d.evento && d.evento.trim() !== ''), 'evento').sort((a,b)=>b.n-a.n);
+  if (porEvento.length > 0) {
+    makeChart('chartEvento','doughnut', porEvento.map(d=>d.key), [{ data:porEvento.map(d=>d.n), backgroundColor:palette }]);
+  } else {
+    if (charts['chartEvento']) charts['chartEvento'].destroy();
+  }
 
   const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
   const comunasConDatos = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
@@ -522,6 +563,7 @@ function renderTabla() {
     <td>${d.comuna ?? ''}</td>
     <td>${d.programa ?? ''}</td>
     <td>${d.estado ?? ''}</td>
+    <td>${d.evento ?? ''}</td>
     <td>${d.anio_aprobacion ?? ''}</td>
     <td>${d.anio_postulacion ?? ''}</td>
     <td class="num">${fmtCLP(d.monto_subdere||0)}</td>
@@ -653,6 +695,7 @@ function seleccionarProyectoExtra(idProyecto) {
     `<b>${proyectoSeleccionado.nombre_proyecto}</b> — ${proyectoSeleccionado.id_proyecto} · ${proyectoSeleccionado.comuna} · ${proyectoSeleccionado.estado}`;
 
   const existing = datosExtra[idProyecto] || {};
+  document.getElementById('f-evento').value = existing.evento || '';
   document.getElementById('f-profesional').value = existing.profesional || '';
   document.getElementById('f-revisiones').value = existing.revisiones ?? '';
   document.getElementById('f-fecha-transferencia').value = existing.fecha_transferencia || '';
@@ -672,6 +715,7 @@ async function guardarDatosExtra() {
   if (!proyectoSeleccionado) return;
   const id = proyectoSeleccionado.id_proyecto;
   datosExtra[id] = {
+    evento: document.getElementById('f-evento').value,
     profesional: document.getElementById('f-profesional').value,
     revisiones: document.getElementById('f-revisiones').value,
     fecha_transferencia: document.getElementById('f-fecha-transferencia').value,
@@ -720,6 +764,7 @@ function construirMinutaHTML(proyecto, extra) {
     </div>
     <div class="minuta-section">
       <h2>Información adicional</h2>
+      ${row('Evento', extra.evento)}
       ${row('Profesional a cargo', extra.profesional)}
       ${row('N° de revisiones', extra.revisiones)}
       ${row('Fecha de transferencia de recursos', extra.fecha_transferencia)}
@@ -798,12 +843,12 @@ function generarPDFConLogo(jsPDF, filasDatos, logoW, logoH) {
 
   const filas = filasDatos.map(d => [
     d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '',
-    d.estado ?? '', d.anio_aprobacion ?? '', fmtCLP(d.monto_subdere || 0),
+    d.estado ?? '', d.evento ?? '', d.anio_aprobacion ?? '', fmtCLP(d.monto_subdere || 0),
   ]);
 
   doc.autoTable({
     startY: 36,
-    head: [['ID', 'Proyecto', 'Comuna', 'Programa', 'Estado', 'Año Aprob.', 'Aporte ($)']],
+    head: [['ID', 'Proyecto', 'Comuna', 'Programa', 'Estado', 'Evento', 'Año Aprob.', 'Aporte ($)']],
     body: filas,
     styles: { fontSize: 7, cellPadding: 1.5 },
     headStyles: { fillColor: [35, 49, 108] },
