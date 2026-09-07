@@ -10,41 +10,39 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
-  --bg:#0f141b; --panel:#161e27; --panel-2:#1c2530; --border:#28323f;
-  --ink:#eef2f6; --ink-dim:#8fa0b3; --accent:#4fb2a8; --accent-2:#d68c45;
-  --accent-3:#7c93b0; --danger:#c9576b;
+  --bg:#141414; --panel:#1a1a1a; --panel-2:#212121; --border:#2e2e2e;
+  --ink:#e8e8e6; --ink-dim:#93928c; --accent:#4fb2a8; --accent-2:#8f8d84;
+  --accent-3:#8f8d84; --danger:#c9576b;
 }
 * { box-sizing:border-box; }
 body { margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
-header { padding:22px 32px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; }
-header h1 { font-size:1.3rem; margin:0; }
-header .sub { color:var(--ink-dim); font-size:0.82rem; }
+header { padding:20px 28px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; background:var(--panel); }
+header h1 { font-size:1.25rem; margin:0; font-weight:600; }
+header .sub { color:var(--ink-dim); font-size:0.8rem; }
 
-.filters { display:flex; flex-wrap:wrap; gap:10px; align-items:end; padding:16px 32px; background:var(--panel); border-bottom:1px solid var(--border); }
+.app-layout { display:flex; align-items:stretch; min-height:calc(100vh - 90px); }
+.sidebar { width:200px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border); padding:14px 0; }
+.main-content { flex:1; min-width:0; }
+
+.filters { display:flex; flex-wrap:wrap; gap:10px; align-items:end; padding:16px 28px; background:var(--panel-2); border-bottom:1px solid var(--border); }
 .filter-group { display:flex; flex-direction:column; gap:4px; min-width:150px; }
-.filter-group label { font-size:0.72rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em; }
-select { background:var(--panel-2); color:var(--ink); border:1px solid var(--border); border-radius:6px; padding:7px 8px; font-size:0.85rem; }
+.filter-group label { font-size:0.7rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em; }
+select { background:var(--panel); color:var(--ink); border:1px solid var(--border); border-radius:6px; padding:7px 8px; font-size:0.85rem; }
 .btn { border:none; border-radius:6px; padding:8px 16px; font-size:0.85rem; cursor:pointer; font-weight:600; }
-.btn-primary { background:var(--accent); color:#08211d; }
+.btn-primary { background:#4fb2a8; color:#08211d; }
 .btn-ghost { background:transparent; color:var(--ink-dim); border:1px solid var(--border); }
 .result-count { color:var(--ink-dim); font-size:0.8rem; margin-left:auto; align-self:center; }
 
-.tabs { display:flex; gap:2px; padding:0 32px; background:var(--bg); border-bottom:1px solid var(--border); }
-.tab { padding:12px 18px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-bottom:3px solid transparent; font-weight:600; transition:background-color .15s; }
-.tab[data-view="resumen"] { border-bottom-color:#4fb2a8; }
-.tab[data-view="provincias"] { border-bottom-color:#d68c45; }
-.tab[data-view="programas"] { border-bottom-color:#7c93b0; }
-.tab[data-view="evolucion"] { border-bottom-color:#8e6bc4; }
-.tab[data-view="tabla"] { border-bottom-color:#c9576b; }
-.tab[data-view="datos-extra"] { border-bottom-color:#6fae4f; }
-.tab[data-view="resumen"].active { color:#4fb2a8; background:rgba(79,178,168,0.12); }
-.tab[data-view="provincias"].active { color:#d68c45; background:rgba(214,140,69,0.12); }
-.tab[data-view="programas"].active { color:#7c93b0; background:rgba(124,147,176,0.12); }
-.tab[data-view="evolucion"].active { color:#8e6bc4; background:rgba(142,107,196,0.12); }
-.tab[data-view="tabla"].active { color:#c9576b; background:rgba(201,87,107,0.12); }
-.tab[data-view="datos-extra"].active { color:#6fae4f; background:rgba(111,174,79,0.12); }
+.tab { padding:11px 18px 11px 15px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-left:3px solid transparent; font-weight:500; transition:background-color .15s,color .15s; }
+.tab:hover { color:var(--ink); background:var(--panel-2); }
+.tab[data-view="resumen"].active { border-left-color:#4fb2a8; color:#4fb2a8; background:var(--panel-2); }
+.tab[data-view="provincias"].active { border-left-color:#d68c45; color:#d68c45; background:var(--panel-2); }
+.tab[data-view="programas"].active { border-left-color:#7c93b0; color:#7c93b0; background:var(--panel-2); }
+.tab[data-view="evolucion"].active { border-left-color:#8e6bc4; color:#8e6bc4; background:var(--panel-2); }
+.tab[data-view="tabla"].active { border-left-color:#c9576b; color:#c9576b; background:var(--panel-2); }
+.tab[data-view="datos-extra"].active { border-left-color:#6fae4f; color:#6fae4f; background:var(--panel-2); }
 
-.view { display:none; padding:22px 32px 40px; }
+.view { display:none; padding:22px 28px 40px; }
 .view.active { display:block; }
 
 .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
@@ -127,6 +125,16 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 </header>
 
 <div id="app" style="display:none">
+<div class="app-layout">
+<nav class="sidebar">
+    <div class="tab active" data-view="resumen">Resumen</div>
+    <div class="tab" data-view="provincias">Provincias / Comunas</div>
+    <div class="tab" data-view="programas">Programas</div>
+    <div class="tab" data-view="evolucion">Evolución</div>
+    <div class="tab" data-view="tabla">Tabla dinámica</div>
+    <div class="tab" data-view="datos-extra">📝 Datos adicionales</div>
+</nav>
+<div class="main-content">
   <div class="filters">
     <div class="filter-group"><label>Provincia</label><select id="f-provincia"><option value="">Todas</option></select></div>
     <div class="filter-group"><label>Comuna</label><select id="f-comuna"><option value="">Todas</option></select></div>
@@ -139,14 +147,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="result-count" id="result-count"></div>
   </div>
 
-  <div class="tabs">
-    <div class="tab active" data-view="resumen">Resumen</div>
-    <div class="tab" data-view="provincias">Provincias / Comunas</div>
-    <div class="tab" data-view="programas">Programas</div>
-    <div class="tab" data-view="evolucion">Evolución</div>
-    <div class="tab" data-view="tabla">Tabla dinámica</div>
-    <div class="tab" data-view="datos-extra">📝 Datos adicionales</div>
-  </div>
+
 
   <div class="view active" id="view-resumen">
     <div class="kpis" id="kpis"></div>
@@ -276,6 +277,8 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       </div>
     </div>
   </div>
+  </div>
+</div>
 </div>
 
 <div id="minuta-print-area"></div>
