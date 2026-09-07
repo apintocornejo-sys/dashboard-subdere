@@ -28,6 +28,18 @@ header .sub { color:var(--ink-dim); font-size:0.8rem; }
 .filter-group { display:flex; flex-direction:column; gap:4px; min-width:150px; }
 .filter-group label { font-size:0.7rem; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em; }
 select { background:var(--panel); color:var(--ink); border:1px solid var(--border); border-radius:6px; padding:7px 8px; font-size:0.85rem; }
+
+.multiselect { position:relative; min-width:150px; }
+.multiselect-btn { width:100%; text-align:left; background:var(--panel); color:var(--ink); border:1px solid var(--border); border-radius:6px; padding:7px 8px; font-size:0.85rem; cursor:pointer; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.multiselect-btn:after { content:'▾'; float:right; color:var(--ink-dim); }
+.multiselect-panel { display:none; position:absolute; top:100%; left:0; margin-top:4px; background:var(--panel-2); border:1px solid var(--border); border-radius:8px; min-width:220px; max-height:260px; overflow-y:auto; z-index:30; padding:6px 0; }
+.multiselect-panel.open { display:block; }
+.multiselect-option { display:flex; align-items:center; gap:8px; padding:7px 12px; font-size:0.84rem; cursor:pointer; }
+.multiselect-option:hover { background:var(--panel); }
+.multiselect-option input { margin:0; }
+.multiselect-actions { display:flex; justify-content:space-between; padding:6px 12px 2px; border-top:1px solid var(--border); margin-top:4px; }
+.multiselect-actions button { background:none; border:none; color:var(--ink-dim); font-size:0.75rem; cursor:pointer; padding:2px 4px; }
+.multiselect-actions button:hover { color:var(--ink); }
 .btn { border:none; border-radius:6px; padding:8px 16px; font-size:0.85rem; cursor:pointer; font-weight:600; }
 .btn-primary { background:#4fb2a8; color:#08211d; }
 .btn-ghost { background:transparent; color:var(--ink-dim); border:1px solid var(--border); }
@@ -136,12 +148,42 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 </nav>
 <div class="main-content">
   <div class="filters">
-    <div class="filter-group"><label>Provincia</label><select id="f-provincia"><option value="">Todas</option></select></div>
-    <div class="filter-group"><label>Comuna</label><select id="f-comuna"><option value="">Todas</option></select></div>
-    <div class="filter-group"><label>Programa</label><select id="f-programa"><option value="">Todos</option></select></div>
-    <div class="filter-group"><label>Estado</label><select id="f-estado"><option value="">Todos</option></select></div>
-    <div class="filter-group"><label>Evento</label><select id="f-evento-filtro"><option value="">Todos</option></select></div>
-    <div class="filter-group"><label>Año Aprobación</label><select id="f-anio"><option value="">Todos</option></select></div>
+    <div class="filter-group"><label>Provincia</label>
+      <div class="multiselect" id="f-provincia">
+        <button type="button" class="multiselect-btn" onclick="toggleMultiselect('f-provincia')">Todas</button>
+        <div class="multiselect-panel"></div>
+      </div>
+    </div>
+    <div class="filter-group"><label>Comuna</label>
+      <div class="multiselect" id="f-comuna">
+        <button type="button" class="multiselect-btn" onclick="toggleMultiselect('f-comuna')">Todas</button>
+        <div class="multiselect-panel"></div>
+      </div>
+    </div>
+    <div class="filter-group"><label>Programa</label>
+      <div class="multiselect" id="f-programa">
+        <button type="button" class="multiselect-btn" onclick="toggleMultiselect('f-programa')">Todos</button>
+        <div class="multiselect-panel"></div>
+      </div>
+    </div>
+    <div class="filter-group"><label>Estado</label>
+      <div class="multiselect" id="f-estado">
+        <button type="button" class="multiselect-btn" onclick="toggleMultiselect('f-estado')">Todos</button>
+        <div class="multiselect-panel"></div>
+      </div>
+    </div>
+    <div class="filter-group"><label>Evento</label>
+      <div class="multiselect" id="f-evento-filtro">
+        <button type="button" class="multiselect-btn" onclick="toggleMultiselect('f-evento-filtro')">Todos</button>
+        <div class="multiselect-panel"></div>
+      </div>
+    </div>
+    <div class="filter-group"><label>Año Aprobación</label>
+      <div class="multiselect" id="f-anio">
+        <button type="button" class="multiselect-btn" onclick="toggleMultiselect('f-anio')">Todos</button>
+        <div class="multiselect-panel"></div>
+      </div>
+    </div>
     <button class="btn btn-primary" onclick="applyFilters()">Aplicar</button>
     <button class="btn btn-ghost" onclick="clearFilters()">✕ Limpiar</button>
     <div class="result-count" id="result-count"></div>
@@ -272,6 +314,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         <div class="form-actions">
           <button class="btn btn-primary" onclick="guardarDatosExtra()">Guardar</button>
           <button class="btn btn-ghost" onclick="imprimirMinuta()">🖨️ Imprimir minuta</button>
+          <button class="btn btn-ghost" onclick="limpiarFormularioExtra()">✕ Limpiar</button>
           <span class="save-status" id="save-status"></span>
         </div>
       </div>
@@ -361,65 +404,119 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   document.getElementById('view-' + t.dataset.view).classList.add('active');
 }));
 
-// ---------- Filtros ----------
+// ---------- Filtros (selección múltiple) ----------
 function unique(arr, key) {
   return [...new Set(arr.map(d => d[key]).filter(v => v !== null && v !== undefined && v !== ''))].sort();
 }
 
-function populateSelect(id, values) {
-  const sel = document.getElementById(id);
-  const current = sel.value;
-  sel.innerHTML = '<option value="">' + sel.dataset.allLabel + '</option>' +
-    values.map(v => `<option value="${v}">${v}</option>`).join('');
-  if (values.includes(current)) sel.value = current;
+const FILTER_LABELS = {
+  'f-provincia': 'Todas', 'f-comuna': 'Todas', 'f-programa': 'Todos',
+  'f-estado': 'Todos', 'f-evento-filtro': 'Todos', 'f-anio': 'Todos',
+};
+const multiselectState = {}; // { [id]: Set(valores seleccionados) }
+Object.keys(FILTER_LABELS).forEach(id => multiselectState[id] = new Set());
+
+function populateMultiselect(id, values) {
+  const container = document.getElementById(id);
+  const panel = container.querySelector('.multiselect-panel');
+  const selected = multiselectState[id];
+  // Descarta selecciones que ya no existan en las opciones disponibles (ej: comuna al cambiar provincia)
+  [...selected].forEach(v => { if (!values.includes(v)) selected.delete(v); });
+
+  panel.innerHTML = values.map(v => `
+    <label class="multiselect-option">
+      <input type="checkbox" value="${String(v).replace(/"/g,'&quot;')}" ${selected.has(v) ? 'checked' : ''} onchange="onMultiselectChange('${id}', this)">
+      <span>${v}</span>
+    </label>`).join('') +
+    `<div class="multiselect-actions">
+       <button type="button" onclick="setAllMultiselect('${id}', true)">Todos</button>
+       <button type="button" onclick="setAllMultiselect('${id}', false)">Ninguno</button>
+     </div>`;
+
+  updateMultiselectLabel(id);
 }
 
-document.getElementById('f-provincia').dataset.allLabel = 'Todas';
-document.getElementById('f-comuna').dataset.allLabel = 'Todas';
-document.getElementById('f-programa').dataset.allLabel = 'Todos';
-document.getElementById('f-estado').dataset.allLabel = 'Todos';
-document.getElementById('f-evento-filtro').dataset.allLabel = 'Todos';
-document.getElementById('f-anio').dataset.allLabel = 'Todos';
+function updateMultiselectLabel(id) {
+  const btn = document.querySelector(`#${id} .multiselect-btn`);
+  const selected = multiselectState[id];
+  if (selected.size === 0) btn.textContent = FILTER_LABELS[id];
+  else if (selected.size === 1) btn.textContent = [...selected][0];
+  else btn.textContent = `${selected.size} seleccionados`;
+}
+
+function onMultiselectChange(id, checkbox) {
+  const selected = multiselectState[id];
+  if (checkbox.checked) selected.add(checkbox.value); else selected.delete(checkbox.value);
+  updateMultiselectLabel(id);
+  if (id === 'f-provincia') {
+    multiselectState['f-comuna'].clear();
+    const base = selected.size ? RAW_DATA.filter(d => selected.has(d.provincia)) : RAW_DATA;
+    populateMultiselect('f-comuna', unique(base, 'comuna'));
+  }
+}
+
+function setAllMultiselect(id, checkAll) {
+  const container = document.getElementById(id);
+  const boxes = container.querySelectorAll('.multiselect-panel input[type=checkbox]');
+  const selected = multiselectState[id];
+  boxes.forEach(b => { b.checked = checkAll; if (checkAll) selected.add(b.value); });
+  if (!checkAll) selected.clear();
+  updateMultiselectLabel(id);
+  if (id === 'f-provincia') {
+    multiselectState['f-comuna'].clear();
+    const base = selected.size ? RAW_DATA.filter(d => selected.has(d.provincia)) : RAW_DATA;
+    populateMultiselect('f-comuna', unique(base, 'comuna'));
+  }
+}
+
+function toggleMultiselect(id) {
+  const panel = document.querySelector(`#${id} .multiselect-panel`);
+  const isOpen = panel.classList.contains('open');
+  document.querySelectorAll('.multiselect-panel.open').forEach(p => p.classList.remove('open'));
+  if (!isOpen) panel.classList.add('open');
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.multiselect')) {
+    document.querySelectorAll('.multiselect-panel.open').forEach(p => p.classList.remove('open'));
+  }
+});
 
 function refreshFilterOptions() {
-  const provinciaVal = document.getElementById('f-provincia').value;
-  const base = provinciaVal ? RAW_DATA.filter(d => d.provincia === provinciaVal) : RAW_DATA;
-  populateSelect('f-provincia', unique(RAW_DATA, 'provincia'));
-  populateSelect('f-comuna', unique(base, 'comuna'));
-  populateSelect('f-programa', unique(RAW_DATA, 'programa'));
-  populateSelect('f-estado', unique(RAW_DATA, 'estado'));
-  populateSelect('f-evento-filtro', unique(RAW_DATA, 'evento'));
-  populateSelect('f-anio', unique(RAW_DATA, 'anio_aprobacion'));
+  const provinciaSel = multiselectState['f-provincia'];
+  const base = provinciaSel.size ? RAW_DATA.filter(d => provinciaSel.has(d.provincia)) : RAW_DATA;
+  populateMultiselect('f-provincia', unique(RAW_DATA, 'provincia'));
+  populateMultiselect('f-comuna', unique(base, 'comuna'));
+  populateMultiselect('f-programa', unique(RAW_DATA, 'programa'));
+  populateMultiselect('f-estado', unique(RAW_DATA, 'estado'));
+  populateMultiselect('f-evento-filtro', unique(RAW_DATA, 'evento'));
+  populateMultiselect('f-anio', unique(RAW_DATA, 'anio_aprobacion').map(String));
 }
-
-document.getElementById('f-provincia').addEventListener('change', () => {
-  document.getElementById('f-comuna').value = '';
-  refreshFilterOptions();
-});
 
 function applyFilters() {
   const f = {
-    provincia: document.getElementById('f-provincia').value,
-    comuna: document.getElementById('f-comuna').value,
-    programa: document.getElementById('f-programa').value,
-    estado: document.getElementById('f-estado').value,
-    evento: document.getElementById('f-evento-filtro').value,
-    anio: document.getElementById('f-anio').value,
+    provincia: multiselectState['f-provincia'],
+    comuna: multiselectState['f-comuna'],
+    programa: multiselectState['f-programa'],
+    estado: multiselectState['f-estado'],
+    evento: multiselectState['f-evento-filtro'],
+    anio: multiselectState['f-anio'],
   };
   filtered = RAW_DATA.filter(d =>
-    (!f.provincia || d.provincia === f.provincia) &&
-    (!f.comuna || d.comuna === f.comuna) &&
-    (!f.programa || d.programa === f.programa) &&
-    (!f.estado || d.estado === f.estado) &&
-    (!f.evento || d.evento === f.evento) &&
-    (!f.anio || String(d.anio_aprobacion) === f.anio)
+    (!f.provincia.size || f.provincia.has(d.provincia)) &&
+    (!f.comuna.size || f.comuna.has(d.comuna)) &&
+    (!f.programa.size || f.programa.has(d.programa)) &&
+    (!f.estado.size || f.estado.has(d.estado)) &&
+    (!f.evento.size || f.evento.has(d.evento)) &&
+    (!f.anio.size || f.anio.has(String(d.anio_aprobacion)))
   );
+  document.querySelectorAll('.multiselect-panel.open').forEach(p => p.classList.remove('open'));
   tablaPage = 0;
   renderAll();
 }
 
 function clearFilters() {
-  ['f-provincia','f-comuna','f-programa','f-estado','f-evento-filtro','f-anio'].forEach(id => document.getElementById(id).value = '');
+  Object.keys(multiselectState).forEach(id => multiselectState[id].clear());
   filtered = RAW_DATA;
   refreshFilterOptions();
   tablaPage = 0;
@@ -740,6 +837,19 @@ async function guardarDatosExtra() {
   } catch (err) {
     statusEl.textContent = 'Error al guardar: ' + err.message;
   }
+}
+
+function limpiarFormularioExtra() {
+  proyectoSeleccionado = null;
+  document.getElementById('proyecto-search').value = '';
+  document.getElementById('picker-results').classList.remove('open');
+  document.getElementById('picker-results').innerHTML = '';
+  document.getElementById('extra-form-wrap').style.display = 'none';
+  document.getElementById('selected-project-banner').innerHTML = '';
+  ['f-evento','f-profesional'].forEach(id => document.getElementById(id).value = '');
+  ['f-revisiones','f-fecha-transferencia','f-contacto-nombre','f-contacto-telefono','f-contacto-correo','f-descripcion','f-observaciones']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('save-status').textContent = '';
 }
 
 // ---------- Minuta imprimible ----------
