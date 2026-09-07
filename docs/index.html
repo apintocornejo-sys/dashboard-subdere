@@ -28,8 +28,19 @@ select { background:var(--panel-2); color:var(--ink); border:1px solid var(--bor
 .result-count { color:var(--ink-dim); font-size:0.8rem; margin-left:auto; align-self:center; }
 
 .tabs { display:flex; gap:2px; padding:0 32px; background:var(--bg); border-bottom:1px solid var(--border); }
-.tab { padding:12px 18px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-bottom:2px solid transparent; }
-.tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+.tab { padding:12px 18px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-bottom:3px solid transparent; font-weight:600; transition:background-color .15s; }
+.tab[data-view="resumen"] { border-bottom-color:#4fb2a8; }
+.tab[data-view="provincias"] { border-bottom-color:#d68c45; }
+.tab[data-view="programas"] { border-bottom-color:#7c93b0; }
+.tab[data-view="evolucion"] { border-bottom-color:#8e6bc4; }
+.tab[data-view="tabla"] { border-bottom-color:#c9576b; }
+.tab[data-view="datos-extra"] { border-bottom-color:#6fae4f; }
+.tab[data-view="resumen"].active { color:#4fb2a8; background:rgba(79,178,168,0.12); }
+.tab[data-view="provincias"].active { color:#d68c45; background:rgba(214,140,69,0.12); }
+.tab[data-view="programas"].active { color:#7c93b0; background:rgba(124,147,176,0.12); }
+.tab[data-view="evolucion"].active { color:#8e6bc4; background:rgba(142,107,196,0.12); }
+.tab[data-view="tabla"].active { color:#c9576b; background:rgba(201,87,107,0.12); }
+.tab[data-view="datos-extra"].active { color:#6fae4f; background:rgba(111,174,79,0.12); }
 
 .view { display:none; padding:22px 32px 40px; }
 .view.active { display:block; }
@@ -106,7 +117,10 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 <body>
 
 <header>
-  <h1>SUBDERE en Línea — Dashboard de Proyectos (Región de Coquimbo)</h1>
+  <div style="display:flex; align-items:center; gap:14px;">
+    <img id="header-logo" alt="Logo SUBDERE" style="height:42px; width:auto; flex-shrink:0;">
+    <h1 style="margin:0;">SUBDERE en Línea — Dashboard de Proyectos (Región de Coquimbo)</h1>
+  </div>
   <div class="sub" id="header-sub">Módulo: Presentación de Proyectos · Cargando datos...</div>
 </header>
 
@@ -138,7 +152,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
       <div class="panel"><h2>Tipo de acción (top 10)</h2><canvas id="chartTipoAccion"></canvas></div>
-      <div class="panel wide"><h2>Aporte promedio por estado ($)</h2><canvas id="chartPromedioEstado"></canvas></div>
+      <div class="panel wide"><h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2><canvas id="chartComunaEstadosClave"></canvas></div>
     </div>
   </div>
 
@@ -185,6 +199,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         <th onclick="sortTabla('programa')">Programa</th>
         <th onclick="sortTabla('estado')">Estado</th>
         <th onclick="sortTabla('anio_aprobacion')">Año Aprob.</th>
+        <th onclick="sortTabla('anio_postulacion')">Año Postul.</th>
         <th class="num" onclick="sortTabla('monto_subdere')">Aporte ($)</th>
         <th>Minuta</th>
       </tr></thead>
@@ -416,8 +431,17 @@ function renderResumen() {
   const porTipo = groupBy(filtered,'tipo_accion').sort((a,b)=>b.n-a.n).slice(0,10);
   makeChart('chartTipoAccion','bar', porTipo.map(d=>d.key), [{ data:porTipo.map(d=>d.n), backgroundColor:palette[2], borderRadius:4 }], { indexAxis:'y' });
 
-  const promEstado = porEstado.map(d => ({ key:d.key, prom: d.n ? d.monto/d.n : 0 }));
-  makeChart('chartPromedioEstado','bar', promEstado.map(d=>d.key), [{ data:promEstado.map(d=>d.prom), backgroundColor:palette[3], borderRadius:4 }]);
+  const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
+  const comunasConDatos = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
+  const datasetsEstadosClave = ESTADOS_CLAVE.map((estado, i) => ({
+    label: estado,
+    backgroundColor: palette[i],
+    data: comunasConDatos.map(comuna => filtered.filter(d => d.comuna === comuna && d.estado === estado).length),
+  }));
+  makeChart('chartComunaEstadosClave', 'bar', comunasConDatos, datasetsEstadosClave, {
+    plugins: { legend: { display: true, position: 'bottom' } },
+    scales: { x: { grid: { color: '#1c2530' } }, y: { grid: { color: '#1c2530' }, ticks: { precision: 0 } } },
+  });
 }
 
 function renderProvincias() {
@@ -496,6 +520,7 @@ function renderTabla() {
     <td>${d.programa ?? ''}</td>
     <td>${d.estado ?? ''}</td>
     <td>${d.anio_aprobacion ?? ''}</td>
+    <td>${d.anio_postulacion ?? ''}</td>
     <td class="num">${fmtCLP(d.monto_subdere||0)}</td>
     <td><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.75rem" onclick="imprimirMinutaDesdeTabla('${String(d.id_proyecto).replace(/'/g,"\\'")}')">🖨️ Minuta</button></td>
   </tr>`).join('');
@@ -687,6 +712,7 @@ function construirMinutaHTML(proyecto, extra) {
       ${row('Estado', proyecto.estado)}
       ${row('Año de creación', proyecto.anio_creacion)}
       ${row('Año de aprobación', proyecto.anio_aprobacion)}
+      ${row('Año de postulación', proyecto.anio_postulacion)}
       ${row('Aporte SUBDERE', fmtCLP(proyecto.monto_subdere || 0))}
     </div>
     <div class="minuta-section">
@@ -720,6 +746,9 @@ function imprimirMinutaDesdeTabla(idProyecto) {
   document.getElementById('minuta-print-area').innerHTML = construirMinutaHTML(proyecto, extra);
   window.print();
 }
+
+// Logo institucional en el header (mismo logo que la minuta imprimible)
+document.getElementById('header-logo').src = `data:image/jpeg;base64,${LOGO_BASE64}`;
 </script>
 </body>
 </html>

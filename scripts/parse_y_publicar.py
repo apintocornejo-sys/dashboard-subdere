@@ -55,7 +55,7 @@ COMUNA_A_PROVINCIA = {
 FIELDS_TO_PUBLISH = [
     "id_proyecto", "nombre_proyecto", "comuna", "provincia", "region",
     "programa", "subprograma", "tipo_accion", "estado",
-    "anio_creacion", "anio_aprobacion", "monto_subdere", "dias_en_estado",
+    "anio_creacion", "anio_aprobacion", "anio_postulacion", "monto_subdere", "dias_en_estado",
 ]
 
 
@@ -79,6 +79,11 @@ def parse_file(path: Path) -> pd.DataFrame:
 
     if "anio_creacion" in df:
         df["anio_creacion"] = pd.to_numeric(df["anio_creacion"], errors="coerce")
+        # "Año de Postulación": el Excel de SUBDERE no trae una fecha completa
+        # de postulación, solo el año de creación del proyecto. Se expone
+        # bajo este nombre para las columnas de clasificación tal como se
+        # pidió, dejando claro que es un año, no una fecha completa.
+        df["anio_postulacion"] = df["anio_creacion"]
 
     if "dias_en_estado" in df:
         df["dias_en_estado"] = pd.to_numeric(df["dias_en_estado"], errors="coerce")
