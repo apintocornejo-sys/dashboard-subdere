@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SUBDERE Coquimbo — Dashboard de Proyectos</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script>
 <style>
 :root {
   --bg:#141414; --panel:#1a1a1a; --panel-2:#212121; --border:#2e2e2e;
@@ -58,15 +61,16 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .view.active { display:block; }
 
 .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
-.kpi { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
-.kpi .value { font-size:1.6rem; font-weight:700; color:var(--accent); }
+.kpi { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.25); }
+.kpi .value { font-size:1.7rem; font-weight:700; color:var(--accent); letter-spacing:-0.01em; }
 .kpi .label { color:var(--ink-dim); font-size:0.75rem; text-transform:uppercase; letter-spacing:.05em; margin-top:4px; }
 
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:16px; }
-.panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:box-shadow .15s; }
+.panel:hover { box-shadow:0 2px 8px rgba(0,0,0,0.35); }
 .panel h2 { font-size:0.9rem; margin:0 0 10px; font-weight:600; }
 .panel.wide { grid-column:1/-1; }
-canvas { max-height:320px; }
+canvas { height:300px !important; }
 
 table { width:100%; border-collapse:collapse; font-size:0.82rem; }
 th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
@@ -199,7 +203,16 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
       <div class="panel"><h2>Tipo de acción (top 10)</h2><canvas id="chartTipoAccion"></canvas></div>
       <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento"></canvas></div>
-      <div class="panel wide"><h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2><canvas id="chartComunaEstadosClave"></canvas></div>
+      <div class="panel wide">
+        <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2>
+        <div id="chartComunaEstadosClave" style="height:420px"></div>
+        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:0.78rem;color:var(--ink-dim)">
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4fb2a8;margin-right:5px"></span>Elegible</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#d68c45;margin-right:5px"></span>Observado Programa</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#7c93b0;margin-right:5px"></span>Observado URS</span>
+          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c9576b;margin-right:5px"></span>En Revisión URS</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -350,8 +363,27 @@ const DATOS_EXTRA_URL = `https://www.googleapis.com/drive/v3/files/${DATOS_EXTRA
 let RAW_DATA = [];
 const fmtCLP = n => '$' + Math.round(n).toLocaleString('es-CL');
 const palette = ['#4fb2a8','#d68c45','#7c93b0','#c9576b','#8e6bc4','#6fae4f','#c9a94f','#4f8ec9','#e08fa0','#5fc48a'];
-Chart.defaults.color = '#8fa0b3';
-Chart.defaults.borderColor = '#28323f';
+if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+Chart.defaults.color = '#a3a29b';
+Chart.defaults.borderColor = '#2e2e2e';
+Chart.defaults.font.family = "'Segoe UI', system-ui, -apple-system, sans-serif";
+Chart.defaults.font.size = 11;
+Chart.defaults.plugins.legend.labels.usePointStyle = true;
+Chart.defaults.plugins.legend.labels.boxWidth = 8;
+Chart.defaults.plugins.legend.labels.padding = 14;
+Chart.defaults.plugins.tooltip.backgroundColor = '#242424';
+Chart.defaults.plugins.tooltip.titleColor = '#e8e8e6';
+Chart.defaults.plugins.tooltip.bodyColor = '#c9c8c2';
+Chart.defaults.plugins.tooltip.borderColor = '#3a3a3a';
+Chart.defaults.plugins.tooltip.borderWidth = 1;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 6;
+// Etiquetas numéricas por defecto en todos los gráficos (se puede afinar por gráfico)
+Chart.defaults.set('plugins.datalabels', {
+  color: '#d8d7d1',
+  font: { size: 10, weight: '600' },
+  formatter: (v) => typeof v === 'number' ? v.toLocaleString('es-CL') : v,
+});
 
 let charts = {};
 let filtered = [];
@@ -402,6 +434,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
   document.getElementById('view-' + t.dataset.view).classList.add('active');
+  if (t.dataset.view === 'resumen' && chart3dComunaEstados) setTimeout(() => chart3dComunaEstados.resize(), 50);
 }));
 
 // ---------- Filtros (selección múltiple) ----------
@@ -537,10 +570,31 @@ function groupBy(arr, key) {
 
 function makeChart(id, type, labels, datasets, opts={}) {
   if (charts[id]) charts[id].destroy();
+
+  const isHorizontal = opts.indexAxis === 'y';
+  const datalabelsByType = {
+    bar: { anchor: 'end', align: isHorizontal ? 'right' : 'top', offset: 2 },
+    line: { anchor: 'end', align: 'top', offset: 4 },
+    doughnut: { color: '#12100c', backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 4, padding: {top:2,bottom:2,left:5,right:5}, font: { size: 10, weight: '700' } },
+    radar: { display: false },
+  };
+
   charts[id] = new Chart(document.getElementById(id), {
     type, data: { labels, datasets },
-    options: Object.assign({ plugins:{ legend:{ display:type==='doughnut' } },
-      scales: type==='doughnut' ? {} : { x:{ grid:{ color:'#1c2530' } }, y:{ grid:{ color:'#1c2530' } } } }, opts)
+    options: Object.assign({
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: type === 'doughnut' || type === 'radar' },
+        datalabels: datalabelsByType[type] || {},
+      },
+      scales: type === 'doughnut' ? {} : type === 'radar' ? {
+        r: { grid: { color: '#2e2e2e' }, angleLines: { color: '#2e2e2e' }, pointLabels: { font: { size: 10 } }, ticks: { backdropColor: 'transparent', color: '#6b6a64' } }
+      } : {
+        x: { grid: { color: '#232323' } },
+        y: { grid: { color: '#232323' }, beginAtZero: true },
+      },
+    }, opts, { plugins: Object.assign({}, opts.plugins, { datalabels: Object.assign({}, datalabelsByType[type] || {}, (opts.plugins && opts.plugins.datalabels) || {}) }) }),
   });
 }
 
@@ -560,13 +614,23 @@ function renderKPIs() {
 
 function renderResumen() {
   const porEstado = groupBy(filtered,'estado').sort((a,b)=>b.n-a.n);
-  makeChart('chartEstado','bar', porEstado.map(d=>d.key), [{ data:porEstado.map(d=>d.n), backgroundColor:palette[0], borderRadius:4 }]);
+  const porEstadoTop = porEstado.slice(0, 8);
+  makeChart('chartEstado','radar', porEstadoTop.map(d=>d.key), [{
+    label: 'Proyectos',
+    data: porEstadoTop.map(d=>d.n),
+    borderColor: palette[0],
+    backgroundColor: 'rgba(79,178,168,0.18)',
+    pointBackgroundColor: palette[0],
+    pointRadius: 3,
+  }]);
 
   const porPrograma = groupBy(filtered,'programa').sort((a,b)=>b.n-a.n).slice(0,8);
   makeChart('chartProgramaDonut','doughnut', porPrograma.map(d=>d.key), [{ data:porPrograma.map(d=>d.n), backgroundColor:palette }]);
 
   const porProvincia = groupBy(filtered,'provincia').sort((a,b)=>b.monto-a.monto);
-  makeChart('chartAportePorProvincia','bar', porProvincia.map(d=>d.key), [{ data:porProvincia.map(d=>d.monto), backgroundColor:palette[1], borderRadius:4 }]);
+  makeChart('chartAportePorProvincia','bar', porProvincia.map(d=>d.key), [{ data:porProvincia.map(d=>d.monto), backgroundColor:palette[1], borderRadius:4 }], {
+    plugins: { datalabels: { formatter: (v) => fmtCLP(v) } },
+  });
 
   const porTipo = groupBy(filtered,'tipo_accion').sort((a,b)=>b.n-a.n).slice(0,10);
   makeChart('chartTipoAccion','bar', porTipo.map(d=>d.key), [{ data:porTipo.map(d=>d.n), backgroundColor:palette[2], borderRadius:4 }], { indexAxis:'y' });
@@ -580,15 +644,49 @@ function renderResumen() {
 
   const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
   const comunasConDatos = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
-  const datasetsEstadosClave = ESTADOS_CLAVE.map((estado, i) => ({
-    label: estado,
-    backgroundColor: palette[i],
-    data: comunasConDatos.map(comuna => filtered.filter(d => d.comuna === comuna && d.estado === estado).length),
-  }));
-  makeChart('chartComunaEstadosClave', 'bar', comunasConDatos, datasetsEstadosClave, {
-    plugins: { legend: { display: true, position: 'bottom' } },
-    scales: { x: { grid: { color: '#1c2530' } }, y: { grid: { color: '#1c2530' }, ticks: { precision: 0 } } },
+  renderChartComunaEstados3D(comunasConDatos, ESTADOS_CLAVE);
+}
+
+let chart3dComunaEstados = null;
+function renderChartComunaEstados3D(comunas, estados) {
+  const el = document.getElementById('chartComunaEstadosClave');
+  if (!window.echarts || !el) return;
+  if (!chart3dComunaEstados) chart3dComunaEstados = echarts.init(el);
+
+  const coloresEstado = ['#4fb2a8', '#d68c45', '#7c93b0', '#c9576b'];
+  const data3d = [];
+  let maxValor = 0;
+  comunas.forEach((comuna, ci) => {
+    estados.forEach((estado, ei) => {
+      const valor = filtered.filter(d => d.comuna === comuna && d.estado === estado).length;
+      if (valor > maxValor) maxValor = valor;
+      if (valor > 0) data3d.push({ value: [ci, ei, valor], itemStyle: { color: coloresEstado[ei] } });
+    });
   });
+
+  chart3dComunaEstados.setOption({
+    tooltip: {
+      backgroundColor: '#242424', borderColor: '#3a3a3a', textStyle: { color: '#e8e8e6' },
+      formatter: (p) => `<b>${comunas[p.value[0]]}</b><br>${estados[p.value[1]]}: ${p.value[2]} proyectos`,
+    },
+    visualMap: { show: false, dimension: 2, min: 0, max: Math.max(maxValor, 1) },
+    xAxis3D: { type: 'category', data: comunas, axisLabel: { color: '#93928c', fontSize: 9, rotate: 30 }, axisLine: { lineStyle: { color: '#3a3a3a' } } },
+    yAxis3D: { type: 'category', data: estados, axisLabel: { color: '#93928c', fontSize: 10 }, axisLine: { lineStyle: { color: '#3a3a3a' } } },
+    zAxis3D: { type: 'value', name: 'Proyectos', axisLabel: { color: '#93928c' }, axisLine: { lineStyle: { color: '#3a3a3a' } }, splitLine: { lineStyle: { color: '#2a2a2a' } } },
+    grid3D: {
+      boxWidth: 100, boxDepth: 55, boxHeight: 55,
+      viewControl: { autoRotate: false, distance: 165, alpha: 22, beta: 30 },
+      light: { main: { intensity: 1.1, shadow: false }, ambient: { intensity: 0.5 } },
+      environment: 'transparent',
+    },
+    series: [{
+      type: 'bar3D', data: data3d, shading: 'lambert',
+      label: { show: true, formatter: (p) => p.value[2].toLocaleString('es-CL'), textStyle: { color: '#e8e8e6', fontSize: 10, fontWeight: '600' } },
+      itemStyle: { opacity: 0.95 },
+      emphasis: { itemStyle: { color: '#f0efe9' } },
+    }],
+  });
+  chart3dComunaEstados.resize();
 }
 
 function renderProvincias() {
