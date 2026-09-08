@@ -194,6 +194,9 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
 
   <div class="view active" id="view-resumen">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn btn-primary" onclick="descargarInformeResumenPDF()">📄 Descargar informe PDF</button>
+    </div>
     <div class="kpis" id="kpis"></div>
     <div class="grid">
       <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
@@ -994,6 +997,79 @@ function imprimirMinutaDesdeTabla(idProyecto) {
 document.getElementById('header-logo').src = `data:image/jpeg;base64,${LOGO_BASE64}`;
 
 // ---------- Descargar resumen en PDF ----------
+function descargarInformeResumenPDF() {
+  const { jsPDF } = window.jspdf;
+  const logoImg = new Image();
+  logoImg.onload = () => generarInformeResumenConLogo(jsPDF, logoImg.naturalWidth, logoImg.naturalHeight);
+  logoImg.onerror = () => generarInformeResumenConLogo(jsPDF, null, null);
+  logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
+}
+
+function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
+  const chart = charts[chartId];
+  doc.setFontSize(9);
+  doc.setTextColor(70, 70, 70);
+  doc.text(titulo, x, y);
+  if (!chart) {
+    doc.setDrawColor(200); doc.rect(x, y + 2, maxW, maxH);
+    doc.setFontSize(8); doc.text('(sin datos)', x + 2, y + maxH / 2);
+    return;
+  }
+  const data = chart.toBase64Image('image/png', 1.0);
+  const pxW = chart.canvas.width, pxH = chart.canvas.height;
+  let w = maxW, h = (pxH / pxW) * w;
+  if (h > maxH) { h = maxH; w = (pxW / pxH) * h; }
+  const offsetX = x + (maxW - w) / 2;
+  doc.addImage(data, 'PNG', offsetX, y + 2, w, h);
+}
+
+function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const marginX = 12;
+  let textoX = marginX;
+
+  if (logoW && logoH) {
+    const alturaLogo = 13;
+    const anchoLogo = alturaLogo * (logoW / logoH);
+    doc.addImage(`data:image/jpeg;base64,${LOGO_BASE64}`, 'JPEG', marginX, 9, anchoLogo, alturaLogo);
+    textoX = marginX + anchoLogo + 6;
+  }
+
+  doc.setFontSize(15);
+  doc.setTextColor(35, 49, 108);
+  doc.text('SUBDERE en Línea — Informe de Resumen (Región de Coquimbo)', textoX, 15);
+  doc.setFontSize(9);
+  doc.setTextColor(90, 90, 90);
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')} · ${filtered.length.toLocaleString('es-CL')} proyectos en la vista actual`, textoX, 21);
+
+  const montoTotal = filtered.reduce((s, d) => s + (d.monto_subdere || 0), 0);
+  doc.setFontSize(10);
+  doc.setTextColor(20, 20, 20);
+  doc.text(
+    `Total proyectos: ${filtered.length.toLocaleString('es-CL')}    |    Aporte SUBDERE total: ${fmtCLP(montoTotal)}    |    Comunas: ${unique(filtered,'comuna').length}`,
+    marginX, 30
+  );
+  doc.setDrawColor(225); doc.line(marginX, 33, 215.9 - marginX, 33);
+
+  const colW = (215.9 - marginX * 2 - 8) / 2; // 2 columnas con separación de 8mm
+  const rowH = 58;
+  const col1X = marginX, col2X = marginX + colW + 8;
+  let y = 40;
+
+  agregarImagenChart(doc, 'chartEstado', col1X, y, colW, rowH, 'Distribución por estado');
+  agregarImagenChart(doc, 'chartProgramaDonut', col2X, y, colW, rowH, 'Distribución por programa');
+  y += rowH + 9;
+
+  agregarImagenChart(doc, 'chartAportePorProvincia', col1X, y, colW, rowH, 'Aporte SUBDERE por provincia');
+  agregarImagenChart(doc, 'chartTipoAccion', col2X, y, colW, rowH, 'Tipo de acción (top 10)');
+  y += rowH + 9;
+
+  agregarImagenChart(doc, 'chartEvento', col1X, y, colW, rowH, 'Distribución por evento');
+  agregarImagenChart(doc, 'chartComunaEstadosClave', col2X, y, colW, rowH, 'Resumen por comuna (estados clave)');
+
+  doc.save(`informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
 function descargarResumenPDF() {
   const { jsPDF } = window.jspdf;
 
