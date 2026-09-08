@@ -997,6 +997,19 @@ function imprimirMinutaDesdeTabla(idProyecto) {
 document.getElementById('header-logo').src = `data:image/jpeg;base64,${LOGO_BASE64}`;
 
 // ---------- Descargar resumen en PDF ----------
+function resumenFiltrosActivos() {
+  const labels = {
+    'f-provincia': 'Provincia', 'f-comuna': 'Comuna', 'f-programa': 'Programa',
+    'f-estado': 'Estado', 'f-evento-filtro': 'Evento', 'f-anio': 'Año Aprobación',
+  };
+  const partes = Object.keys(labels).map(id => {
+    const sel = multiselectState[id];
+    if (!sel || sel.size === 0) return null;
+    return `${labels[id]}: ${[...sel].join(', ')}`;
+  }).filter(Boolean);
+  return partes.length ? partes.join('   |   ') : 'Sin filtros aplicados (todos los proyectos)';
+}
+
 function descargarInformeResumenPDF() {
   const { jsPDF } = window.jspdf;
   const logoImg = new Image();
@@ -1026,35 +1039,58 @@ function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
 function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
   const marginX = 12;
+  const pageW = 215.9;
   let textoX = marginX;
 
   if (logoW && logoH) {
-    const alturaLogo = 13;
+    const alturaLogo = 15;
     const anchoLogo = alturaLogo * (logoW / logoH);
-    doc.addImage(`data:image/jpeg;base64,${LOGO_BASE64}`, 'JPEG', marginX, 9, anchoLogo, alturaLogo);
+    doc.addImage(`data:image/jpeg;base64,${LOGO_BASE64}`, 'JPEG', marginX, 8, anchoLogo, alturaLogo);
     textoX = marginX + anchoLogo + 6;
   }
 
-  doc.setFontSize(15);
-  doc.setTextColor(35, 49, 108);
-  doc.text('SUBDERE en Línea — Informe de Resumen (Región de Coquimbo)', textoX, 15);
-  doc.setFontSize(9);
-  doc.setTextColor(90, 90, 90);
-  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')} · ${filtered.length.toLocaleString('es-CL')} proyectos en la vista actual`, textoX, 21);
+  const maxTitleWidth = pageW - marginX - textoX;
 
+  // Título en dos líneas (más robusto que una sola línea larga: nunca se corta)
+  doc.setFont(undefined, 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(35, 49, 108);
+  doc.text('SUBDERE en Línea', textoX, 13);
+  doc.setFontSize(10.5);
+  doc.setTextColor(70, 80, 120);
+  doc.text('Informe de Resumen — Región de Coquimbo', textoX, 19, { maxWidth: maxTitleWidth });
+  doc.setFont(undefined, 'normal');
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, textoX, 24.5);
+
+  let y = 32;
+  doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
+  y += 5;
+
+  // Filtros activos
+  doc.setFontSize(8.5);
+  doc.setTextColor(90, 90, 90);
+  const filtrosTexto = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, pageW - marginX * 2);
+  doc.text(filtrosTexto, marginX, y);
+  y += filtrosTexto.length * 4 + 3;
+
+  // KPIs
   const montoTotal = filtered.reduce((s, d) => s + (d.monto_subdere || 0), 0);
   doc.setFontSize(10);
   doc.setTextColor(20, 20, 20);
   doc.text(
     `Total proyectos: ${filtered.length.toLocaleString('es-CL')}    |    Aporte SUBDERE total: ${fmtCLP(montoTotal)}    |    Comunas: ${unique(filtered,'comuna').length}`,
-    marginX, 30
+    marginX, y
   );
-  doc.setDrawColor(225); doc.line(marginX, 33, 215.9 - marginX, 33);
+  y += 3;
+  doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
+  y += 7;
 
-  const colW = (215.9 - marginX * 2 - 8) / 2; // 2 columnas con separación de 8mm
-  const rowH = 58;
+  const colW = (pageW - marginX * 2 - 8) / 2; // 2 columnas con separación de 8mm
+  const rowH = 55;
   const col1X = marginX, col2X = marginX + colW + 8;
-  let y = 40;
 
   agregarImagenChart(doc, 'chartEstado', col1X, y, colW, rowH, 'Distribución por estado');
   agregarImagenChart(doc, 'chartProgramaDonut', col2X, y, colW, rowH, 'Distribución por programa');
@@ -1090,27 +1126,43 @@ function descargarResumenPDF() {
 
 function generarPDFConLogo(jsPDF, filasDatos, logoW, logoH) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const pageW = 279.4;
+  const marginX = 12;
 
-  let textoX = 14;
+  let textoX = marginX;
   if (logoW && logoH) {
     // Mantiene la proporción real del logo, con una altura fija razonable
-    const alturaLogo = 13;
+    const alturaLogo = 14;
     const anchoLogo = alturaLogo * (logoW / logoH);
-    doc.addImage(`data:image/jpeg;base64,${LOGO_BASE64}`, 'JPEG', 12, 9, anchoLogo, alturaLogo);
-    textoX = 12 + anchoLogo + 6;
+    doc.addImage(`data:image/jpeg;base64,${LOGO_BASE64}`, 'JPEG', marginX, 8, anchoLogo, alturaLogo);
+    textoX = marginX + anchoLogo + 6;
   }
 
-  doc.setFontSize(15);
+  doc.setFont(undefined, 'bold');
+  doc.setFontSize(13);
   doc.setTextColor(35, 49, 108);
-  doc.text('SUBDERE en Línea — Resumen de Proyectos (Región de Coquimbo)', textoX, 15);
-  doc.setFontSize(9);
+  doc.text('SUBDERE en Línea', textoX, 13);
+  doc.setFontSize(10.5);
+  doc.setTextColor(70, 80, 120);
+  doc.text('Resumen de Proyectos — Región de Coquimbo', textoX, 19);
+  doc.setFont(undefined, 'normal');
+
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')} · ${filasDatos.length.toLocaleString('es-CL')} proyectos en este listado`, textoX, 24.5);
+
+  let y = 30;
+  doc.setFontSize(8.5);
   doc.setTextColor(90, 90, 90);
-  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')} · ${filasDatos.length.toLocaleString('es-CL')} proyectos en este listado`, textoX, 21);
+  const filtrosTexto = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, pageW - marginX * 2);
+  doc.text(filtrosTexto, marginX, y);
+  y += filtrosTexto.length * 4 + 3;
 
   const montoTotal = filasDatos.reduce((s, d) => s + (d.monto_subdere || 0), 0);
   doc.setFontSize(10);
   doc.setTextColor(20, 20, 20);
-  doc.text(`Total proyectos: ${filasDatos.length.toLocaleString('es-CL')}    |    Aporte SUBDERE total: ${fmtCLP(montoTotal)}    |    Comunas: ${new Set(filasDatos.map(d => d.comuna)).size}`, 12, 30);
+  doc.text(`Total proyectos: ${filasDatos.length.toLocaleString('es-CL')}    |    Aporte SUBDERE total: ${fmtCLP(montoTotal)}    |    Comunas: ${new Set(filasDatos.map(d => d.comuna)).size}`, marginX, y);
+  y += 4;
 
   const filas = filasDatos.map(d => [
     d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '',
@@ -1118,7 +1170,7 @@ function generarPDFConLogo(jsPDF, filasDatos, logoW, logoH) {
   ]);
 
   doc.autoTable({
-    startY: 36,
+    startY: y + 3,
     head: [['ID', 'Proyecto', 'Comuna', 'Programa', 'Estado', 'Días en Estado', 'Evento', 'Año Aprob.', 'Aporte ($)']],
     body: filas,
     styles: { fontSize: 7, cellPadding: 1.5 },
