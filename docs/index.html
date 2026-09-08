@@ -9,8 +9,6 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts-gl/dist/echarts-gl.min.js"></script>
 <style>
 :root {
   --bg:#141414; --panel:#1a1a1a; --panel-2:#212121; --border:#2e2e2e;
@@ -198,20 +196,14 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   <div class="view active" id="view-resumen">
     <div class="kpis" id="kpis"></div>
     <div class="grid">
-      <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado"></canvas></div>
+      <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
-      <div class="panel"><h2>Tipo de acción (top 10)</h2><canvas id="chartTipoAccion"></canvas></div>
-      <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento"></canvas></div>
+      <div class="panel"><h2>Tipo de acción (top 10)</h2><canvas id="chartTipoAccion" style="height:340px !important"></canvas></div>
+      <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento" style="height:340px !important"></canvas></div>
       <div class="panel wide">
         <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2>
-        <div id="chartComunaEstadosClave" style="height:420px"></div>
-        <div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;font-size:0.78rem;color:var(--ink-dim)">
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#4fb2a8;margin-right:5px"></span>Elegible</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#d68c45;margin-right:5px"></span>Observado Programa</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#7c93b0;margin-right:5px"></span>Observado URS</span>
-          <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#c9576b;margin-right:5px"></span>En Revisión URS</span>
-        </div>
+        <canvas id="chartComunaEstadosClave" style="height:420px !important"></canvas>
       </div>
     </div>
   </div>
@@ -362,7 +354,7 @@ const DATOS_EXTRA_URL = `https://www.googleapis.com/drive/v3/files/${DATOS_EXTRA
 
 let RAW_DATA = [];
 const fmtCLP = n => '$' + Math.round(n).toLocaleString('es-CL');
-const palette = ['#4fb2a8','#d68c45','#7c93b0','#c9576b','#8e6bc4','#6fae4f','#c9a94f','#4f8ec9','#e08fa0','#5fc48a'];
+const palette = ['#4fb2a8','#5b8dd9','#d68c45','#8e6bc4','#6fae4f','#c9576b'];
 if (window.ChartDataLabels) Chart.register(ChartDataLabels);
 Chart.defaults.color = '#a3a29b';
 Chart.defaults.borderColor = '#2e2e2e';
@@ -434,7 +426,6 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
   t.classList.add('active');
   document.getElementById('view-' + t.dataset.view).classList.add('active');
-  if (t.dataset.view === 'resumen' && chart3dComunaEstados) setTimeout(() => chart3dComunaEstados.resize(), 50);
 }));
 
 // ---------- Filtros (selección múltiple) ----------
@@ -576,25 +567,27 @@ function makeChart(id, type, labels, datasets, opts={}) {
     bar: { anchor: 'end', align: isHorizontal ? 'right' : 'top', offset: 2 },
     line: { anchor: 'end', align: 'top', offset: 4 },
     doughnut: { color: '#12100c', backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 4, padding: {top:2,bottom:2,left:5,right:5}, font: { size: 10, weight: '700' } },
-    radar: { display: false },
   };
+  const defaultLegendOn = type === 'doughnut' || datasets.length > 1;
+  const baseScales = type === 'doughnut' ? {} : {
+    x: { grid: { color: '#232323' } },
+    y: { grid: { color: '#232323' }, beginAtZero: true },
+  };
+  const userPlugins = opts.plugins || {};
 
   charts[id] = new Chart(document.getElementById(id), {
     type, data: { labels, datasets },
     options: Object.assign({
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: { display: type === 'doughnut' || type === 'radar' },
-        datalabels: datalabelsByType[type] || {},
-      },
-      scales: type === 'doughnut' ? {} : type === 'radar' ? {
-        r: { grid: { color: '#2e2e2e' }, angleLines: { color: '#2e2e2e' }, pointLabels: { font: { size: 10 } }, ticks: { backdropColor: 'transparent', color: '#6b6a64' } }
-      } : {
-        x: { grid: { color: '#232323' } },
-        y: { grid: { color: '#232323' }, beginAtZero: true },
-      },
-    }, opts, { plugins: Object.assign({}, opts.plugins, { datalabels: Object.assign({}, datalabelsByType[type] || {}, (opts.plugins && opts.plugins.datalabels) || {}) }) }),
+      scales: baseScales,
+    }, opts, {
+      plugins: Object.assign(
+        { legend: { display: defaultLegendOn, position: 'bottom' } },
+        userPlugins,
+        { datalabels: Object.assign({}, datalabelsByType[type] || {}, userPlugins.datalabels || {}) }
+      ),
+    }),
   });
 }
 
@@ -613,80 +606,67 @@ function renderKPIs() {
 }
 
 function renderResumen() {
-  const porEstado = groupBy(filtered,'estado').sort((a,b)=>b.n-a.n);
-  const porEstadoTop = porEstado.slice(0, 8);
-  makeChart('chartEstado','radar', porEstadoTop.map(d=>d.key), [{
-    label: 'Proyectos',
-    data: porEstadoTop.map(d=>d.n),
-    borderColor: palette[0],
-    backgroundColor: 'rgba(79,178,168,0.18)',
-    pointBackgroundColor: palette[0],
-    pointRadius: 3,
-  }]);
+  // Distribución por estado: barra horizontal — la mejor opción cuando hay
+  // muchas categorías con nombres largos (evita rotar/truncar etiquetas y
+  // permite comparar magnitudes con precisión, sin la distorsión de un radar).
+  const porEstado = groupBy(filtered,'estado').sort((a,b)=>b.n-a.n).slice(0,12);
+  makeChart('chartEstado','bar', porEstado.map(d=>d.key), [{
+    data: porEstado.map(d=>d.n), backgroundColor: palette[0], borderRadius:4,
+  }], { indexAxis:'y' });
 
+  // Distribución por programa: dona — pocas categorías (top 8), útil para
+  // comunicar "parte de un todo" de un vistazo.
   const porPrograma = groupBy(filtered,'programa').sort((a,b)=>b.n-a.n).slice(0,8);
-  makeChart('chartProgramaDonut','doughnut', porPrograma.map(d=>d.key), [{ data:porPrograma.map(d=>d.n), backgroundColor:palette }]);
+  makeChart('chartProgramaDonut','doughnut', porPrograma.map(d=>d.key), [{ data:porPrograma.map(d=>d.n), backgroundColor:palette.concat(['#c9a94f','#4f8ec9']) }]);
 
+  // Aporte por provincia: solo 3 categorías — barra vertical simple y clara.
   const porProvincia = groupBy(filtered,'provincia').sort((a,b)=>b.monto-a.monto);
-  makeChart('chartAportePorProvincia','bar', porProvincia.map(d=>d.key), [{ data:porProvincia.map(d=>d.monto), backgroundColor:palette[1], borderRadius:4 }], {
+  makeChart('chartAportePorProvincia','bar', porProvincia.map(d=>d.key), [{ data:porProvincia.map(d=>d.monto), backgroundColor:palette[2], borderRadius:4 }], {
     plugins: { datalabels: { formatter: (v) => fmtCLP(v) } },
   });
 
+  // Tipo de acción: barra horizontal (10 categorías, nombres largos).
   const porTipo = groupBy(filtered,'tipo_accion').sort((a,b)=>b.n-a.n).slice(0,10);
-  makeChart('chartTipoAccion','bar', porTipo.map(d=>d.key), [{ data:porTipo.map(d=>d.n), backgroundColor:palette[2], borderRadius:4 }], { indexAxis:'y' });
+  makeChart('chartTipoAccion','bar', porTipo.map(d=>d.key), [{ data:porTipo.map(d=>d.n), backgroundColor:palette[1], borderRadius:4 }], { indexAxis:'y' });
 
+  // Distribución por evento: barra horizontal (hasta 14 opciones posibles,
+  // demasiadas para una dona legible).
   const porEvento = groupBy(filtered.filter(d => d.evento && d.evento.trim() !== ''), 'evento').sort((a,b)=>b.n-a.n);
   if (porEvento.length > 0) {
-    makeChart('chartEvento','doughnut', porEvento.map(d=>d.key), [{ data:porEvento.map(d=>d.n), backgroundColor:palette }]);
-  } else {
-    if (charts['chartEvento']) charts['chartEvento'].destroy();
+    makeChart('chartEvento','bar', porEvento.map(d=>d.key), [{ data:porEvento.map(d=>d.n), backgroundColor:palette[4], borderRadius:4 }], { indexAxis:'y' });
+  } else if (charts['chartEvento']) {
+    charts['chartEvento'].destroy();
   }
 
+  // Resumen por comuna x estado: barra horizontal APILADA. Es la forma más
+  // clara de comparar 4 categorías a la vez a través de muchas comunas: cada
+  // fila es una comuna, el largo total y cada segmento se leen con precisión,
+  // sin la ambigüedad visual de una vista 3D en perspectiva.
   const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
+  const coloresEstadosClave = [palette[0], palette[2], palette[1], palette[5]];
   const comunasConDatos = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
-  renderChartComunaEstados3D(comunasConDatos, ESTADOS_CLAVE);
-}
+  const totalesPorComuna = comunasConDatos.map(c => ({
+    comuna: c,
+    total: ESTADOS_CLAVE.reduce((s,e) => s + filtered.filter(d => d.comuna===c && d.estado===e).length, 0),
+  })).sort((a,b) => b.total - a.total);
+  const comunasOrdenadas = totalesPorComuna.map(d => d.comuna);
 
-let chart3dComunaEstados = null;
-function renderChartComunaEstados3D(comunas, estados) {
-  const el = document.getElementById('chartComunaEstadosClave');
-  if (!window.echarts || !el) return;
-  if (!chart3dComunaEstados) chart3dComunaEstados = echarts.init(el);
-
-  const coloresEstado = ['#4fb2a8', '#d68c45', '#7c93b0', '#c9576b'];
-  const data3d = [];
-  let maxValor = 0;
-  comunas.forEach((comuna, ci) => {
-    estados.forEach((estado, ei) => {
-      const valor = filtered.filter(d => d.comuna === comuna && d.estado === estado).length;
-      if (valor > maxValor) maxValor = valor;
-      if (valor > 0) data3d.push({ value: [ci, ei, valor], itemStyle: { color: coloresEstado[ei] } });
-    });
-  });
-
-  chart3dComunaEstados.setOption({
-    tooltip: {
-      backgroundColor: '#242424', borderColor: '#3a3a3a', textStyle: { color: '#e8e8e6' },
-      formatter: (p) => `<b>${comunas[p.value[0]]}</b><br>${estados[p.value[1]]}: ${p.value[2]} proyectos`,
+  const datasetsEstadosClave = ESTADOS_CLAVE.map((estado, i) => ({
+    label: estado,
+    backgroundColor: coloresEstadosClave[i],
+    data: comunasOrdenadas.map(comuna => filtered.filter(d => d.comuna === comuna && d.estado === estado).length),
+  }));
+  makeChart('chartComunaEstadosClave', 'bar', comunasOrdenadas, datasetsEstadosClave, {
+    indexAxis: 'y',
+    scales: {
+      x: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
+      y: { stacked: true, grid: { display: false } },
     },
-    visualMap: { show: false, dimension: 2, min: 0, max: Math.max(maxValor, 1) },
-    xAxis3D: { type: 'category', data: comunas, axisLabel: { color: '#93928c', fontSize: 9, rotate: 30 }, axisLine: { lineStyle: { color: '#3a3a3a' } } },
-    yAxis3D: { type: 'category', data: estados, axisLabel: { color: '#93928c', fontSize: 10 }, axisLine: { lineStyle: { color: '#3a3a3a' } } },
-    zAxis3D: { type: 'value', name: 'Proyectos', axisLabel: { color: '#93928c' }, axisLine: { lineStyle: { color: '#3a3a3a' } }, splitLine: { lineStyle: { color: '#2a2a2a' } } },
-    grid3D: {
-      boxWidth: 100, boxDepth: 55, boxHeight: 55,
-      viewControl: { autoRotate: false, distance: 165, alpha: 22, beta: 30 },
-      light: { main: { intensity: 1.1, shadow: false }, ambient: { intensity: 0.5 } },
-      environment: 'transparent',
+    plugins: {
+      legend: { display: true, position: 'bottom' },
+      datalabels: { anchor: 'center', align: 'center', color: '#12100c', font: { size: 9, weight: '700' }, formatter: (v) => v > 0 ? v : '' },
     },
-    series: [{
-      type: 'bar3D', data: data3d, shading: 'lambert',
-      label: { show: true, formatter: (p) => p.value[2].toLocaleString('es-CL'), textStyle: { color: '#e8e8e6', fontSize: 10, fontWeight: '600' } },
-      itemStyle: { opacity: 0.95 },
-      emphasis: { itemStyle: { color: '#f0efe9' } },
-    }],
   });
-  chart3dComunaEstados.resize();
 }
 
 function renderProvincias() {
