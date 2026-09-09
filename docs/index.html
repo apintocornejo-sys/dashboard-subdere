@@ -126,6 +126,51 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   #minuta-print-area { display:block; position:absolute; top:0; left:0; width:100%; color:#111; background:#fff; }
   @page { size: letter; margin: 0.75in; }
 }
+
+/* ---------- Responsivo (celular / pantallas angostas) ---------- */
+@media (max-width: 768px) {
+  header { padding:14px 16px 10px; }
+  header h1 { font-size:1.02rem; line-height:1.3; }
+  header .sub { font-size:0.72rem; }
+  #header-logo { height:32px !important; }
+
+  .app-layout { flex-direction:column; min-height:0; }
+  .sidebar {
+    width:100%; display:flex; flex-direction:row; overflow-x:auto;
+    padding:0; border-right:none; border-bottom:1px solid var(--border);
+    -webkit-overflow-scrolling:touch;
+  }
+  .tab {
+    flex-shrink:0; white-space:nowrap; border-left:none;
+    border-bottom:3px solid transparent; padding:11px 14px; font-size:0.78rem;
+  }
+  .tab[data-view="resumen"].active { border-left-color:transparent; border-bottom-color:#4fb2a8; }
+  .tab[data-view="provincias"].active { border-left-color:transparent; border-bottom-color:#d68c45; }
+  .tab[data-view="programas"].active { border-left-color:transparent; border-bottom-color:#7c93b0; }
+  .tab[data-view="evolucion"].active { border-left-color:transparent; border-bottom-color:#8e6bc4; }
+  .tab[data-view="tabla"].active { border-left-color:transparent; border-bottom-color:#c9576b; }
+  .tab[data-view="datos-extra"].active { border-left-color:transparent; border-bottom-color:#6fae4f; }
+
+  .filters { padding:12px 14px; gap:8px; }
+  .filter-group, .multiselect { min-width:0; width:100%; }
+  .filters > .btn, .filters > .result-count { width:100%; }
+  .result-count { margin-left:0; text-align:center; }
+
+  .view { padding:16px 14px 30px; }
+  .kpis { grid-template-columns:repeat(2, 1fr); gap:10px; }
+  .kpi { padding:12px 14px; }
+  .kpi .value { font-size:1.3rem; }
+  .grid { grid-template-columns:1fr; gap:12px; }
+  .panel { padding:12px 14px; }
+  canvas { height:260px !important; }
+
+  .table-controls { flex-direction:column; align-items:stretch; }
+  .table-controls input[type=text] { width:100%; }
+  #view-tabla table { display:block; overflow-x:auto; white-space:nowrap; }
+
+  .form-grid { grid-template-columns:1fr; }
+  .minuta-row .k { width:130px; }
+}
 </style>
 </head>
 <body>
@@ -222,8 +267,8 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
   <div class="view" id="view-programas">
     <div class="grid">
-      <div class="panel"><h2>Aporte por programa (%)</h2><canvas id="chartProgramaPct"></canvas></div>
-      <div class="panel">
+      <div class="panel wide"><h2>Aporte por programa (%)</h2><canvas id="chartProgramaPct" style="height:360px !important"></canvas></div>
+      <div class="panel wide">
         <h2>Aporte por programa</h2>
         <table id="tbl-programa"><thead><tr><th>Programa</th><th class="num">N° Proyectos</th><th class="num">Aporte Total ($)</th><th class="num">%</th></tr></thead><tbody></tbody></table>
       </div>
@@ -596,14 +641,14 @@ function makeChart(id, type, labels, datasets, opts={}) {
 
 function renderKPIs() {
   const total = filtered.length;
-  const monto = filtered.reduce((s,d) => s + (d.monto_subdere||0), 0);
-  const comunas = unique(filtered, 'comuna').length;
-  const promedio = total ? monto/total : 0;
+  const enRevisionURS = filtered.filter(d => d.estado === 'En Revisión URS').length;
+  const enEvaluacionTecnica = filtered.filter(d => d.estado === 'En Evaluación Técnica').length;
+  const elegibles = filtered.filter(d => d.estado === 'Elegible').length;
   document.getElementById('kpis').innerHTML = `
     <div class="kpi"><div class="value">${total.toLocaleString('es-CL')}</div><div class="label">Proyectos</div></div>
-    <div class="kpi"><div class="value">${fmtCLP(monto)}</div><div class="label">Aporte SUBDERE total</div></div>
-    <div class="kpi"><div class="value">${fmtCLP(promedio)}</div><div class="label">Aporte promedio / proyecto</div></div>
-    <div class="kpi"><div class="value">${comunas}</div><div class="label">Comunas con proyectos</div></div>
+    <div class="kpi"><div class="value">${enRevisionURS.toLocaleString('es-CL')}</div><div class="label">En Revisión URS</div></div>
+    <div class="kpi"><div class="value">${enEvaluacionTecnica.toLocaleString('es-CL')}</div><div class="label">En Evaluación Técnica</div></div>
+    <div class="kpi"><div class="value">${elegibles.toLocaleString('es-CL')}</div><div class="label">Elegibles</div></div>
   `;
   document.getElementById('result-count').textContent = `${total.toLocaleString('es-CL')} proyectos filtrados de ${RAW_DATA.length.toLocaleString('es-CL')}`;
 }
@@ -694,7 +739,12 @@ function renderProvincias() {
 function renderProgramas() {
   const totalMonto = filtered.reduce((s,d)=>s+(d.monto_subdere||0),0) || 1;
   const rows = groupBy(filtered,'programa').sort((a,b)=>b.monto-a.monto);
-  makeChart('chartProgramaPct','doughnut', rows.map(r=>r.key), [{ data: rows.map(r=>r.monto), backgroundColor:palette }]);
+  makeChart('chartProgramaPct','bar', rows.map(r=>r.key), [{
+    data: rows.map(r=>r.monto), backgroundColor: palette[0], borderRadius: 4,
+  }], {
+    indexAxis: 'y',
+    plugins: { datalabels: { formatter: (v) => `${(100*v/totalMonto).toFixed(1)}%` } },
+  });
   document.querySelector('#tbl-programa tbody').innerHTML = rows.map(r => `<tr>
     <td>${r.key}</td>
     <td class="num">${r.n.toLocaleString('es-CL')}</td>
@@ -1018,6 +1068,36 @@ function descargarInformeResumenPDF() {
   logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
 }
 
+function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
+  doc.setFontSize(9);
+  doc.setTextColor(70, 70, 70);
+  doc.text(titulo, x, y);
+
+  const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
+  const comunas = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
+  const filas = comunas.map(c => {
+    const counts = ESTADOS_CLAVE.map(e => filtered.filter(d => d.comuna === c && d.estado === e).length);
+    return [c, ...counts.map(n => n || '—')];
+  });
+
+  if (filas.length === 0) {
+    doc.setFontSize(8);
+    doc.text('(sin datos para estos estados en la vista actual)', x, y + 6);
+    return;
+  }
+
+  doc.autoTable({
+    startY: y + 2,
+    margin: { left: x },
+    tableWidth: maxW,
+    head: [['Comuna', 'Elegible', 'Obs. Prog.', 'Obs. URS', 'En Rev. URS']],
+    body: filas,
+    styles: { fontSize: 6.3, cellPadding: 1.1, halign: 'center' },
+    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+    headStyles: { fillColor: [35, 49, 108], fontSize: 6.3 },
+  });
+}
+
 function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
   const chart = charts[chartId];
   doc.setFontSize(9);
@@ -1101,7 +1181,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   y += rowH + 9;
 
   agregarImagenChart(doc, 'chartEvento', col1X, y, colW, rowH, 'Distribución por evento');
-  agregarImagenChart(doc, 'chartComunaEstadosClave', col2X, y, colW, rowH, 'Resumen por comuna (estados clave)');
+  agregarResumenComunaTabla(doc, col2X, y, colW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS');
 
   doc.save(`informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.pdf`);
 }
