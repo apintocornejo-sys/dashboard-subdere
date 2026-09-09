@@ -67,7 +67,16 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:16px 18px; box-shadow:0 1px 3px rgba(0,0,0,0.25); transition:box-shadow .15s; }
 .panel:hover { box-shadow:0 2px 8px rgba(0,0,0,0.35); }
 .panel h2 { font-size:0.9rem; margin:0 0 10px; font-weight:600; }
-.panel.wide { grid-column:1/-1; }
+.panel.wide { grid-column:1/-1; margin-bottom:20px; }
+
+.panel-contraste { background:#3a1420; border:1px solid #c9576b; box-shadow:0 2px 10px rgba(201,87,107,0.25); }
+.panel-contraste h2 { color:#ffd7dd; }
+.profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
+.profesional-card { background:#c9576b; border-radius:8px; padding:14px 12px; text-align:center; }
+.profesional-card .num { font-size:2rem; font-weight:800; color:#fff; line-height:1; }
+.profesional-card .name { font-size:0.75rem; color:#ffe3e8; margin-top:6px; text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
+.profesional-card.sin-asignar { background:#5a2530; }
+.profesional-card.sin-asignar .name { color:#f0b8c2; }
 canvas { height:300px !important; }
 
 table { width:100%; border-collapse:collapse; font-size:0.82rem; }
@@ -243,6 +252,11 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <button class="btn btn-primary" onclick="descargarInformeResumenPDF()">📄 Descargar informe PDF</button>
     </div>
     <div class="kpis" id="kpis"></div>
+
+    <div class="panel wide panel-contraste">
+      <h2>⚠️ Proyectos "En Revisión URS" por Profesional</h2>
+      <div id="profesional-revision-grid" class="profesional-revision-grid"></div>
+    </div>
     <div class="grid">
       <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
@@ -454,7 +468,10 @@ Promise.all([
 ])
   .then(([payload, extraPublico]) => {
     datosExtra = extraPublico || {};
-    RAW_DATA = payload.proyectos.map(p => Object.assign({}, p, { evento: datosExtra[p.id_proyecto]?.evento || '' }));
+    RAW_DATA = payload.proyectos.map(p => Object.assign({}, p, {
+      evento: datosExtra[p.id_proyecto]?.evento || '',
+      profesional: datosExtra[p.id_proyecto]?.profesional || '',
+    }));
     filtered = RAW_DATA;
     document.getElementById('header-sub').textContent =
       `Módulo: Presentación de Proyectos · Datos al ${payload.fecha_actualizacion} · ${payload.total_proyectos} proyectos · fuente: Google Drive`;
@@ -653,7 +670,30 @@ function renderKPIs() {
   document.getElementById('result-count').textContent = `${total.toLocaleString('es-CL')} proyectos filtrados de ${RAW_DATA.length.toLocaleString('es-CL')}`;
 }
 
+function renderProfesionalRevision() {
+  const enRevision = filtered.filter(d => d.estado === 'En Revisión URS');
+  const conteos = {};
+  enRevision.forEach(d => {
+    const nombre = d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar';
+    conteos[nombre] = (conteos[nombre] || 0) + 1;
+  });
+  const filas = Object.entries(conteos).sort((a,b) => b[1]-a[1]);
+  const el = document.getElementById('profesional-revision-grid');
+  if (filas.length === 0) {
+    el.innerHTML = `<div style="color:#ffd7dd;font-size:0.85rem;padding:8px 0">Sin proyectos "En Revisión URS" en la vista actual.</div>`;
+    return;
+  }
+  el.innerHTML = filas.map(([nombre, n]) => `
+    <div class="profesional-card${nombre === 'Sin asignar' ? ' sin-asignar' : ''}">
+      <div class="num">${n}</div>
+      <div class="name">${nombre}</div>
+    </div>
+  `).join('');
+}
+
 function renderResumen() {
+  renderProfesionalRevision();
+
   // Distribución por estado: barra horizontal — la mejor opción cuando hay
   // muchas categorías con nombres largos (evita rotar/truncar etiquetas y
   // permite comparar magnitudes con precisión, sin la distorsión de un radar).
