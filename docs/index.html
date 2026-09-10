@@ -1110,23 +1110,29 @@ function descargarInformeResumenPDF() {
   logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
 }
 
-function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
+function agregarResumenComunaTabla(doc, x, y, maxW, maxH, titulo) {
   doc.setFontSize(9);
   doc.setTextColor(70, 70, 70);
   doc.text(titulo, x, y);
 
   const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
   const comunas = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
-  const filas = comunas.map(c => {
+  let filasCompletas = comunas.map(c => {
     const counts = ESTADOS_CLAVE.map(e => filtered.filter(d => d.comuna === c && d.estado === e).length);
-    return [c, ...counts.map(n => n || '—')];
-  });
+    return { comuna: c, counts, total: counts.reduce((a,b)=>a+b,0) };
+  }).sort((a,b) => b.total - a.total);
 
-  if (filas.length === 0) {
+  if (filasCompletas.length === 0) {
     doc.setFontSize(8);
     doc.text('(sin datos para estos estados en la vista actual)', x, y + 6);
     return;
   }
+
+  // Limita filas para garantizar que la tabla nunca se salga de su espacio
+  // asignado y empuje el informe a una segunda hoja.
+  const MAX_FILAS = 9;
+  const truncado = filasCompletas.length > MAX_FILAS;
+  const filas = filasCompletas.slice(0, MAX_FILAS).map(f => [f.comuna, ...f.counts.map(n => n || '—')]);
 
   doc.autoTable({
     startY: y + 2,
@@ -1134,10 +1140,17 @@ function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
     tableWidth: maxW,
     head: [['Comuna', 'Elegible', 'Obs. Prog.', 'Obs. URS', 'En Rev. URS']],
     body: filas,
-    styles: { fontSize: 6.3, cellPadding: 1.1, halign: 'center' },
+    styles: { fontSize: 6.2, cellPadding: 0.9, halign: 'center' },
     columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
-    headStyles: { fillColor: [35, 49, 108], fontSize: 6.3 },
+    headStyles: { fillColor: [35, 49, 108], fontSize: 6.2 },
   });
+
+  if (truncado) {
+    const yFinal = doc.lastAutoTable.finalY + 3;
+    doc.setFontSize(6.5);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`+ ${filasCompletas.length - MAX_FILAS} comuna(s) más (ver Tabla dinámica)`, x, yFinal);
+  }
 }
 
 function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
@@ -1195,8 +1208,9 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   // Filtros activos (ajustado con salto de línea automático para nunca salirse del margen)
   doc.setFontSize(8.5);
   doc.setTextColor(90, 90, 90);
-  const filtrosTexto = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW);
-  doc.text(filtrosTexto, marginX, y, { align: 'justify', maxWidth: contentW });
+  let filtrosTexto = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW);
+  if (filtrosTexto.length > 2) { filtrosTexto = filtrosTexto.slice(0, 2); filtrosTexto[1] += '…'; }
+  doc.text(filtrosTexto, marginX, y);
   y += filtrosTexto.length * 4 + 3;
 
   // KPIs (mismos 4 indicadores que se ven en el dashboard)
@@ -1225,29 +1239,30 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
     .map(([nombre, n]) => `${nombre}: ${n}`);
   doc.setFontSize(8.5);
   doc.setTextColor(150, 40, 55);
-  const profesionalTexto = doc.splitTextToSize(
+  let profesionalTexto = doc.splitTextToSize(
     `En Revisión URS por profesional: ${partesProfesional.length ? partesProfesional.join('   |   ') : 'sin proyectos en este estado'}`,
     contentW
   );
+  if (profesionalTexto.length > 2) { profesionalTexto = profesionalTexto.slice(0, 2); profesionalTexto[1] += '…'; }
   doc.text(profesionalTexto, marginX, y);
   y += profesionalTexto.length * 4 + 3;
   doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
   y += 6;
 
   const colW = (pageW - marginX * 2 - 8) / 2; // 2 columnas con separación de 8mm
-  const rowH = 52;
+  const rowH = 50;
   const col1X = marginX, col2X = marginX + colW + 8;
 
   agregarImagenChart(doc, 'chartEstado', col1X, y, colW, rowH, 'Distribución por estado');
   agregarImagenChart(doc, 'chartProgramaDonut', col2X, y, colW, rowH, 'Distribución por programa');
-  y += rowH + 8;
+  y += rowH + 7;
 
   agregarImagenChart(doc, 'chartAportePorProvincia', col1X, y, colW, rowH, 'Aporte SUBDERE por provincia');
   agregarImagenChart(doc, 'chartTipoAccion', col2X, y, colW, rowH, 'Tipo de acción (top 10)');
-  y += rowH + 8;
+  y += rowH + 7;
 
   agregarImagenChart(doc, 'chartEvento', col1X, y, colW, rowH, 'Distribución por evento');
-  agregarResumenComunaTabla(doc, col2X, y, colW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS');
+  agregarResumenComunaTabla(doc, col2X, y, colW, rowH, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS');
 
   doc.save(`informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.pdf`);
 }
