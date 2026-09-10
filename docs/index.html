@@ -73,8 +73,8 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .panel-contraste h2 { color:#ffd7dd; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
 .profesional-card { background:#c9576b; border-radius:8px; padding:14px 12px; text-align:center; }
-.profesional-card .num { font-size:2rem; font-weight:800; color:#fff; line-height:1; }
-.profesional-card .name { font-size:0.75rem; color:#ffe3e8; margin-top:6px; text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
+.profesional-card .num { font-size:1.6rem; font-weight:800; color:#fff; line-height:1; }
+.profesional-card .name { font-size:1.6rem; color:#ffe3e8; margin-top:6px; letter-spacing:.01em; font-weight:600; }
 .profesional-card.sin-asignar { background:#5a2530; }
 .profesional-card.sin-asignar .name { color:#f0b8c2; }
 .profesional-card { cursor:pointer; transition:transform .12s, box-shadow .12s; }
@@ -89,6 +89,8 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 canvas { height:300px !important; }
 
 table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+.tabla-compacta table { font-size:0.68rem; }
+.tabla-compacta th, .tabla-compacta td { padding:4px 5px; white-space:nowrap; }
 th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
 th { color:var(--ink-dim); font-weight:600; cursor:pointer; user-select:none; white-space:nowrap; }
 th:hover { color:var(--ink); }
@@ -277,10 +279,10 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
-      <div class="panel wide"><h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)</h2><div id="tabla-tradicional-2026" style="overflow-x:auto"></div></div>
+      <div class="panel wide"><h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)</h2><div id="tabla-tradicional-2026" class="tabla-compacta" style="overflow-x:auto"></div></div>
       <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento" style="height:340px !important"></canvas></div>
       <div class="panel wide">
-        <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2>
+        <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica</h2>
         <canvas id="chartComunaEstadosClave" style="height:420px !important"></canvas>
       </div>
     </div>
@@ -712,13 +714,10 @@ function renderProfesionalRevision() {
   }
 
   el.innerHTML = filas.map(([nombre, n]) => {
-    // Tamaño de fuente proporcional: nombres cortos se ven más grandes,
-    // nombres largos se reducen para caber sin desbordar la tarjeta.
-    const tamañoFuente = Math.max(0.68, Math.min(1.35, 13 / nombre.length)).toFixed(2);
     return `
     <div class="profesional-card${nombre === 'Sin asignar' ? ' sin-asignar' : ''}${profesionalExpandido === nombre ? ' expandido' : ''}" onclick="toggleProfesionalDetalle('${nombre.replace(/'/g,"\\'")}')">
       <div class="num">${n}</div>
-      <div class="name" style="font-size:${tamañoFuente}rem">${nombre}</div>
+      <div class="name">${nombre}</div>
     </div>
   `;
   }).join('');
@@ -784,9 +783,10 @@ function renderResumen() {
       data: eventosOrdenados.map(evento => proyectosConEvento.filter(d => d.evento === evento && d.estado === estado).length),
     }));
     makeChart('chartEvento', 'bar', eventosOrdenados, datasetsEvento, {
+      indexAxis: 'y',
       scales: {
-        x: { stacked: true, grid: { color: '#232323' } },
-        y: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
+        x: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
+        y: { stacked: true, grid: { display: false } },
       },
       plugins: {
         legend: { display: true, position: 'bottom' },
@@ -801,8 +801,8 @@ function renderResumen() {
   // clara de comparar 4 categorías a la vez a través de muchas comunas: cada
   // fila es una comuna, el largo total y cada segmento se leen con precisión,
   // sin la ambigüedad visual de una vista 3D en perspectiva.
-  const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
-  const coloresEstadosClave = [palette[0], palette[2], palette[1], palette[5]];
+  const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS', 'En Evaluación Técnica'];
+  const coloresEstadosClave = [palette[0], palette[2], palette[1], palette[5], palette[3]];
   const comunasConDatos = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
   const totalesPorComuna = comunasConDatos.map(c => ({
     comuna: c,
@@ -843,7 +843,7 @@ function renderTablaTradicional2026() {
 
   const headerPrograma = PROGRAMAS_TRAD.map(p => `<th colspan="${estadosTrad.length}" style="text-align:center;border-left:2px solid var(--border)">${p}</th>`).join('');
   const headerEstados = PROGRAMAS_TRAD.map(() =>
-    estadosTrad.map((e, i) => `<th class="num"${i === 0 ? ' style="border-left:2px solid var(--border)"' : ''}>${e}</th>`).join('')
+    estadosTrad.map((e, i) => `<th class="num" title="${e}"${i === 0 ? ' style="border-left:2px solid var(--border)"' : ''}>${abreviarEstado(e)}</th>`).join('')
   ).join('');
 
   const filasHtml = TODAS_LAS_COMUNAS.map(comuna => {
@@ -981,6 +981,24 @@ const TODAS_LAS_COMUNAS = [
   "OVALLE", "COMBARBALÁ", "MONTE PATRIA", "PUNITAQUI", "RÍO HURTADO",
   "ILLAPEL", "CANELA", "LOS VILOS", "SALAMANCA",
 ];
+// Abreviaciones de estado para encabezados de tablas compactas (no cambia
+// el dato real, solo cómo se muestra el título de la columna).
+const ABREVIACIONES_ESTADO = {
+  "Proyecto Cerrado": "Cerrado", "Proyecto Terminado": "Terminado",
+  "100% Girado": "100% Girado", "Observado URS": "Obs. URS",
+  "En Ejecución": "En Ejec.", "Proyecto Dejado sin Efecto": "Dejado s/Efecto",
+  "Proyecto Con Término Anticipado": "Térm. Anticip.",
+  "En Creación Municipal": "Creación Mun.", "Aprobado": "Aprobado",
+  "En Proceso de Cierre": "Proc. Cierre", "Elegible": "Elegible",
+  "En Corrección Municipal": "Correc. Mun.", "En Revisión URS": "Rev. URS",
+  "Con Anticipo Solicitado": "Antic. Solicit.", "Observado Programa": "Obs. Programa",
+  "Con Giro por Anticipo": "Giro Anticipo", "Proyecto Eliminado": "Eliminado",
+  "En Evaluación Técnica": "Eval. Técnica", "En Revisión PMU": "Rev. PMU",
+};
+function abreviarEstado(estado) {
+  if (ABREVIACIONES_ESTADO[estado]) return ABREVIACIONES_ESTADO[estado];
+  return estado && estado.length > 14 ? estado.slice(0, 13) + '…' : estado;
+}
 // Lista configurable de eventos — para agregar, quitar o renombrar opciones,
 // edita este arreglo directamente (mismo mecanismo que PROFESIONALES).
 const EVENTOS = [
@@ -1234,7 +1252,7 @@ function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
   doc.text(tituloLineas, x, y);
   const yTabla = y + (tituloLineas.length - 1) * 4 + 2;
 
-  const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS'];
+  const ESTADOS_CLAVE = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS', 'En Evaluación Técnica'];
   const comunas = unique(filtered.filter(d => ESTADOS_CLAVE.includes(d.estado)), 'comuna');
   const filasCompletas = comunas.map(c => {
     const counts = ESTADOS_CLAVE.map(e => filtered.filter(d => d.comuna === c && d.estado === e).length);
@@ -1255,7 +1273,7 @@ function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
     startY: yTabla,
     margin: { left: x },
     tableWidth: maxW,
-    head: [['Comuna', 'Elegible', 'Obs. Programa', 'Obs. URS', 'En Revisión URS']],
+    head: [['Comuna', 'Elegible', 'Obs. Programa', 'Obs. URS', 'En Revisión URS', 'Eval. Técnica']],
     body: filas,
     styles: { fontSize: 7, cellPadding: 1.2, halign: 'center' },
     columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
@@ -1373,7 +1391,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
 
   // Tabla de comunas a ancho completo: entran las 15 comunas de la región
   // sin necesidad de recortar ninguna.
-  agregarResumenComunaTabla(doc, marginX, y, contentW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS');
+  agregarResumenComunaTabla(doc, marginX, y, contentW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica');
   y = doc.lastAutoTable.finalY + 10;
 
   // Tabla PMB Tradicional / Tradicional, año de postulación 2026, por comuna y estado.
@@ -1410,7 +1428,7 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
   const head1 = [{ content: 'Comuna', rowSpan: 2 }].concat(
     PROGRAMAS_TRAD.map(p => ({ content: p, colSpan: estadosTrad.length, styles: { halign: 'center' } }))
   );
-  const head2 = PROGRAMAS_TRAD.flatMap(() => estadosTrad.map(e => e));
+  const head2 = PROGRAMAS_TRAD.flatMap(() => estadosTrad.map(e => abreviarEstado(e)));
 
   const body = TODAS_LAS_COMUNAS.map(comuna => {
     const celdas = PROGRAMAS_TRAD.flatMap(programa =>
