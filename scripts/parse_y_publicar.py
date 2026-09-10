@@ -10,6 +10,7 @@ Uso:
 
 import sys
 import json
+import hashlib
 from pathlib import Path
 from datetime import datetime
 
@@ -100,6 +101,24 @@ def parse_file(path: Path) -> pd.DataFrame:
         df = df[df["nombre_proyecto"].astype(str).str.strip().str.lower() != "totales"]
     if "estado" in df:
         df = df[df["estado"].notna() & (df["estado"].astype(str).str.strip().str.lower() != "nan")]
+
+    # Algunos proyectos vienen SIN "Id. Proyecto" desde el propio SUBDERE en
+    # Línea (vacío en el Excel). Como todo el sistema de "Datos adicionales"
+    # (profesional a cargo, eventos, etc.) se guarda usando ese ID, a esos
+    # proyectos les generamos un ID sustituto ESTABLE (siempre el mismo,
+    # semana a semana, mientras nombre/comuna/programa no cambien) en vez de
+    # dejarlos sin ID — de lo contrario, quedan "invisibles" para esa parte
+    # del sistema y nunca se les puede asignar nada.
+    if "id_proyecto" in df:
+        def id_o_sintetico(row):
+            id_actual = str(row.get("id_proyecto", "")).strip()
+            if id_actual and id_actual.lower() != "nan":
+                return id_actual
+            base = f"{row.get('nombre_proyecto','')}|{row.get('comuna','')}|{row.get('programa','')}"
+            hash_corto = hashlib.md5(base.encode("utf-8")).hexdigest()[:10]
+            return f"SINID-{hash_corto}"
+
+        df["id_proyecto"] = df.apply(id_o_sintetico, axis=1)
 
     return df.reset_index(drop=True)
 
