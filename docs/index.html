@@ -277,7 +277,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
-      <div class="panel"><h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por estado y comuna)</h2><canvas id="chartTradicional2026" style="height:340px !important"></canvas></div>
+      <div class="panel wide"><h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)</h2><div id="tabla-tradicional-2026" style="overflow-x:auto"></div></div>
       <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento" style="height:340px !important"></canvas></div>
       <div class="panel wide">
         <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2>
@@ -767,34 +767,13 @@ function renderResumen() {
     plugins: { datalabels: { formatter: (v) => fmtCLP(v) } },
   });
 
-  // PMB Tradicional / Tradicional, Año Postulación 2026: barra horizontal
-  // apilada por estado, mostrando las 15 comunas de la región (incluso las
-  // que no tengan proyectos, para que el vacío también sea visible).
-  const PROGRAMAS_TRAD = ['PMB Tradicional', 'Tradicional'];
-  const proyectosTrad2026 = filtered.filter(d =>
-    PROGRAMAS_TRAD.includes(d.programa) && String(d.anio_postulacion) === '2026'
-  );
-  const estadosTrad = unique(proyectosTrad2026, 'estado');
-  const datasetsTrad = estadosTrad.map((estado, i) => ({
-    label: estado,
-    backgroundColor: palette[i % palette.length],
-    data: TODAS_LAS_COMUNAS.map(comuna => proyectosTrad2026.filter(d => d.comuna === comuna && d.estado === estado).length),
-  }));
-  makeChart('chartTradicional2026', 'bar', TODAS_LAS_COMUNAS, datasetsTrad, {
-    indexAxis: 'y',
-    scales: {
-      x: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
-      y: { stacked: true, grid: { display: false } },
-    },
-    plugins: {
-      legend: { display: true, position: 'bottom' },
-      datalabels: { anchor: 'center', align: 'center', color: '#12100c', font: { size: 9, weight: '700' }, formatter: (v) => v > 0 ? v : '' },
-    },
-  });
+  // PMB Tradicional / Tradicional, Año Postulación 2026: tabla con las 15
+  // comunas de la región (fila), columnas agrupadas por programa y, dentro
+  // de cada una, desglosadas por estado.
+  renderTablaTradicional2026();
 
-  // Distribución por evento, separado por estado: barra horizontal apilada
-  // (hasta 14 eventos posibles, demasiados para una dona legible; el
-  // desglose por estado se apila dentro de cada barra de evento).
+  // Distribución por evento, separado por estado: gráfico de COLUMNAS
+  // (barras verticales) apiladas por estado dentro de cada evento.
   const proyectosConEvento = filtered.filter(d => d.evento && d.evento.trim() !== '');
   const eventosOrdenados = groupBy(proyectosConEvento, 'evento').sort((a,b)=>b.n-a.n).map(d=>d.key);
   if (eventosOrdenados.length > 0) {
@@ -805,10 +784,9 @@ function renderResumen() {
       data: eventosOrdenados.map(evento => proyectosConEvento.filter(d => d.evento === evento && d.estado === estado).length),
     }));
     makeChart('chartEvento', 'bar', eventosOrdenados, datasetsEvento, {
-      indexAxis: 'y',
       scales: {
-        x: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
-        y: { stacked: true, grid: { display: false } },
+        x: { stacked: true, grid: { color: '#232323' } },
+        y: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
       },
       plugins: {
         legend: { display: true, position: 'bottom' },
@@ -848,6 +826,45 @@ function renderResumen() {
       datalabels: { anchor: 'center', align: 'center', color: '#12100c', font: { size: 9, weight: '700' }, formatter: (v) => v > 0 ? v : '' },
     },
   });
+}
+
+function renderTablaTradicional2026() {
+  const PROGRAMAS_TRAD = ['PMB Tradicional', 'Tradicional'];
+  const proyectosTrad2026 = filtered.filter(d =>
+    PROGRAMAS_TRAD.includes(d.programa) && String(d.anio_postulacion) === '2026'
+  );
+  const estadosTrad = unique(proyectosTrad2026, 'estado');
+  const el = document.getElementById('tabla-tradicional-2026');
+
+  if (estadosTrad.length === 0) {
+    el.innerHTML = '<div style="color:var(--ink-dim);font-size:0.85rem;padding:10px 0">Sin proyectos PMB Tradicional / Tradicional con año de postulación 2026 en la vista actual.</div>';
+    return;
+  }
+
+  const headerPrograma = PROGRAMAS_TRAD.map(p => `<th colspan="${estadosTrad.length}" style="text-align:center;border-left:2px solid var(--border)">${p}</th>`).join('');
+  const headerEstados = PROGRAMAS_TRAD.map(() =>
+    estadosTrad.map((e, i) => `<th class="num"${i === 0 ? ' style="border-left:2px solid var(--border)"' : ''}>${e}</th>`).join('')
+  ).join('');
+
+  const filasHtml = TODAS_LAS_COMUNAS.map(comuna => {
+    const celdas = PROGRAMAS_TRAD.map(programa =>
+      estadosTrad.map((estado, i) => {
+        const n = proyectosTrad2026.filter(d => d.comuna === comuna && d.programa === programa && d.estado === estado).length;
+        return `<td class="num"${i === 0 ? ' style="border-left:2px solid var(--border)"' : ''}>${n || '—'}</td>`;
+      }).join('')
+    ).join('');
+    return `<tr><td>${comuna}</td>${celdas}</tr>`;
+  }).join('');
+
+  el.innerHTML = `
+    <table>
+      <thead>
+        <tr><th rowspan="2">Comuna</th>${headerPrograma}</tr>
+        <tr>${headerEstados}</tr>
+      </thead>
+      <tbody>${filasHtml}</tbody>
+    </table>
+  `;
 }
 
 function renderProvincias() {
@@ -1357,8 +1374,63 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   // Tabla de comunas a ancho completo: entran las 15 comunas de la región
   // sin necesidad de recortar ninguna.
   agregarResumenComunaTabla(doc, marginX, y, contentW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS');
+  y = doc.lastAutoTable.finalY + 10;
+
+  // Tabla PMB Tradicional / Tradicional, año de postulación 2026, por comuna y estado.
+  // Como puede sumar bastantes filas y columnas, esta sección puede continuar
+  // en una segunda hoja carta si no alcanza el espacio restante.
+  agregarTablaTradicional2026PDF(doc, marginX, y, contentW);
 
   doc.save(`informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
+  const pageH = 279.4;
+  if (y > pageH - 30) { doc.addPage(); y = 15; }
+
+  doc.setFontSize(9);
+  doc.setTextColor(70, 70, 70);
+  const titulo = 'PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)';
+  const tituloLineas = doc.splitTextToSize(titulo, maxW);
+  doc.text(tituloLineas, x, y);
+  const yTabla = y + (tituloLineas.length - 1) * 4 + 2;
+
+  const PROGRAMAS_TRAD = ['PMB Tradicional', 'Tradicional'];
+  const proyectosTrad2026 = filtered.filter(d =>
+    PROGRAMAS_TRAD.includes(d.programa) && String(d.anio_postulacion) === '2026'
+  );
+  const estadosTrad = unique(proyectosTrad2026, 'estado');
+
+  if (estadosTrad.length === 0) {
+    doc.setFontSize(8);
+    doc.text('(sin proyectos PMB Tradicional / Tradicional con año de postulación 2026 en la vista actual)', x, yTabla + 4);
+    return;
+  }
+
+  const head1 = [{ content: 'Comuna', rowSpan: 2 }].concat(
+    PROGRAMAS_TRAD.map(p => ({ content: p, colSpan: estadosTrad.length, styles: { halign: 'center' } }))
+  );
+  const head2 = PROGRAMAS_TRAD.flatMap(() => estadosTrad.map(e => e));
+
+  const body = TODAS_LAS_COMUNAS.map(comuna => {
+    const celdas = PROGRAMAS_TRAD.flatMap(programa =>
+      estadosTrad.map(estado =>
+        proyectosTrad2026.filter(d => d.comuna === comuna && d.programa === programa && d.estado === estado).length || '—'
+      )
+    );
+    return [comuna, ...celdas];
+  });
+
+  doc.autoTable({
+    startY: yTabla,
+    margin: { left: x },
+    tableWidth: maxW,
+    head: [head1, head2],
+    body,
+    styles: { fontSize: 6.3, cellPadding: 1, halign: 'center' },
+    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+    headStyles: { fillColor: [35, 49, 108], fontSize: 6.3 },
+  });
 }
 
 function descargarResumenPDF() {
