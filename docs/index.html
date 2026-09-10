@@ -77,6 +77,15 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .profesional-card .name { font-size:0.75rem; color:#ffe3e8; margin-top:6px; text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
 .profesional-card.sin-asignar { background:#5a2530; }
 .profesional-card.sin-asignar .name { color:#f0b8c2; }
+.profesional-card { cursor:pointer; transition:transform .12s, box-shadow .12s; }
+.profesional-card:hover { transform:translateY(-2px); box-shadow:0 3px 10px rgba(0,0,0,0.3); }
+.profesional-card.expandido { outline:2px solid #fff; outline-offset:1px; }
+.profesional-card .name { line-height:1.15; word-break:break-word; }
+.profesional-detalle-panel { margin-top:14px; background:rgba(0,0,0,0.2); border-radius:8px; padding:12px 14px; }
+.profesional-detalle-panel h3 { margin:0 0 8px; font-size:0.85rem; color:#ffd7dd; }
+.profesional-detalle-tabla { width:100%; border-collapse:collapse; font-size:0.78rem; }
+.profesional-detalle-tabla th { text-align:left; color:#f0b8c2; padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.15); }
+.profesional-detalle-tabla td { padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.08); color:#f6dde1; }
 canvas { height:300px !important; }
 
 table { width:100%; border-collapse:collapse; font-size:0.82rem; }
@@ -240,6 +249,12 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         <div class="multiselect-panel"></div>
       </div>
     </div>
+    <div class="filter-group"><label>Año Postulación</label>
+      <div class="multiselect" id="f-anio-postulacion">
+        <button type="button" class="multiselect-btn" onclick="toggleMultiselect('f-anio-postulacion')">Todos</button>
+        <div class="multiselect-panel"></div>
+      </div>
+    </div>
     <button class="btn btn-primary" onclick="applyFilters()">Aplicar</button>
     <button class="btn btn-ghost" onclick="clearFilters()">✕ Limpiar</button>
     <div class="result-count" id="result-count"></div>
@@ -256,12 +271,13 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="panel wide panel-contraste">
       <h2>⚠️ Proyectos "En Revisión URS" por Profesional</h2>
       <div id="profesional-revision-grid" class="profesional-revision-grid"></div>
+      <div id="profesional-detalle"></div>
     </div>
     <div class="grid">
       <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
-      <div class="panel"><h2>Tipo de acción (top 10)</h2><canvas id="chartTipoAccion" style="height:340px !important"></canvas></div>
+      <div class="panel"><h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por estado y comuna)</h2><canvas id="chartTradicional2026" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento" style="height:340px !important"></canvas></div>
       <div class="panel wide">
         <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS</h2>
@@ -501,7 +517,7 @@ function unique(arr, key) {
 
 const FILTER_LABELS = {
   'f-provincia': 'Todas', 'f-comuna': 'Todas', 'f-programa': 'Todos',
-  'f-estado': 'Todos', 'f-evento-filtro': 'Todos', 'f-anio': 'Todos',
+  'f-estado': 'Todos', 'f-evento-filtro': 'Todos', 'f-anio': 'Todos', 'f-anio-postulacion': 'Todos',
 };
 const multiselectState = {}; // { [id]: Set(valores seleccionados) }
 Object.keys(FILTER_LABELS).forEach(id => multiselectState[id] = new Set());
@@ -581,6 +597,7 @@ function refreshFilterOptions() {
   populateMultiselect('f-estado', unique(RAW_DATA, 'estado'));
   populateMultiselect('f-evento-filtro', unique(RAW_DATA, 'evento'));
   populateMultiselect('f-anio', unique(RAW_DATA, 'anio_aprobacion').map(String));
+  populateMultiselect('f-anio-postulacion', unique(RAW_DATA, 'anio_postulacion').map(String));
 }
 
 function applyFilters() {
@@ -591,6 +608,7 @@ function applyFilters() {
     estado: multiselectState['f-estado'],
     evento: multiselectState['f-evento-filtro'],
     anio: multiselectState['f-anio'],
+    anioPostulacion: multiselectState['f-anio-postulacion'],
   };
   filtered = RAW_DATA.filter(d =>
     (!f.provincia.size || f.provincia.has(d.provincia)) &&
@@ -598,7 +616,8 @@ function applyFilters() {
     (!f.programa.size || f.programa.has(d.programa)) &&
     (!f.estado.size || f.estado.has(d.estado)) &&
     (!f.evento.size || f.evento.has(d.evento)) &&
-    (!f.anio.size || f.anio.has(String(d.anio_aprobacion)))
+    (!f.anio.size || f.anio.has(String(d.anio_aprobacion))) &&
+    (!f.anioPostulacion.size || f.anioPostulacion.has(String(d.anio_postulacion)))
   );
   document.querySelectorAll('.multiselect-panel.open').forEach(p => p.classList.remove('open'));
   tablaPage = 0;
@@ -671,25 +690,59 @@ function renderKPIs() {
   document.getElementById('result-count').textContent = `${total.toLocaleString('es-CL')} proyectos filtrados de ${RAW_DATA.length.toLocaleString('es-CL')}`;
 }
 
+let profesionalExpandido = null;
+
 function renderProfesionalRevision() {
   const enRevision = filtered.filter(d => d.estado === 'En Revisión URS');
   const conteos = {};
+  const proyectosPorProfesional = {};
   enRevision.forEach(d => {
     const nombre = d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar';
     conteos[nombre] = (conteos[nombre] || 0) + 1;
+    (proyectosPorProfesional[nombre] = proyectosPorProfesional[nombre] || []).push(d);
   });
   const filas = Object.entries(conteos).sort((a,b) => b[1]-a[1]);
   const el = document.getElementById('profesional-revision-grid');
+  const detalleEl = document.getElementById('profesional-detalle');
+
   if (filas.length === 0) {
     el.innerHTML = `<div style="color:#ffd7dd;font-size:0.85rem;padding:8px 0">Sin proyectos "En Revisión URS" en la vista actual.</div>`;
+    detalleEl.innerHTML = '';
     return;
   }
-  el.innerHTML = filas.map(([nombre, n]) => `
-    <div class="profesional-card${nombre === 'Sin asignar' ? ' sin-asignar' : ''}">
+
+  el.innerHTML = filas.map(([nombre, n]) => {
+    // Tamaño de fuente proporcional: nombres cortos se ven más grandes,
+    // nombres largos se reducen para caber sin desbordar la tarjeta.
+    const tamañoFuente = Math.max(0.68, Math.min(1.35, 13 / nombre.length)).toFixed(2);
+    return `
+    <div class="profesional-card${nombre === 'Sin asignar' ? ' sin-asignar' : ''}${profesionalExpandido === nombre ? ' expandido' : ''}" onclick="toggleProfesionalDetalle('${nombre.replace(/'/g,"\\'")}')">
       <div class="num">${n}</div>
-      <div class="name">${nombre}</div>
+      <div class="name" style="font-size:${tamañoFuente}rem">${nombre}</div>
     </div>
-  `).join('');
+  `;
+  }).join('');
+
+  if (profesionalExpandido && proyectosPorProfesional[profesionalExpandido]) {
+    const lista = proyectosPorProfesional[profesionalExpandido];
+    detalleEl.innerHTML = `
+      <div class="profesional-detalle-panel">
+        <h3>Proyectos "En Revisión URS" — ${profesionalExpandido} (${lista.length})</h3>
+        <table class="profesional-detalle-tabla">
+          <thead><tr><th>ID</th><th>Proyecto</th><th>Comuna</th><th>Programa</th></tr></thead>
+          <tbody>
+            ${lista.map(p => `<tr><td>${p.id_proyecto ?? ''}</td><td>${p.nombre_proyecto ?? ''}</td><td>${p.comuna ?? ''}</td><td>${p.programa ?? ''}</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+  } else {
+    detalleEl.innerHTML = '';
+  }
+}
+
+function toggleProfesionalDetalle(nombre) {
+  profesionalExpandido = profesionalExpandido === nombre ? null : nombre;
+  renderProfesionalRevision();
 }
 
 function renderResumen() {
@@ -714,15 +767,54 @@ function renderResumen() {
     plugins: { datalabels: { formatter: (v) => fmtCLP(v) } },
   });
 
-  // Tipo de acción: barra horizontal (10 categorías, nombres largos).
-  const porTipo = groupBy(filtered,'tipo_accion').sort((a,b)=>b.n-a.n).slice(0,10);
-  makeChart('chartTipoAccion','bar', porTipo.map(d=>d.key), [{ data:porTipo.map(d=>d.n), backgroundColor:palette[1], borderRadius:4 }], { indexAxis:'y' });
+  // PMB Tradicional / Tradicional, Año Postulación 2026: barra horizontal
+  // apilada por estado, mostrando las 15 comunas de la región (incluso las
+  // que no tengan proyectos, para que el vacío también sea visible).
+  const PROGRAMAS_TRAD = ['PMB Tradicional', 'Tradicional'];
+  const proyectosTrad2026 = filtered.filter(d =>
+    PROGRAMAS_TRAD.includes(d.programa) && String(d.anio_postulacion) === '2026'
+  );
+  const estadosTrad = unique(proyectosTrad2026, 'estado');
+  const datasetsTrad = estadosTrad.map((estado, i) => ({
+    label: estado,
+    backgroundColor: palette[i % palette.length],
+    data: TODAS_LAS_COMUNAS.map(comuna => proyectosTrad2026.filter(d => d.comuna === comuna && d.estado === estado).length),
+  }));
+  makeChart('chartTradicional2026', 'bar', TODAS_LAS_COMUNAS, datasetsTrad, {
+    indexAxis: 'y',
+    scales: {
+      x: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
+      y: { stacked: true, grid: { display: false } },
+    },
+    plugins: {
+      legend: { display: true, position: 'bottom' },
+      datalabels: { anchor: 'center', align: 'center', color: '#12100c', font: { size: 9, weight: '700' }, formatter: (v) => v > 0 ? v : '' },
+    },
+  });
 
-  // Distribución por evento: barra horizontal (hasta 14 opciones posibles,
-  // demasiadas para una dona legible).
-  const porEvento = groupBy(filtered.filter(d => d.evento && d.evento.trim() !== ''), 'evento').sort((a,b)=>b.n-a.n);
-  if (porEvento.length > 0) {
-    makeChart('chartEvento','bar', porEvento.map(d=>d.key), [{ data:porEvento.map(d=>d.n), backgroundColor:palette[4], borderRadius:4 }], { indexAxis:'y' });
+  // Distribución por evento, separado por estado: barra horizontal apilada
+  // (hasta 14 eventos posibles, demasiados para una dona legible; el
+  // desglose por estado se apila dentro de cada barra de evento).
+  const proyectosConEvento = filtered.filter(d => d.evento && d.evento.trim() !== '');
+  const eventosOrdenados = groupBy(proyectosConEvento, 'evento').sort((a,b)=>b.n-a.n).map(d=>d.key);
+  if (eventosOrdenados.length > 0) {
+    const estadosEvento = unique(proyectosConEvento, 'estado');
+    const datasetsEvento = estadosEvento.map((estado, i) => ({
+      label: estado,
+      backgroundColor: palette[i % palette.length],
+      data: eventosOrdenados.map(evento => proyectosConEvento.filter(d => d.evento === evento && d.estado === estado).length),
+    }));
+    makeChart('chartEvento', 'bar', eventosOrdenados, datasetsEvento, {
+      indexAxis: 'y',
+      scales: {
+        x: { stacked: true, grid: { color: '#232323' }, beginAtZero: true },
+        y: { stacked: true, grid: { display: false } },
+      },
+      plugins: {
+        legend: { display: true, position: 'bottom' },
+        datalabels: { anchor: 'center', align: 'center', color: '#12100c', font: { size: 8, weight: '700' }, formatter: (v) => v > 0 ? v : '' },
+      },
+    });
   } else if (charts['chartEvento']) {
     charts['chartEvento'].destroy();
   }
@@ -864,6 +956,14 @@ function renderAll() {
 // ========================================================================
 const OAUTH_CLIENT_ID = "263773563980-qri1cqlqnk4kirtqmv2en0nblmmlqm1u.apps.googleusercontent.com";
 const PROFESIONALES = ["Tamara Huerta", "Romina Canihuante", "Martin Rodriguez", "Carlos Pinto"];
+// Las 15 comunas reales de la Región de Coquimbo (evita mezclar con filas
+// administrativas como "Delegación Presidencial..." que a veces aparecen
+// en el dato crudo de comuna).
+const TODAS_LAS_COMUNAS = [
+  "LA SERENA", "COQUIMBO", "ANDACOLLO", "LA HIGUERA", "PAIGUANO", "VICUÑA",
+  "OVALLE", "COMBARBALÁ", "MONTE PATRIA", "PUNITAQUI", "RÍO HURTADO",
+  "ILLAPEL", "CANELA", "LOS VILOS", "SALAMANCA",
+];
 // Lista configurable de eventos — para agregar, quitar o renombrar opciones,
 // edita este arreglo directamente (mismo mecanismo que PROFESIONALES).
 const EVENTOS = [
@@ -1092,7 +1192,7 @@ document.getElementById('header-logo').src = `data:image/jpeg;base64,${LOGO_BASE
 function resumenFiltrosActivos() {
   const labels = {
     'f-provincia': 'Provincia', 'f-comuna': 'Comuna', 'f-programa': 'Programa',
-    'f-estado': 'Estado', 'f-evento-filtro': 'Evento', 'f-anio': 'Año Aprobación',
+    'f-estado': 'Estado', 'f-evento-filtro': 'Evento', 'f-anio': 'Año Aprobación', 'f-anio-postulacion': 'Año Postulación',
   };
   const partes = Object.keys(labels).map(id => {
     const sel = multiselectState[id];
