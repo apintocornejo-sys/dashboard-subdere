@@ -863,7 +863,7 @@ function renderAll() {
 // DATOS ADICIONALES: login con Google + lectura/escritura en Drive
 // ========================================================================
 const OAUTH_CLIENT_ID = "263773563980-qri1cqlqnk4kirtqmv2en0nblmmlqm1u.apps.googleusercontent.com";
-const PROFESIONALES = ["Tamara Huerta", "Romina Canihuante", "Martin Rodriguez"];
+const PROFESIONALES = ["Tamara Huerta", "Romina Canihuante", "Martin Rodriguez", "Carlos Pinto"];
 // Lista configurable de eventos — para agregar, quitar o renombrar opciones,
 // edita este arreglo directamente (mismo mecanismo que PROFESIONALES).
 const EVENTOS = [
@@ -1162,6 +1162,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
   const marginX = 12;
   const pageW = 215.9;
+  const contentW = pageW - marginX * 2;
   let textoX = marginX;
 
   if (logoW && logoH) {
@@ -1187,40 +1188,63 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   doc.setTextColor(110, 110, 110);
   doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, textoX, 24.5);
 
-  let y = 32;
+  let y = 31;
   doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
   y += 5;
 
-  // Filtros activos
+  // Filtros activos (ajustado con salto de línea automático para nunca salirse del margen)
   doc.setFontSize(8.5);
   doc.setTextColor(90, 90, 90);
-  const filtrosTexto = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, pageW - marginX * 2);
-  doc.text(filtrosTexto, marginX, y);
+  const filtrosTexto = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW);
+  doc.text(filtrosTexto, marginX, y, { align: 'justify', maxWidth: contentW });
   y += filtrosTexto.length * 4 + 3;
 
-  // KPIs
-  const montoTotal = filtered.reduce((s, d) => s + (d.monto_subdere || 0), 0);
-  doc.setFontSize(10);
+  // KPIs (mismos 4 indicadores que se ven en el dashboard)
+  const enRevisionURS = filtered.filter(d => d.estado === 'En Revisión URS').length;
+  const enEvaluacionTecnica = filtered.filter(d => d.estado === 'En Evaluación Técnica').length;
+  const elegibles = filtered.filter(d => d.estado === 'Elegible').length;
+  doc.setFontSize(9.5);
   doc.setTextColor(20, 20, 20);
-  doc.text(
-    `Total proyectos: ${filtered.length.toLocaleString('es-CL')}    |    Aporte SUBDERE total: ${fmtCLP(montoTotal)}    |    Comunas: ${unique(filtered,'comuna').length}`,
-    marginX, y
+  const kpiTexto = doc.splitTextToSize(
+    `Proyectos: ${filtered.length.toLocaleString('es-CL')}   |   En Revisión URS: ${enRevisionURS.toLocaleString('es-CL')}   |   En Evaluación Técnica: ${enEvaluacionTecnica.toLocaleString('es-CL')}   |   Elegibles: ${elegibles.toLocaleString('es-CL')}`,
+    contentW
   );
-  y += 3;
+  doc.text(kpiTexto, marginX, y);
+  y += kpiTexto.length * 4 + 3;
   doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
-  y += 7;
+  y += 5;
+
+  // Resumen "En Revisión URS" por profesional (mismo dato del recuadro de alto contraste en pantalla)
+  const conteoProfesional = {};
+  filtered.filter(d => d.estado === 'En Revisión URS').forEach(d => {
+    const nombre = d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar';
+    conteoProfesional[nombre] = (conteoProfesional[nombre] || 0) + 1;
+  });
+  const partesProfesional = Object.entries(conteoProfesional)
+    .sort((a,b) => b[1]-a[1])
+    .map(([nombre, n]) => `${nombre}: ${n}`);
+  doc.setFontSize(8.5);
+  doc.setTextColor(150, 40, 55);
+  const profesionalTexto = doc.splitTextToSize(
+    `En Revisión URS por profesional: ${partesProfesional.length ? partesProfesional.join('   |   ') : 'sin proyectos en este estado'}`,
+    contentW
+  );
+  doc.text(profesionalTexto, marginX, y);
+  y += profesionalTexto.length * 4 + 3;
+  doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
+  y += 6;
 
   const colW = (pageW - marginX * 2 - 8) / 2; // 2 columnas con separación de 8mm
-  const rowH = 55;
+  const rowH = 52;
   const col1X = marginX, col2X = marginX + colW + 8;
 
   agregarImagenChart(doc, 'chartEstado', col1X, y, colW, rowH, 'Distribución por estado');
   agregarImagenChart(doc, 'chartProgramaDonut', col2X, y, colW, rowH, 'Distribución por programa');
-  y += rowH + 9;
+  y += rowH + 8;
 
   agregarImagenChart(doc, 'chartAportePorProvincia', col1X, y, colW, rowH, 'Aporte SUBDERE por provincia');
   agregarImagenChart(doc, 'chartTipoAccion', col2X, y, colW, rowH, 'Tipo de acción (top 10)');
-  y += rowH + 9;
+  y += rowH + 8;
 
   agregarImagenChart(doc, 'chartEvento', col1X, y, colW, rowH, 'Distribución por evento');
   agregarResumenComunaTabla(doc, col2X, y, colW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS');

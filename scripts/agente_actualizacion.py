@@ -48,11 +48,39 @@ DRIVE_UPLOAD_DIR = BASE_DIR / "para_subir_a_drive"
 LOG_FILE = BASE_DIR / "agente_log.txt"
 
 DRIVE_FILE_ID = "1ZRi0TAbjIozOnZ00cbH9O68sX4Ejlds8"
+DATOS_EXTRA_FILE_ID = "1oThL9AfQ1_3i_h676ORmL6MSAi58VF7Z"
 CLIENT_SECRET_PATH = BASE_DIR / "client_secret.json"
 TOKEN_PATH = BASE_DIR / "token.json"
 DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 LOGIN_URL = "http://www.subdereenlinea.gov.cl/"
+
+
+def obtener_credenciales_drive():
+    """Credenciales OAuth reutilizables para cualquier operación de lectura/escritura en Drive."""
+    from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
+    from google_auth_oauthlib.flow import InstalledAppFlow
+
+    creds = None
+    if TOKEN_PATH.exists():
+        creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), DRIVE_SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            log("Renovando token de acceso a Drive...")
+            creds.refresh(Request())
+        else:
+            if not CLIENT_SECRET_PATH.exists():
+                raise RuntimeError(
+                    f"No se encontró {CLIENT_SECRET_PATH.name}. "
+                    "Ver README.md sección 'Agente' para crearlo en Google Cloud Console."
+                )
+            log("Primera vez: se abrirá tu navegador para autorizar acceso a Drive...")
+            flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_SECRET_PATH), DRIVE_SCOPES)
+            creds = flow.run_local_server(port=0)
+        TOKEN_PATH.write_text(creds.to_json(), encoding="utf-8")
+    return creds
 
 
 def log(msg):
@@ -245,37 +273,63 @@ def procesar_excel(ruta_excel: Path) -> Path:
 # PASO 3: Subir a Google Drive (reemplaza el archivo, mismo ID de siempre)
 # ----------------------------------------------------------------------
 def subir_a_drive(ruta_json: Path):
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import InstalledAppFlow
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
 
-    creds = None
-    if TOKEN_PATH.exists():
-        creds = Credentials.from_authorized_user_file(str(TOKEN_PATH), DRIVE_SCOPES)
-
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            log("Renovando token de acceso a Drive...")
-            creds.refresh(Request())
-        else:
-            if not CLIENT_SECRET_PATH.exists():
-                raise RuntimeError(
-                    f"No se encontró {CLIENT_SECRET_PATH.name}. "
-                    "Ver README.md sección 'Agente' para crearlo en Google Cloud Console."
-                )
-            log("Primera vez: se abrirá tu navegador para autorizar acceso a Drive...")
-            flow = InstalledAppFlow.from_client_secrets_file(str(CLIENT_SECRET_PATH), DRIVE_SCOPES)
-            creds = flow.run_local_server(port=0)
-        TOKEN_PATH.write_text(creds.to_json(), encoding="utf-8")
-
+    creds = obtener_credenciales_drive()
     service = build("drive", "v3", credentials=creds)
 
     log(f"Subiendo nueva versión del archivo a Drive (ID {DRIVE_FILE_ID})...")
     media = MediaFileUpload(str(ruta_json), mimetype="application/json", resumable=False)
     service.files().update(fileId=DRIVE_FILE_ID, media_body=media).execute()
     log("Archivo actualizado en Drive correctamente.")
+
+
+# ----------------------------------------------------------------------
+# PASO 3.5: Asignación automática de "Profesional a cargo" para proyectos
+# nuevos (nunca sobrescribe una asignación ya existente, manual o automática)
+# ----------------------------------------------------------------------
+def asignar_profesionales_automatico(ruta_json: Path):
+    import io
+    from googleapiclient.discovery import build
+    from googleapiclient.http import MediaIoBaseUpload
+
+    sys.path.insert(0, str(BASE_DIR / "scripts"))
+    from reglas_profesionales import calcular_profesional
+
+    proyectos = json.loads(ruta_json.read_text(encoding="utf-8"))["proyectos"]
+
+    creds = obtener_credenciales_drive()
+    service = build("drive", "v3", credentials=creds)
+
+    log("Revisando si hay proyectos nuevos sin profesional asignado...")
+    contenido = service.files().get_media(fileId=DATOS_EXTRA_FILE_ID).execute()
+    datos_extra = json.loads(contenido.decode("utf-8")) if contenido else {}
+
+    asignados = 0
+    for p in proyectos:
+        id_proyecto = p.get("id_proyecto")
+        if not id_proyecto:
+            continue
+        entrada = datos_extra.get(id_proyecto, {})
+        if entrada.get("profesional"):
+            continue  # ya tiene alguien asignado (manual o automático) -> no se toca
+        profesional = calcular_profesional(p.get("programa"), p.get("comuna"))
+        if profesional:
+            entrada["profesional"] = profesional
+            datos_extra[id_proyecto] = entrada
+            asignados += 1
+
+    if asignados == 0:
+        log("No había proyectos nuevos que requirieran asignación automática.")
+        return
+
+    media = MediaIoBaseUpload(
+        io.BytesIO(json.dumps(datos_extra, ensure_ascii=False).encode("utf-8")),
+        mimetype="application/json",
+    )
+    service.files().update(fileId=DATOS_EXTRA_FILE_ID, media_body=media).execute()
+    log(f"Profesional asignado automáticamente a {asignados} proyecto(s) nuevo(s).")
 
 
 # ----------------------------------------------------------------------
@@ -333,6 +387,12 @@ def main():
         log("El archivo procesado sigue disponible en para_subir_a_drive/proyectos.json")
         log("para subirlo manualmente si prefieres, mientras resolvemos el error.")
         sys.exit(1)
+
+    try:
+        asignar_profesionales_automatico(ruta_json)
+    except Exception as e:
+        log(f"ERROR al asignar profesionales automáticamente: {e}")
+        log("Esto no detiene el resto del flujo — se puede corregir manualmente en el dashboard.")
 
     try:
         publicar_en_github()

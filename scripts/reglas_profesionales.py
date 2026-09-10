@@ -29,6 +29,9 @@ PROGRAMAS_PROFESIONAL_FIJO = {
         "Fondo Recuperación de Ciudades",
         "Revitalización de Barrios e Infraestructura Patrimonial Emblemática",
     ],
+    "Carlos Pinto": [
+        "Programa Tenencia Responsable de Animales de Compañía",
+    ],
 }
 
 # Programas que se dividen por comuna
@@ -51,9 +54,7 @@ COMUNAS_ROMINA_CANIHUANTE = {
 }
 
 # Programas explícitamente sin designar (no se les asigna nadie)
-PROGRAMAS_SIN_DESIGNAR = [
-    "Programa Tenencia Responsable de Animales de Compañía",
-]
+PROGRAMAS_SIN_DESIGNAR = []
 
 
 def calcular_profesional(programa: str, comuna: str):
