@@ -1440,51 +1440,76 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   });
   y += kpiH + 6;
 
-  // ---- Recuadro de contraste: proyectos "En Revisión URS" por profesional (rojo/alerta) ----
+  // ---- Tarjetas: proyectos "En Revisión URS" por profesional ----
+  // Mismo formato visual que las tarjetas de KPI de arriba (ribete de color,
+  // número grande, etiqueta abajo), una tarjeta por profesional.
   const conteoProfesional = {};
   filtered.filter(d => d.estado === 'En Revisión URS').forEach(d => {
     const nombre = d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar';
     conteoProfesional[nombre] = (conteoProfesional[nombre] || 0) + 1;
   });
-  const partesProfesional = Object.entries(conteoProfesional)
-    .sort((a,b) => b[1]-a[1])
-    .map(([nombre, n]) => `${nombre}: ${n}`);
+  const tarjetasProfesional = Object.entries(conteoProfesional).sort((a,b) => b[1]-a[1]);
 
-  doc.setFontSize(8.5);
-  const lineasCaja = doc.splitTextToSize(
-    partesProfesional.length ? partesProfesional.join('   |   ') : 'Sin proyectos en este estado',
-    contentW - 8
-  ).slice(0, 2);
-  const alturaCaja = 6 + lineasCaja.length * 4.2 + 3;
+  doc.setFontSize(9.5);
+  doc.setTextColor(35, 49, 108);
+  doc.setFont(undefined, 'bold');
+  doc.text('Proyectos "En Revisión URS" por Profesional', marginX, y);
+  doc.setFont(undefined, 'normal');
+  y += 5;
 
-  doc.setFillColor(58, 20, 32);
-  doc.setDrawColor(201, 87, 107);
-  doc.roundedRect(marginX, y, contentW, alturaCaja, 1.5, 1.5, 'FD');
+  if (tarjetasProfesional.length === 0) {
+    doc.setFontSize(8.5);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Sin proyectos en este estado en la vista actual.', marginX, y + 4);
+    y += 12;
+  } else {
+    const gapProf = 6;
+    const maxPorFila = 6;
+    const nCols = Math.min(tarjetasProfesional.length, maxPorFila);
+    const profW = (contentW - gapProf * (nCols - 1)) / nCols;
+    const profH = 20;
+    const colorProf = [201, 87, 107];
+    tarjetasProfesional.forEach(([nombre, n], i) => {
+      const fila = Math.floor(i / maxPorFila);
+      const col = i % maxPorFila;
+      const px = marginX + col * (profW + gapProf);
+      const py = y + fila * (profH + 5);
+      doc.setFillColor(245, 246, 249);
+      doc.setDrawColor(225, 227, 232);
+      doc.roundedRect(px, py, profW, profH, 1.5, 1.5, 'FD');
+      doc.setFillColor(colorProf[0], colorProf[1], colorProf[2]);
+      doc.roundedRect(px, py, 2.2, profH, 1, 1, 'F');
+      doc.setFontSize(15);
+      doc.setTextColor(colorProf[0], colorProf[1], colorProf[2]);
+      doc.setFont(undefined, 'bold');
+      doc.text(String(n), px + 6, py + 11);
+      doc.setFont(undefined, 'normal');
+      doc.setFontSize(7);
+      doc.setTextColor(90, 90, 95);
+      doc.text(nombre, px + 6, py + 16.5, { maxWidth: profW - 8 });
+    });
+    const filas = Math.ceil(tarjetasProfesional.length / maxPorFila);
+    y += filas * (profH + 5) + 1;
+  }
 
-  doc.setFontSize(9);
-  doc.setTextColor(255, 215, 221);
-  doc.text('Proyectos "En Revisión URS" por Profesional', marginX + 4, y + 6);
-  doc.setFontSize(8.5);
-  doc.setTextColor(240, 184, 194);
-  doc.text(lineasCaja, marginX + 4, y + 11);
+  // ---- Gráficos: 3 en una sola fila, a mayor tamaño (se quitó "Distribución
+  // por programa" para dejarles más espacio a los 3 restantes) ----
+  const gapChart = 8;
+  const colW3 = (contentW - gapChart * 2) / 3;
+  const rowH = 78;
+  const c1X = marginX, c2X = marginX + colW3 + gapChart, c3X = marginX + (colW3 + gapChart) * 2;
 
-  y += alturaCaja + 6;
-
-  // ---- Gráficos: 2 columnas, aprovechando el ancho extra de la hoja horizontal ----
-  const colW = (contentW - 8) / 2;
-  const rowH = 52;
-  const col1X = marginX, col2X = marginX + colW + 8;
-
-  agregarImagenChart(doc, 'chartEstado', col1X, y, colW, rowH, 'Distribución por estado');
-  agregarImagenChart(doc, 'chartProgramaDonut', col2X, y, colW, rowH, 'Distribución por programa');
-  y += rowH + 6;
-
-  agregarImagenChart(doc, 'chartAportePorProvincia', col1X, y, colW, rowH, 'Aporte SUBDERE por provincia');
-  agregarImagenChart(doc, 'chartEvento', col2X, y, colW, rowH, 'Distribución por evento');
+  agregarImagenChart(doc, 'chartEstado', c1X, y, colW3, rowH, 'Distribución por estado');
+  agregarImagenChart(doc, 'chartAportePorProvincia', c2X, y, colW3, rowH, 'Aporte SUBDERE por provincia');
+  agregarImagenChart(doc, 'chartEvento', c3X, y, colW3, rowH, 'Distribución por evento');
   y += rowH + 8;
 
   // Tabla de comunas a ancho completo: entran las 15 comunas de la región
-  // sin necesidad de recortar ninguna.
+  // sin necesidad de recortar ninguna. Si no alcanza el espacio para el
+  // título + la tabla completa en la página actual, se pasa a una hoja
+  // nueva para que ambos queden juntos (nunca el título solo).
+  const pageHLandscape = 215.9;
+  if (y > pageHLandscape - 110) { doc.addPage(); y = 15; }
   agregarResumenComunaTabla(doc, marginX, y, contentW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica');
   y = doc.lastAutoTable.finalY + 10;
 
