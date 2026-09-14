@@ -1429,7 +1429,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
 
   doc.setFontSize(9);
   doc.setTextColor(255, 215, 221);
-  doc.text('⚠ Proyectos "En Revisión URS" por Profesional', marginX + 4, y + 6);
+  doc.text('Proyectos "En Revisión URS" por Profesional', marginX + 4, y + 6);
   doc.setFontSize(8.5);
   doc.setTextColor(240, 184, 194);
   doc.text(lineasCaja, marginX + 4, y + 11);
@@ -1478,11 +1478,15 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
   doc.text('Listado detallado: Proyectos "En Revisión URS" (ordenado por días en revisión)', x, y);
   y += 5;
 
-  const iconoUrgencia = (dias) => {
-    if (dias == null || isNaN(dias)) return '';
-    if (dias > 20) return '🧨';
-    if (dias >= 11) return '💡';
-    return '';
+  // Colores de urgencia dibujados como círculo vectorial (no emoji, para que
+  // siempre se vean bien sin depender de si la fuente del PDF los soporta).
+  const FONT_SIZE_TABLA = 6.8;
+  const RADIO_CIRCULO = (FONT_SIZE_TABLA * 0.3528) / 2; // pt -> mm, mismo alto que el texto
+  const colorUrgencia = (dias) => {
+    if (dias == null || isNaN(dias)) return null;
+    if (dias > 20) return [201, 87, 107];   // rojo
+    if (dias >= 11) return [230, 181, 46];  // amarillo
+    return null;
   };
 
   const proyectosRevision = filtered
@@ -1504,16 +1508,27 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
     head: [['Días', '', 'Profesional', 'ID', 'Proyecto', 'Comuna', 'Programa']],
     body: proyectosRevision.map(d => [
       d.dias_en_estado ?? '',
-      iconoUrgencia(d.dias_en_estado),
+      '', // el círculo se dibuja aparte en didDrawCell, no como texto
       d.profesional, d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '',
     ]),
-    styles: { fontSize: 6.8, cellPadding: 1.3 },
+    styles: { fontSize: FONT_SIZE_TABLA, cellPadding: 1.3 },
     columnStyles: {
       0: { halign: 'center', cellWidth: 12 },
       1: { halign: 'center', cellWidth: 8 },
       4: { cellWidth: maxW * 0.30 },
     },
-    headStyles: { fillColor: [201, 87, 107], fontSize: 6.8 },
+    headStyles: { fillColor: [201, 87, 107], fontSize: FONT_SIZE_TABLA },
+    didDrawCell: (data) => {
+      if (data.section === 'body' && data.column.index === 1) {
+        const color = colorUrgencia(Number(proyectosRevision[data.row.index].dias_en_estado));
+        if (color) {
+          const cx = data.cell.x + data.cell.width / 2;
+          const cy = data.cell.y + data.cell.height / 2;
+          doc.setFillColor(color[0], color[1], color[2]);
+          doc.circle(cx, cy, RADIO_CIRCULO, 'F');
+        }
+      }
+    },
   });
 
   return doc.lastAutoTable.finalY + 10;
