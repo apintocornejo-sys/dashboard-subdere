@@ -1349,9 +1349,9 @@ function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
 }
 
 function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
-  const marginX = 12;
-  const pageW = 215.9;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const marginX = 14;
+  const pageW = 279.4;
   const contentW = pageW - marginX * 2;
   let textoX = marginX;
 
@@ -1362,51 +1362,67 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
     textoX = marginX + anchoLogo + 6;
   }
 
-  const maxTitleWidth = pageW - marginX - textoX;
-
   // Título en dos líneas (más robusto que una sola línea larga: nunca se corta)
   doc.setFont(undefined, 'bold');
-  doc.setFontSize(13);
+  doc.setFontSize(14);
   doc.setTextColor(35, 49, 108);
   doc.text('SUBDERE en Línea', textoX, 13);
-  doc.setFontSize(10.5);
+  doc.setFontSize(11);
   doc.setTextColor(70, 80, 120);
-  doc.text('Informe de Resumen — Región de Coquimbo', textoX, 19, { maxWidth: maxTitleWidth });
+  doc.text('Informe de Resumen — Región de Coquimbo', textoX, 19.5);
   doc.setFont(undefined, 'normal');
 
   doc.setFontSize(8.5);
   doc.setTextColor(110, 110, 110);
-  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, textoX, 24.5);
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, textoX, 25);
 
-  let y = 31;
-  doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
-  y += 4;
+  let y = 30;
 
-  // Filtros activos (ajustado con salto de línea automático para nunca salirse del margen)
-  doc.setFontSize(8.5);
-  doc.setTextColor(90, 90, 90);
-  let filtrosTexto = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW);
-  if (filtrosTexto.length > 2) { filtrosTexto = filtrosTexto.slice(0, 2); filtrosTexto[1] += '…'; }
-  doc.text(filtrosTexto, marginX, y);
-  y += filtrosTexto.length * 4 + 2;
+  // ---- Recuadro de contraste: filtros aplicados + KPIs (azul institucional) ----
+  doc.setFontSize(8);
+  const filtrosLineas = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW - 8).slice(0, 2);
+  const alturaFiltrosCaja = 6 + filtrosLineas.length * 4;
 
-  // KPIs (mismos 4 indicadores que se ven en el dashboard)
+  doc.setFillColor(24, 34, 74);
+  doc.setDrawColor(70, 90, 160);
+  doc.roundedRect(marginX, y, contentW, alturaFiltrosCaja, 1.5, 1.5, 'FD');
+  doc.setFontSize(8);
+  doc.setTextColor(210, 216, 240);
+  doc.text(filtrosLineas, marginX + 4, y + 5);
+  y += alturaFiltrosCaja + 5;
+
+  // ---- Tarjetas de KPI (estilo tablero moderno) ----
   const enRevisionURS = filtered.filter(d => d.estado === 'En Revisión URS').length;
   const enEvaluacionTecnica = filtered.filter(d => d.estado === 'En Evaluación Técnica').length;
   const elegibles = filtered.filter(d => d.estado === 'Elegible').length;
-  doc.setFontSize(9.5);
-  doc.setTextColor(20, 20, 20);
-  const kpiTexto = doc.splitTextToSize(
-    `Proyectos: ${filtered.length.toLocaleString('es-CL')}   |   En Revisión URS: ${enRevisionURS.toLocaleString('es-CL')}   |   En Evaluación Técnica: ${enEvaluacionTecnica.toLocaleString('es-CL')}   |   Elegibles: ${elegibles.toLocaleString('es-CL')}`,
-    contentW
-  );
-  doc.text(kpiTexto, marginX, y);
-  y += kpiTexto.length * 4 + 2;
-  doc.setDrawColor(225); doc.line(marginX, y, pageW - marginX, y);
-  y += 4;
+  const kpis = [
+    { label: 'Proyectos', valor: filtered.length, color: [79, 178, 168] },
+    { label: 'En Revisión URS', valor: enRevisionURS, color: [201, 87, 107] },
+    { label: 'En Evaluación Técnica', valor: enEvaluacionTecnica, color: [214, 140, 69] },
+    { label: 'Elegibles', valor: elegibles, color: [91, 141, 217] },
+  ];
+  const gapKpi = 6;
+  const kpiW = (contentW - gapKpi * 3) / 4;
+  const kpiH = 20;
+  kpis.forEach((k, i) => {
+    const kx = marginX + i * (kpiW + gapKpi);
+    doc.setFillColor(245, 246, 249);
+    doc.setDrawColor(225, 227, 232);
+    doc.roundedRect(kx, y, kpiW, kpiH, 1.5, 1.5, 'FD');
+    doc.setFillColor(k.color[0], k.color[1], k.color[2]);
+    doc.roundedRect(kx, y, 2.2, kpiH, 1, 1, 'F'); // ribete de color a la izquierda
+    doc.setFontSize(15);
+    doc.setTextColor(k.color[0], k.color[1], k.color[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text(String(k.valor.toLocaleString('es-CL')), kx + 6, y + 11);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(90, 90, 95);
+    doc.text(k.label, kx + 6, y + 16.5, { maxWidth: kpiW - 8 });
+  });
+  y += kpiH + 6;
 
-  // Resumen "En Revisión URS" por profesional — recuadro de alto contraste
-  // (mismo criterio visual que el panel de alerta en el dashboard).
+  // ---- Recuadro de contraste: proyectos "En Revisión URS" por profesional (rojo/alerta) ----
   const conteoProfesional = {};
   filtered.filter(d => d.estado === 'En Revisión URS').forEach(d => {
     const nombre = d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar';
@@ -1423,8 +1439,8 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   ).slice(0, 2);
   const alturaCaja = 6 + lineasCaja.length * 4.2 + 3;
 
-  doc.setFillColor(58, 20, 32);   // mismo tono que --panel-contraste del dashboard
-  doc.setDrawColor(201, 87, 107); // mismo tono que el borde rosado del dashboard
+  doc.setFillColor(58, 20, 32);
+  doc.setDrawColor(201, 87, 107);
   doc.roundedRect(marginX, y, contentW, alturaCaja, 1.5, 1.5, 'FD');
 
   doc.setFontSize(9);
@@ -1434,10 +1450,11 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   doc.setTextColor(240, 184, 194);
   doc.text(lineasCaja, marginX + 4, y + 11);
 
-  y += alturaCaja + 5;
+  y += alturaCaja + 6;
 
-  const colW = (pageW - marginX * 2 - 8) / 2; // 2 columnas con separación de 8mm
-  const rowH = 46;
+  // ---- Gráficos: 2 columnas, aprovechando el ancho extra de la hoja horizontal ----
+  const colW = (contentW - 8) / 2;
+  const rowH = 52;
   const col1X = marginX, col2X = marginX + colW + 8;
 
   agregarImagenChart(doc, 'chartEstado', col1X, y, colW, rowH, 'Distribución por estado');
@@ -1454,8 +1471,6 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   y = doc.lastAutoTable.finalY + 10;
 
   // Tabla PMB Tradicional / Tradicional, año de postulación 2026, por comuna y estado.
-  // Como puede sumar bastantes filas y columnas, esta sección puede continuar
-  // en una segunda hoja carta si no alcanza el espacio restante.
   agregarTablaTradicional2026PDF(doc, marginX, y, contentW);
   y = doc.lastAutoTable.finalY + 10;
 
@@ -1470,7 +1485,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
 }
 
 function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
-  const pageH = 279.4;
+  const pageH = 215.9;
   if (y > pageH - 30) { doc.addPage(); y = 15; }
 
   doc.setFontSize(10);
@@ -1535,7 +1550,7 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
 }
 
 function agregarListadoTransferenciaGR2026(doc, x, y, maxW) {
-  const pageH = 279.4;
+  const pageH = 215.9;
   if (y > pageH - 30) { doc.addPage(); y = 15; }
 
   doc.setFontSize(10);
@@ -1577,7 +1592,7 @@ function agregarListadoTransferenciaGR2026(doc, x, y, maxW) {
 }
 
 function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
-  const pageH = 279.4;
+  const pageH = 215.9;
   if (y > pageH - 30) { doc.addPage(); y = 15; }
 
   doc.setFontSize(9);
