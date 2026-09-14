@@ -313,8 +313,15 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
 
   <div class="view active" id="view-resumen">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-      <button class="btn btn-primary" onclick="descargarInformeResumenPDF()">📄 Descargar informe PDF</button>
+    <div style="display:flex;justify-content:center;margin-bottom:12px">
+      <button class="btn btn-primary" onclick="descargarInformeResumenPDF()" style="display:inline-flex;align-items:center;gap:8px">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#F5F5DC" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M14 2v6h6" stroke="#F5F5DC" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M8 13h8M8 17h5" stroke="#F5F5DC" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        Descargar informe PDF
+      </button>
     </div>
     <div class="kpis" id="kpis"></div>
 
@@ -844,6 +851,7 @@ function renderResumen() {
     });
   } else if (charts['chartEvento']) {
     charts['chartEvento'].destroy();
+    delete charts['chartEvento'];
   }
 
   // Resumen por comuna x estado: barra horizontal APILADA. Es la forma más
@@ -1289,9 +1297,18 @@ function resumenFiltrosActivos() {
 function descargarInformeResumenPDF() {
   const { jsPDF } = window.jspdf;
   const logoImg = new Image();
-  logoImg.onload = () => generarInformeResumenConLogo(jsPDF, logoImg.naturalWidth, logoImg.naturalHeight);
-  logoImg.onerror = () => generarInformeResumenConLogo(jsPDF, null, null);
+  logoImg.onload = () => generarInformeResumenSeguro(jsPDF, logoImg.naturalWidth, logoImg.naturalHeight);
+  logoImg.onerror = () => generarInformeResumenSeguro(jsPDF, null, null);
   logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
+}
+
+function generarInformeResumenSeguro(jsPDF, logoW, logoH) {
+  try {
+    generarInformeResumenConLogo(jsPDF, logoW, logoH);
+  } catch (err) {
+    console.error('Error generando el informe PDF:', err);
+    alert('No se pudo generar el PDF: ' + err.message + '\n\nRevisa la Consola del navegador (F12) para más detalle, o avísame el mensaje de error.');
+  }
 }
 
 function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
@@ -1335,7 +1352,7 @@ function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
   doc.setFontSize(9);
   doc.setTextColor(70, 70, 70);
   doc.text(titulo, x, y);
-  if (!chart) {
+  if (!chart || !chart.canvas || !chart.canvas.width) {
     doc.setDrawColor(200); doc.rect(x, y + 2, maxW, maxH);
     doc.setFontSize(8); doc.text('(sin datos)', x + 2, y + maxH / 2);
     return;
