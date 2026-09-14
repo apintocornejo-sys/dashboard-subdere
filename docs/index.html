@@ -1350,6 +1350,7 @@ function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
 
 function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  doc.setFont('helvetica', 'normal'); // Century Gothic no disponible en el PDF; Helvetica es la alternativa geométrica más cercana
   const marginX = 14;
   const pageW = 279.4;
   const contentW = pageW - marginX * 2;
@@ -1660,6 +1661,7 @@ function descargarResumenPDF() {
 
 function generarPDFConLogo(jsPDF, filasDatos, logoW, logoH) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  doc.setFont('helvetica', 'normal');
   const pageW = 279.4;
   const marginX = 12;
 
