@@ -1475,13 +1475,20 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
 
   doc.setFontSize(10);
   doc.setTextColor(35, 49, 108);
-  doc.text('Listado detallado: Proyectos "En Revisión URS" por Profesional', x, y);
+  doc.text('Listado detallado: Proyectos "En Revisión URS" (ordenado por días en revisión)', x, y);
   y += 5;
+
+  const iconoUrgencia = (dias) => {
+    if (dias == null || isNaN(dias)) return '';
+    if (dias > 20) return '🧨';
+    if (dias >= 11) return '💡';
+    return '';
+  };
 
   const proyectosRevision = filtered
     .filter(d => d.estado === 'En Revisión URS')
     .map(d => ({ ...d, profesional: d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar' }))
-    .sort((a, b) => a.profesional.localeCompare(b.profesional) || a.comuna.localeCompare(b.comuna));
+    .sort((a, b) => (Number(b.dias_en_estado) || 0) - (Number(a.dias_en_estado) || 0));
 
   if (proyectosRevision.length === 0) {
     doc.setFontSize(8);
@@ -1494,22 +1501,19 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
     startY: y,
     margin: { left: x },
     tableWidth: maxW,
-    head: [['Profesional', 'ID', 'Proyecto', 'Comuna', 'Programa']],
-    body: proyectosRevision.map(d => [d.profesional, d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '']),
+    head: [['Días', '', 'Profesional', 'ID', 'Proyecto', 'Comuna', 'Programa']],
+    body: proyectosRevision.map(d => [
+      d.dias_en_estado ?? '',
+      iconoUrgencia(d.dias_en_estado),
+      d.profesional, d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '',
+    ]),
     styles: { fontSize: 6.8, cellPadding: 1.3 },
-    columnStyles: { 2: { cellWidth: maxW * 0.35 } },
-    headStyles: { fillColor: [201, 87, 107], fontSize: 6.8 },
-    didParseCell: (data) => {
-      // Resalta visualmente el inicio de cada profesional distinto
-      if (data.section === 'body' && data.column.index === 0) {
-        const prev = data.row.index > 0 ? proyectosRevision[data.row.index - 1].profesional : null;
-        if (prev !== proyectosRevision[data.row.index].profesional) {
-          data.cell.styles.fontStyle = 'bold';
-        } else {
-          data.cell.text = [''];
-        }
-      }
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 12 },
+      1: { halign: 'center', cellWidth: 8 },
+      4: { cellWidth: maxW * 0.30 },
     },
+    headStyles: { fillColor: [201, 87, 107], fontSize: 6.8 },
   });
 
   return doc.lastAutoTable.finalY + 10;
