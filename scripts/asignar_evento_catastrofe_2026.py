@@ -81,7 +81,11 @@ def main():
             continue
 
         # 3. Año de postulación 2026
-        if str(p.get("anio_postulacion")) != "2026":
+        try:
+            anio_postulacion = int(float(p.get("anio_postulacion")))
+        except (TypeError, ValueError):
+            continue
+        if anio_postulacion != 2026:
             continue
 
         coincidencias.append(p)

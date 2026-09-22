@@ -1523,7 +1523,8 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
 
   // Listado detallado: proyectos del evento "Transferencia Gobierno Regional
   // 2026", ordenados por estado.
-  agregarListadoTransferenciaGR2026(doc, marginX, y, contentW);
+  y = agregarListadoPorEvento(doc, marginX, y, contentW, 'Ficha Simplificada SUBDERE Catastrofe 2026');
+  agregarListadoPorEvento(doc, marginX, y, contentW, 'Transferencia Gobierno Regional 2026');
 
   doc.save(`informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.pdf`);
 }
@@ -1593,24 +1594,24 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
   return doc.lastAutoTable.finalY + 10;
 }
 
-function agregarListadoTransferenciaGR2026(doc, x, y, maxW) {
+function agregarListadoPorEvento(doc, x, y, maxW, nombreEvento) {
   const pageH = 215.9;
   if (y > pageH - 30) { doc.addPage(); y = 15; }
 
   doc.setFontSize(10);
   doc.setTextColor(35, 49, 108);
-  doc.text('Listado detallado: Proyectos "Transferencia Gobierno Regional 2026" (por estado)', x, y);
+  doc.text(`Listado detallado: Proyectos "${nombreEvento}" (por estado)`, x, y);
   y += 5;
 
-  const proyectosGR2026 = filtered
-    .filter(d => d.evento === 'Transferencia Gobierno Regional 2026')
+  const proyectosEvento = filtered
+    .filter(d => d.evento === nombreEvento)
     .sort((a, b) => a.estado.localeCompare(b.estado) || a.comuna.localeCompare(b.comuna));
 
-  if (proyectosGR2026.length === 0) {
+  if (proyectosEvento.length === 0) {
     doc.setFontSize(8);
     doc.setTextColor(120, 120, 120);
     doc.text('(sin proyectos de este evento en la vista actual)', x, y + 4);
-    return;
+    return y + 10;
   }
 
   doc.autoTable({
@@ -1618,7 +1619,7 @@ function agregarListadoTransferenciaGR2026(doc, x, y, maxW) {
     margin: { left: x },
     tableWidth: maxW,
     head: [['Estado', 'ID', 'Proyecto', 'Comuna', 'Programa']],
-    body: proyectosGR2026.map(d => [d.estado ?? '', d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '']),
+    body: proyectosEvento.map(d => [d.estado ?? '', d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '']),
     styles: { fontSize: 6.8, cellPadding: 1.3 },
     columnStyles: { 2: { cellWidth: maxW * 0.35 } },
     headStyles: { fillColor: [35, 49, 108], fontSize: 6.8 },
@@ -1637,6 +1638,7 @@ function agregarListadoTransferenciaGR2026(doc, x, y, maxW) {
       };
     })(),
   });
+  return doc.lastAutoTable.finalY + 10;
 }
 
 function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
