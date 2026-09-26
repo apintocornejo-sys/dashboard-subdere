@@ -19,7 +19,30 @@
 body { margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; }
 header { padding:20px 28px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; background:var(--panel); }
 header h1 { font-size:1.25rem; margin:0; font-weight:600; }
-header .sub { color:var(--ink-dim); font-size:0.8rem; }
+header .sub { color:var(--ink-dim); font-size:0.75rem; }
+.badge-actualizado { display:flex; align-items:center; gap:7px; background:rgba(79,178,168,0.12); border:1px solid rgba(79,178,168,0.4); border-radius:20px; padding:5px 12px; font-size:0.78rem; color:#8fd8cd; font-weight:600; }
+.badge-dot { width:8px; height:8px; border-radius:50%; background:#4fb2a8; flex-shrink:0; animation:pulso-actualizado 2s ease-in-out infinite; }
+
+/* ---------- Modo Reunión: pantalla simplificada para proyectar ---------- */
+#btn-salir-reunion { position:fixed; top:16px; right:16px; z-index:200; background:#c9576b; color:#fff; border:none; border-radius:8px; padding:12px 20px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 16px rgba(0,0,0,0.4); }
+body.modo-reunion .sidebar,
+body.modo-reunion .filters,
+body.modo-reunion header,
+body.modo-reunion #view-resumen > div:first-child,
+body.modo-reunion .grid { display:none !important; }
+body.modo-reunion .main-content { width:100%; }
+body.modo-reunion .view { padding:40px 6vw; max-width:1400px; margin:0 auto; }
+body.modo-reunion .kpis { grid-template-columns:repeat(4, 1fr); gap:24px; margin-bottom:24px; }
+body.modo-reunion .kpi { padding:32px 24px; }
+body.modo-reunion .kpi .value { font-size:4rem; }
+body.modo-reunion .kpi .label { font-size:1.1rem; margin-top:10px; }
+body.modo-reunion .panel-contraste { padding:24px; }
+body.modo-reunion .panel-contraste h2 { font-size:1.4rem; }
+body.modo-reunion .profesional-revision-grid { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
+body.modo-reunion .profesional-card { padding:26px 20px; }
+body.modo-reunion .profesional-card .num,
+body.modo-reunion .profesional-card .name { font-size:2.6rem; }
+@keyframes pulso-actualizado { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(79,178,168,0.5); } 50% { opacity:0.6; box-shadow:0 0 0 4px rgba(79,178,168,0); } }
 
 .app-layout { display:flex; align-items:stretch; min-height:calc(100vh - 90px); }
 .sidebar { width:200px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border); padding:14px 0; }
@@ -91,6 +114,7 @@ canvas { height:300px !important; }
 table { width:100%; border-collapse:collapse; font-size:0.82rem; }
 .tabla-compacta table { font-size:0.68rem; }
 .tabla-compacta th, .tabla-compacta td { padding:4px 5px; white-space:nowrap; }
+.tabla-trad-toggle.activo { background:var(--accent); color:#08211d; border-color:var(--accent); }
 th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
 th { color:var(--ink-dim); font-weight:600; cursor:pointer; user-select:none; white-space:nowrap; }
 th:hover { color:var(--ink); }
@@ -196,6 +220,12 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .form-grid { grid-template-columns:1fr; }
   .minuta-row .k { width:130px; }
 
+  body.modo-reunion .kpis { grid-template-columns:repeat(2, 1fr); }
+  body.modo-reunion .kpi .value { font-size:2.2rem; }
+  body.modo-reunion .profesional-card .num,
+  body.modo-reunion .profesional-card .name { font-size:1.6rem; }
+  #btn-salir-reunion { top:auto; bottom:16px; right:16px; padding:10px 16px; font-size:0.85rem; }
+
   .profesional-revision-grid { grid-template-columns:repeat(2, 1fr); }
   .tabla-compacta { overflow-x:auto; -webkit-overflow-scrolling:touch; }
   #tabla-tradicional-2026 table { white-space:nowrap; }
@@ -203,11 +233,13 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
 /* ---------- Afinado específico para ancho de iPhone (iPhone 15 Pro: 393px lógicos) ---------- */
 @media (max-width: 430px) {
-  header { flex-direction:column; align-items:flex-start; gap:4px; }
+  header { flex-direction:column; align-items:flex-start; gap:8px; }
   header > div:first-child { gap:10px; }
+  header > div:last-child { align-items:flex-start !important; width:100%; }
   header h1 { font-size:0.92rem; }
   #header-logo { height:28px !important; }
   header .sub { font-size:0.66rem; }
+  .badge-actualizado { font-size:0.7rem; padding:4px 10px; }
 
   .filters { padding-top:10px; padding-bottom:10px; }
   .filter-group label { font-size:0.66rem; }
@@ -243,12 +275,20 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 </head>
 <body>
 
+<button id="btn-salir-reunion" onclick="toggleModoReunion()" style="display:none">✕ Salir del Modo Reunión</button>
+
 <header>
   <div style="display:flex; align-items:center; gap:14px;">
     <img id="header-logo" alt="Logo SUBDERE" style="height:42px; width:auto; flex-shrink:0;">
     <h1 style="margin:0;">SUBDERE en Línea — Dashboard de Proyectos (Región de Coquimbo)</h1>
   </div>
-  <div class="sub" id="header-sub">Módulo: Presentación de Proyectos · Cargando datos...</div>
+  <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+    <div id="badge-actualizado" class="badge-actualizado">
+      <span class="badge-dot"></span>
+      <span id="badge-actualizado-texto">Cargando datos...</span>
+    </div>
+    <div class="sub" id="header-sub"></div>
+  </div>
 </header>
 
 <div id="app" style="display:none">
@@ -313,7 +353,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
 
   <div class="view active" id="view-resumen">
-    <div style="display:flex;justify-content:center;margin-bottom:12px">
+    <div style="display:flex;justify-content:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="descargarInformeResumenPDF()" style="display:inline-flex;align-items:center;gap:8px">
         <svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#F5F5DC" stroke-width="1.8" stroke-linejoin="round"/>
@@ -322,6 +362,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         </svg>
         Descargar informe PDF
       </button>
+      <button class="btn btn-ghost" id="btn-modo-reunion" onclick="toggleModoReunion()">🖥️ Modo Reunión</button>
     </div>
     <div class="kpis" id="kpis"></div>
 
@@ -334,7 +375,15 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
-      <div class="panel wide"><h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)</h2><div id="tabla-tradicional-2026" class="tabla-compacta" style="overflow-x:auto"></div></div>
+      <div class="panel wide">
+        <h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)</h2>
+        <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+          <button class="btn btn-ghost tabla-trad-toggle activo" data-vista="ambos" onclick="cambiarVistaTradicional('ambos', this)">Ambos</button>
+          <button class="btn btn-ghost tabla-trad-toggle" data-vista="PMB Tradicional" onclick="cambiarVistaTradicional('PMB Tradicional', this)">Solo PMB Tradicional</button>
+          <button class="btn btn-ghost tabla-trad-toggle" data-vista="Tradicional" onclick="cambiarVistaTradicional('Tradicional', this)">Solo Tradicional</button>
+        </div>
+        <div id="tabla-tradicional-2026" class="tabla-compacta" style="overflow-x:auto"></div>
+      </div>
       <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento" style="height:340px !important"></canvas></div>
       <div class="panel wide">
         <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica</h2>
@@ -490,7 +539,10 @@ const DATOS_EXTRA_URL = `https://www.googleapis.com/drive/v3/files/${DATOS_EXTRA
 
 let RAW_DATA = [];
 const fmtCLP = n => '$' + Math.round(n).toLocaleString('es-CL');
-const palette = ['#4fb2a8','#5b8dd9','#d68c45','#8e6bc4','#6fae4f','#c9576b'];
+// Paleta Okabe-Ito, el estándar científicamente validado para daltonismo
+// (protanopia/deuteranopia/tritanopia) — cada color se distingue del resto
+// incluso en escala de grises. Ajustada levemente de brillo para fondo oscuro.
+const palette = ['#E69F00','#56B4E9','#009E73','#D55E00','#0072B2','#CC79A7'];
 if (window.ChartDataLabels) Chart.register(ChartDataLabels);
 Chart.defaults.color = '#a3a29b';
 Chart.defaults.borderColor = '#2e2e2e';
@@ -548,8 +600,9 @@ Promise.all([
       profesional: datosExtra[p.id_proyecto]?.profesional || '',
     }));
     filtered = RAW_DATA;
+    document.getElementById('badge-actualizado-texto').textContent = `Actualizado: ${payload.fecha_actualizacion}`;
     document.getElementById('header-sub').textContent =
-      `Módulo: Presentación de Proyectos · Datos al ${payload.fecha_actualizacion} · ${payload.total_proyectos} proyectos · fuente: Google Drive`;
+      `Módulo: Presentación de Proyectos · ${payload.total_proyectos} proyectos · fuente: Google Drive`;
     document.getElementById('loading').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     refreshFilterOptions();
@@ -702,6 +755,17 @@ function groupBy(arr, key) {
   return [...m.entries()].map(([k,v]) => ({ key:k, n:v.n, monto:v.monto }));
 }
 
+function aplicarDrilldown(campo, valor) {
+  const idFiltro = { provincia: 'f-provincia', comuna: 'f-comuna', programa: 'f-programa', estado: 'f-estado', evento: 'f-evento-filtro' }[campo];
+  if (!idFiltro || !multiselectState[idFiltro]) return;
+  Object.keys(multiselectState).forEach(id => multiselectState[id].clear());
+  multiselectState[idFiltro].add(valor);
+  refreshFilterOptions();
+  applyFilters();
+  const tabTabla = document.querySelector('.tab[data-view="tabla"]');
+  if (tabTabla) tabTabla.click();
+}
+
 function makeChart(id, type, labels, datasets, opts={}) {
   if (charts[id]) charts[id].destroy();
 
@@ -717,13 +781,21 @@ function makeChart(id, type, labels, datasets, opts={}) {
     y: { grid: { color: '#232323' }, beginAtZero: true },
   };
   const userPlugins = opts.plugins || {};
+  const drilldownCampo = opts.drilldownCampo || null;
+  const canvasEl = document.getElementById(id);
+  if (drilldownCampo || opts.onClick) canvasEl.style.cursor = 'pointer';
 
-  charts[id] = new Chart(document.getElementById(id), {
+  charts[id] = new Chart(canvasEl, {
     type, data: { labels, datasets },
     options: Object.assign({
       responsive: true,
       maintainAspectRatio: false,
       scales: baseScales,
+      onClick: drilldownCampo ? (evt, elements) => {
+        if (!elements.length) return;
+        const idx = elements[0].index;
+        aplicarDrilldown(drilldownCampo, labels[idx]);
+      } : undefined,
     }, opts, {
       plugins: Object.assign(
         { legend: { display: defaultLegendOn, position: 'bottom' } },
@@ -795,6 +867,16 @@ function renderProfesionalRevision() {
   }
 }
 
+function toggleModoReunion() {
+  const activo = document.body.classList.toggle('modo-reunion');
+  document.getElementById('btn-salir-reunion').style.display = activo ? 'block' : 'none';
+  if (activo && document.documentElement.requestFullscreen) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else if (!activo && document.fullscreenElement) {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+
 function toggleProfesionalDetalle(nombre) {
   profesionalExpandido = profesionalExpandido === nombre ? null : nombre;
   renderProfesionalRevision();
@@ -809,17 +891,18 @@ function renderResumen() {
   const porEstado = groupBy(filtered,'estado').sort((a,b)=>b.n-a.n).slice(0,12);
   makeChart('chartEstado','bar', porEstado.map(d=>d.key), [{
     data: porEstado.map(d=>d.n), backgroundColor: palette[0], borderRadius:4,
-  }], { indexAxis:'y' });
+  }], { indexAxis:'y', drilldownCampo: 'estado' });
 
   // Distribución por programa: dona — pocas categorías (top 8), útil para
   // comunicar "parte de un todo" de un vistazo.
   const porPrograma = groupBy(filtered,'programa').sort((a,b)=>b.n-a.n).slice(0,8);
-  makeChart('chartProgramaDonut','doughnut', porPrograma.map(d=>d.key), [{ data:porPrograma.map(d=>d.n), backgroundColor:palette.concat(['#c9a94f','#4f8ec9']) }]);
+  makeChart('chartProgramaDonut','doughnut', porPrograma.map(d=>d.key), [{ data:porPrograma.map(d=>d.n), backgroundColor:palette.concat(['#c9a94f','#4f8ec9']) }], { drilldownCampo: 'programa' });
 
   // Aporte por provincia: solo 3 categorías — barra vertical simple y clara.
   const porProvincia = groupBy(filtered,'provincia').sort((a,b)=>b.monto-a.monto);
   makeChart('chartAportePorProvincia','bar', porProvincia.map(d=>d.key), [{ data:porProvincia.map(d=>d.monto), backgroundColor:palette[2], borderRadius:4 }], {
     plugins: { datalabels: { formatter: (v) => fmtCLP(v) } },
+    drilldownCampo: 'provincia',
   });
 
   // PMB Tradicional / Tradicional, Año Postulación 2026: tabla con las 15
@@ -847,6 +930,17 @@ function renderResumen() {
       plugins: {
         legend: { display: true, position: 'bottom' },
         datalabels: { anchor: 'center', align: 'center', color: '#12100c', font: { size: 8, weight: '700' }, formatter: (v) => v > 0 ? v : '' },
+      },
+      onClick: (evt, elements) => {
+        if (!elements.length) return;
+        const el = elements[0];
+        Object.keys(multiselectState).forEach(id => multiselectState[id].clear());
+        multiselectState['f-evento-filtro'].add(eventosOrdenados[el.index]);
+        multiselectState['f-estado'].add(estadosEvento[el.datasetIndex]);
+        refreshFilterOptions();
+        applyFilters();
+        const tabTabla = document.querySelector('.tab[data-view="tabla"]');
+        if (tabTabla) tabTabla.click();
       },
     });
   } else if (charts['chartEvento']) {
@@ -885,8 +979,18 @@ function renderResumen() {
   });
 }
 
+let tradicionalProgramaVista = 'ambos';
+function cambiarVistaTradicional(vista, btn) {
+  tradicionalProgramaVista = vista;
+  document.querySelectorAll('.tabla-trad-toggle').forEach(b => b.classList.remove('activo'));
+  btn.classList.add('activo');
+  renderTablaTradicional2026();
+}
+
 function renderTablaTradicional2026() {
-  const PROGRAMAS_TRAD = ['PMB Tradicional', 'Tradicional'];
+  const PROGRAMAS_TRAD = tradicionalProgramaVista === 'ambos'
+    ? ['PMB Tradicional', 'Tradicional']
+    : [tradicionalProgramaVista];
   const proyectosTrad2026 = filtered.filter(d =>
     PROGRAMAS_TRAD.includes(d.programa) && String(d.anio_postulacion) === '2026'
   );
