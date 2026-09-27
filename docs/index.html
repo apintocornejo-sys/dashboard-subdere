@@ -384,11 +384,13 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="panel wide solo-modo-reunion">
       <h2>PMB Tradicional / Tradicional — Año Postulación 2026</h2>
       <div id="indicadores-tradicional-2026" class="profesional-revision-grid"></div>
+      <div id="indicador-tradicional-detalle"></div>
     </div>
 
     <div class="panel wide solo-modo-reunion">
       <h2>Proyectos por Evento</h2>
       <div id="indicadores-eventos" class="profesional-revision-grid"></div>
+      <div id="indicador-eventos-detalle"></div>
     </div>
 
     <div class="grid">
@@ -842,26 +844,82 @@ function renderKPIs() {
 
 let profesionalExpandido = null;
 
+function circuloUrgencia(dias) {
+  const n = Number(dias);
+  if (isNaN(n)) return '';
+  if (n > 20) return '<span class="circulo-urgencia" style="background:#c9576b" title="Más de 20 días"></span>';
+  if (n >= 11) return '<span class="circulo-urgencia" style="background:#e6b52e" title="11 a 20 días"></span>';
+  return '';
+}
+
+let indicadorExpandido = null; // { tipo: 'programaTrad' | 'evento', valor: string }
+
+function toggleIndicadorDetalle(tipo, valor) {
+  indicadorExpandido = (indicadorExpandido && indicadorExpandido.tipo === tipo && indicadorExpandido.valor === valor)
+    ? null : { tipo, valor };
+  renderIndicadoresModoReunion();
+}
+
+function tablaDetalleIndicador(lista) {
+  const ordenada = [...lista].sort((a, b) =>
+    a.estado.localeCompare(b.estado) || (Number(b.dias_en_estado) || 0) - (Number(a.dias_en_estado) || 0)
+  );
+  return `
+    <table class="profesional-detalle-tabla">
+      <thead><tr><th>Estado</th><th>Días</th><th></th><th>Profesional a Cargo</th><th>ID</th><th>Proyecto</th><th>Comuna</th></tr></thead>
+      <tbody>
+        ${ordenada.map(p => `<tr>
+          <td>${p.estado ?? ''}</td>
+          <td class="num">${p.dias_en_estado ?? ''}</td>
+          <td>${circuloUrgencia(p.dias_en_estado)}</td>
+          <td>${p.profesional && p.profesional.trim() !== '' ? p.profesional : 'Sin asignar'}</td>
+          <td>${p.id_proyecto ?? ''}</td>
+          <td>${p.nombre_proyecto ?? ''}</td>
+          <td>${p.comuna ?? ''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
 function renderIndicadoresModoReunion() {
   // PMB Tradicional / Tradicional, año de postulación 2026
   const PROGRAMAS_TRAD = ['PMB Tradicional', 'Tradicional'];
   const elTrad = document.getElementById('indicadores-tradicional-2026');
+  const detalleTrad = document.getElementById('indicador-tradicional-detalle');
   elTrad.innerHTML = PROGRAMAS_TRAD.map(programa => {
     const n = filtered.filter(d => d.programa === programa && String(d.anio_postulacion) === '2026').length;
-    return `<div class="profesional-card indicador-neutro"><div class="num">${n}</div><div class="name">${programa}</div></div>`;
+    const activo = indicadorExpandido && indicadorExpandido.tipo === 'programaTrad' && indicadorExpandido.valor === programa;
+    return `<div class="profesional-card indicador-neutro${activo ? ' expandido' : ''}" onclick="toggleIndicadorDetalle('programaTrad', '${programa.replace(/'/g,"\\'")}')"><div class="num">${n}</div><div class="name">${programa}</div></div>`;
   }).join('');
+
+  if (indicadorExpandido && indicadorExpandido.tipo === 'programaTrad') {
+    const lista = filtered.filter(d => d.programa === indicadorExpandido.valor && String(d.anio_postulacion) === '2026');
+    detalleTrad.innerHTML = `<div class="profesional-detalle-panel"><h3>${indicadorExpandido.valor} — Año Postulación 2026 (${lista.length})</h3>${tablaDetalleIndicador(lista)}</div>`;
+  } else {
+    detalleTrad.innerHTML = '';
+  }
 
   // Un indicador por cada evento con proyectos (mismos datos del gráfico
   // "Distribución por evento" del Resumen).
   const proyectosConEvento = filtered.filter(d => d.evento && d.evento.trim() !== '');
   const porEvento = groupBy(proyectosConEvento, 'evento').sort((a,b) => b.n - a.n);
   const elEventos = document.getElementById('indicadores-eventos');
+  const detalleEventos = document.getElementById('indicador-eventos-detalle');
   if (porEvento.length === 0) {
     elEventos.innerHTML = '<div style="color:var(--ink-dim);font-size:0.85rem;padding:8px 0">Sin proyectos con evento asignado en la vista actual.</div>';
+    detalleEventos.innerHTML = '';
   } else {
-    elEventos.innerHTML = porEvento.map(({key, n}) =>
-      `<div class="profesional-card indicador-neutro"><div class="num">${n}</div><div class="name">${key}</div></div>`
-    ).join('');
+    elEventos.innerHTML = porEvento.map(({key, n}) => {
+      const activo = indicadorExpandido && indicadorExpandido.tipo === 'evento' && indicadorExpandido.valor === key;
+      return `<div class="profesional-card indicador-neutro${activo ? ' expandido' : ''}" onclick="toggleIndicadorDetalle('evento', '${key.replace(/'/g,"\\'")}')"><div class="num">${n}</div><div class="name">${key}</div></div>`;
+    }).join('');
+
+    if (indicadorExpandido && indicadorExpandido.tipo === 'evento') {
+      const lista = proyectosConEvento.filter(d => d.evento === indicadorExpandido.valor);
+      detalleEventos.innerHTML = `<div class="profesional-detalle-panel"><h3>${indicadorExpandido.valor} (${lista.length})</h3>${tablaDetalleIndicador(lista)}</div>`;
+    } else {
+      detalleEventos.innerHTML = '';
+    }
   }
 }
 
@@ -896,13 +954,6 @@ function renderProfesionalRevision() {
   if (profesionalExpandido && proyectosPorProfesional[profesionalExpandido]) {
     const lista = [...proyectosPorProfesional[profesionalExpandido]]
       .sort((a, b) => (Number(b.dias_en_estado) || 0) - (Number(a.dias_en_estado) || 0));
-    const circuloUrgencia = (dias) => {
-      const n = Number(dias);
-      if (isNaN(n)) return '';
-      if (n > 20) return '<span class="circulo-urgencia" style="background:#c9576b" title="Más de 20 días"></span>';
-      if (n >= 11) return '<span class="circulo-urgencia" style="background:#e6b52e" title="11 a 20 días"></span>';
-      return '';
-    };
     detalleEl.innerHTML = `
       <div class="profesional-detalle-panel">
         <h3>Proyectos "En Revisión URS" — ${profesionalExpandido} (${lista.length})</h3>
