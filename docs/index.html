@@ -67,6 +67,8 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .btn { border:none; border-radius:6px; padding:8px 16px; font-size:0.85rem; cursor:pointer; font-weight:600; }
 .btn-primary { background:#4fb2a8; color:#08211d; }
 .btn-ghost { background:transparent; color:var(--ink-dim); border:1px solid var(--border); }
+.btn-modo-reunion { background:linear-gradient(135deg, #ff6a3d, #c9576b); color:#fff; box-shadow:0 2px 10px rgba(255,106,61,0.35); }
+.btn-modo-reunion:hover { box-shadow:0 3px 14px rgba(255,106,61,0.5); }
 .result-count { color:var(--ink-dim); font-size:0.8rem; margin-left:auto; align-self:center; }
 
 .tab { padding:11px 18px 11px 15px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-left:3px solid transparent; font-weight:500; transition:background-color .15s,color .15s; }
@@ -100,6 +102,12 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .profesional-card .name { font-size:1.6rem; color:#ffe3e8; margin-top:6px; letter-spacing:.01em; font-weight:600; }
 .profesional-card.sin-asignar { background:#5a2530; }
 .profesional-card.sin-asignar .name { color:#f0b8c2; }
+
+.solo-modo-reunion { display:none; }
+body.modo-reunion .solo-modo-reunion { display:block; }
+.indicador-neutro { background:#243040 !important; }
+.indicador-neutro .num { color:#8fd8cd !important; }
+.indicador-neutro .name { color:#c7d6df !important; }
 .profesional-card { cursor:pointer; transition:transform .12s, box-shadow .12s; }
 .profesional-card:hover { transform:translateY(-2px); box-shadow:0 3px 10px rgba(0,0,0,0.3); }
 .profesional-card.expandido { outline:2px solid #fff; outline-offset:1px; }
@@ -109,6 +117,7 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .profesional-detalle-tabla { width:100%; border-collapse:collapse; font-size:0.78rem; }
 .profesional-detalle-tabla th { text-align:left; color:#f0b8c2; padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.15); }
 .profesional-detalle-tabla td { padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.08); color:#f6dde1; }
+.circulo-urgencia { display:inline-block; width:9px; height:9px; border-radius:50%; }
 canvas { height:300px !important; }
 
 table { width:100%; border-collapse:collapse; font-size:0.82rem; }
@@ -362,7 +371,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         </svg>
         Descargar informe PDF
       </button>
-      <button class="btn btn-ghost" id="btn-modo-reunion" onclick="toggleModoReunion()">🖥️ Modo Reunión</button>
+      <button class="btn btn-modo-reunion" id="btn-modo-reunion" onclick="toggleModoReunion()">🖥️ Modo Reunión</button>
     </div>
     <div class="kpis" id="kpis"></div>
 
@@ -371,6 +380,17 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div id="profesional-revision-grid" class="profesional-revision-grid"></div>
       <div id="profesional-detalle"></div>
     </div>
+
+    <div class="panel wide solo-modo-reunion">
+      <h2>PMB Tradicional / Tradicional — Año Postulación 2026</h2>
+      <div id="indicadores-tradicional-2026" class="profesional-revision-grid"></div>
+    </div>
+
+    <div class="panel wide solo-modo-reunion">
+      <h2>Proyectos por Evento</h2>
+      <div id="indicadores-eventos" class="profesional-revision-grid"></div>
+    </div>
+
     <div class="grid">
       <div class="panel"><h2>Distribución por estado</h2><canvas id="chartEstado" style="height:340px !important"></canvas></div>
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
@@ -822,6 +842,29 @@ function renderKPIs() {
 
 let profesionalExpandido = null;
 
+function renderIndicadoresModoReunion() {
+  // PMB Tradicional / Tradicional, año de postulación 2026
+  const PROGRAMAS_TRAD = ['PMB Tradicional', 'Tradicional'];
+  const elTrad = document.getElementById('indicadores-tradicional-2026');
+  elTrad.innerHTML = PROGRAMAS_TRAD.map(programa => {
+    const n = filtered.filter(d => d.programa === programa && String(d.anio_postulacion) === '2026').length;
+    return `<div class="profesional-card indicador-neutro"><div class="num">${n}</div><div class="name">${programa}</div></div>`;
+  }).join('');
+
+  // Un indicador por cada evento con proyectos (mismos datos del gráfico
+  // "Distribución por evento" del Resumen).
+  const proyectosConEvento = filtered.filter(d => d.evento && d.evento.trim() !== '');
+  const porEvento = groupBy(proyectosConEvento, 'evento').sort((a,b) => b.n - a.n);
+  const elEventos = document.getElementById('indicadores-eventos');
+  if (porEvento.length === 0) {
+    elEventos.innerHTML = '<div style="color:var(--ink-dim);font-size:0.85rem;padding:8px 0">Sin proyectos con evento asignado en la vista actual.</div>';
+  } else {
+    elEventos.innerHTML = porEvento.map(({key, n}) =>
+      `<div class="profesional-card indicador-neutro"><div class="num">${n}</div><div class="name">${key}</div></div>`
+    ).join('');
+  }
+}
+
 function renderProfesionalRevision() {
   const enRevision = filtered.filter(d => d.estado === 'En Revisión URS');
   const conteos = {};
@@ -851,14 +894,22 @@ function renderProfesionalRevision() {
   }).join('');
 
   if (profesionalExpandido && proyectosPorProfesional[profesionalExpandido]) {
-    const lista = proyectosPorProfesional[profesionalExpandido];
+    const lista = [...proyectosPorProfesional[profesionalExpandido]]
+      .sort((a, b) => (Number(b.dias_en_estado) || 0) - (Number(a.dias_en_estado) || 0));
+    const circuloUrgencia = (dias) => {
+      const n = Number(dias);
+      if (isNaN(n)) return '';
+      if (n > 20) return '<span class="circulo-urgencia" style="background:#c9576b" title="Más de 20 días"></span>';
+      if (n >= 11) return '<span class="circulo-urgencia" style="background:#e6b52e" title="11 a 20 días"></span>';
+      return '';
+    };
     detalleEl.innerHTML = `
       <div class="profesional-detalle-panel">
         <h3>Proyectos "En Revisión URS" — ${profesionalExpandido} (${lista.length})</h3>
         <table class="profesional-detalle-tabla">
-          <thead><tr><th>ID</th><th>Proyecto</th><th>Comuna</th><th>Programa</th></tr></thead>
+          <thead><tr><th>Días</th><th></th><th>ID</th><th>Proyecto</th><th>Comuna</th><th>Programa</th></tr></thead>
           <tbody>
-            ${lista.map(p => `<tr><td>${p.id_proyecto ?? ''}</td><td>${p.nombre_proyecto ?? ''}</td><td>${p.comuna ?? ''}</td><td>${p.programa ?? ''}</td></tr>`).join('')}
+            ${lista.map(p => `<tr><td class="num">${p.dias_en_estado ?? ''}</td><td>${circuloUrgencia(p.dias_en_estado)}</td><td>${p.id_proyecto ?? ''}</td><td>${p.nombre_proyecto ?? ''}</td><td>${p.comuna ?? ''}</td><td>${p.programa ?? ''}</td></tr>`).join('')}
           </tbody>
         </table>
       </div>`;
@@ -884,6 +935,7 @@ function toggleProfesionalDetalle(nombre) {
 
 function renderResumen() {
   renderProfesionalRevision();
+  renderIndicadoresModoReunion();
 
   // Distribución por estado: barra horizontal — la mejor opción cuando hay
   // muchas categorías con nombres largos (evita rotar/truncar etiquetas y
