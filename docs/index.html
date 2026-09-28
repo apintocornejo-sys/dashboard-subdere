@@ -73,8 +73,8 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .btn { border:none; border-radius:999px; padding:9px 20px; font-size:0.85rem; cursor:pointer; font-weight:600; }
 .btn-primary { background:linear-gradient(135deg, #5b8dff, #3d6ae0); color:#fff; box-shadow:0 4px 14px rgba(91,141,255,0.35); }
 .btn-ghost { background:var(--panel-2); color:var(--ink-dim); border:1px solid var(--border); }
-.btn-modo-reunion { background:linear-gradient(135deg, #ff6a3d, #c9576b); color:#fff; box-shadow:0 2px 10px rgba(255,106,61,0.35); }
-.btn-modo-reunion:hover { box-shadow:0 3px 14px rgba(255,106,61,0.5); }
+.btn-modo-reunion { background:linear-gradient(135deg, #2ea3ff, #1a5fd6); color:#fff; box-shadow:0 2px 10px rgba(46,163,255,0.4); }
+.btn-modo-reunion:hover { box-shadow:0 3px 14px rgba(46,163,255,0.55); }
 .result-count { color:var(--ink-dim); font-size:0.8rem; margin-left:auto; align-self:center; }
 
 .tab { padding:11px 18px 11px 15px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-left:3px solid transparent; font-weight:500; transition:background-color .15s,color .15s; }
@@ -92,6 +92,9 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:20px; }
 .kpi { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px 22px; box-shadow:0 8px 24px rgba(0,0,0,0.3); }
 .kpi .value { font-size:2.1rem; font-weight:700; color:var(--accent); letter-spacing:-0.02em; }
+.kpi-clickeable { cursor:pointer; transition:transform .12s, box-shadow .12s; }
+.kpi-clickeable:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(0,0,0,0.4); }
+.kpi-clickeable.expandido-kpi { outline:2px solid var(--accent); outline-offset:1px; }
 .kpi .label { color:var(--ink-dim); font-size:0.75rem; text-transform:uppercase; letter-spacing:.05em; margin-top:4px; }
 
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(430px,1fr)); gap:16px; }
@@ -104,8 +107,11 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .panel-contraste h2 { color:#ffd7dd; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
 .profesional-card { background:#c9576b; border-radius:8px; padding:14px 12px; text-align:center; }
-.profesional-card .num { font-size:1.6rem; font-weight:800; color:#fff; line-height:1; }
-.profesional-card .name { font-size:1.6rem; color:#ffe3e8; margin-top:6px; letter-spacing:.01em; font-weight:600; }
+.profesional-card .num { font-size:1.6rem; font-weight:800; color:#fff; line-height:1; text-align:center !important; display:flex; justify-content:center; gap:2px; }
+.profesional-card .name { font-size:1.6rem; color:#ffe3e8; margin-top:6px; letter-spacing:.01em; font-weight:600; text-align:center !important; }
+.flip-digito { display:inline-block; background:#1b1f27; color:#f5f5f5; border-radius:4px; padding:2px 5px; min-width:0.85em; box-shadow:0 2px 4px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(255,255,255,0.08); border:1px solid #33383f; position:relative; font-variant-numeric:tabular-nums; }
+.flip-digito::after { content:''; position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(0,0,0,0.5); }
+.flip-separador { display:inline-flex; align-items:center; color:inherit; opacity:0.7; }
 .profesional-card.sin-asignar { background:#5a2530; }
 .profesional-card.sin-asignar .name { color:#f0b8c2; }
 
@@ -118,7 +124,7 @@ body.modo-reunion .solo-modo-reunion { display:block; }
 .profesional-card:hover { transform:translateY(-2px); box-shadow:0 3px 10px rgba(0,0,0,0.3); }
 .profesional-card.expandido { outline:2px solid #fff; outline-offset:1px; }
 .profesional-card .name { line-height:1.15; word-break:break-word; }
-.profesional-detalle-panel { margin-top:14px; background:rgba(0,0,0,0.2); border-radius:8px; padding:12px 14px; }
+.profesional-detalle-panel { margin-top:14px; background:rgba(0,0,0,0.2); border-radius:8px; padding:12px 14px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 .profesional-detalle-panel h3 { margin:0 0 8px; font-size:0.85rem; color:#ffd7dd; }
 .profesional-detalle-tabla { width:100%; border-collapse:collapse; font-size:0.78rem; }
 .profesional-detalle-tabla th { text-align:left; color:#f0b8c2; padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.15); }
@@ -239,6 +245,11 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   body.modo-reunion .kpi .value { font-size:2.2rem; }
   body.modo-reunion .profesional-card .num,
   body.modo-reunion .profesional-card .name { font-size:1.6rem; }
+  body.modo-reunion .profesional-detalle-panel { padding:10px; margin-top:10px; }
+  body.modo-reunion .profesional-detalle-panel h3 { font-size:0.8rem; }
+  body.modo-reunion .profesional-detalle-tabla { font-size:0.68rem; }
+  body.modo-reunion .profesional-detalle-tabla th,
+  body.modo-reunion .profesional-detalle-tabla td { padding:4px 6px; white-space:nowrap; }
   #btn-salir-reunion { top:auto; bottom:16px; right:16px; padding:10px 16px; font-size:0.85rem; }
 
   .profesional-revision-grid { grid-template-columns:repeat(2, 1fr); }
@@ -382,6 +393,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <button class="btn btn-modo-reunion" id="btn-modo-reunion" onclick="toggleModoReunion()">🖥️ Modo Reunión</button>
     </div>
     <div class="kpis" id="kpis"></div>
+    <div id="kpi-detalle"></div>
 
     <div class="panel wide panel-contraste">
       <h2>⚠️ Proyectos "En Revisión URS" por Profesional</h2>
@@ -842,16 +854,41 @@ function renderKPIs() {
   const enRevisionURS = filtered.filter(d => d.estado === 'En Revisión URS').length;
   const enEvaluacionTecnica = filtered.filter(d => d.estado === 'En Evaluación Técnica').length;
   const elegibles = filtered.filter(d => d.estado === 'Elegible').length;
+  const activa = (estado) => kpiExpandido === estado ? ' expandido-kpi' : '';
   document.getElementById('kpis').innerHTML = `
     <div class="kpi"><div class="value">${total.toLocaleString('es-CL')}</div><div class="label">Proyectos</div></div>
-    <div class="kpi"><div class="value">${enRevisionURS.toLocaleString('es-CL')}</div><div class="label">En Revisión URS</div></div>
-    <div class="kpi"><div class="value">${enEvaluacionTecnica.toLocaleString('es-CL')}</div><div class="label">En Evaluación Técnica</div></div>
-    <div class="kpi"><div class="value">${elegibles.toLocaleString('es-CL')}</div><div class="label">Elegibles</div></div>
+    <div class="kpi kpi-clickeable${activa('En Revisión URS')}" onclick="toggleKpiDetalle('En Revisión URS')"><div class="value">${enRevisionURS.toLocaleString('es-CL')}</div><div class="label">En Revisión URS</div></div>
+    <div class="kpi kpi-clickeable${activa('En Evaluación Técnica')}" onclick="toggleKpiDetalle('En Evaluación Técnica')"><div class="value">${enEvaluacionTecnica.toLocaleString('es-CL')}</div><div class="label">En Evaluación Técnica</div></div>
+    <div class="kpi kpi-clickeable${activa('Elegible')}" onclick="toggleKpiDetalle('Elegible')"><div class="value">${elegibles.toLocaleString('es-CL')}</div><div class="label">Elegibles</div></div>
   `;
   document.getElementById('result-count').textContent = `${total.toLocaleString('es-CL')} proyectos filtrados de ${RAW_DATA.length.toLocaleString('es-CL')}`;
+
+  const detalleEl = document.getElementById('kpi-detalle');
+  if (kpiExpandido) {
+    const lista = filtered.filter(d => d.estado === kpiExpandido);
+    detalleEl.innerHTML = `<div class="profesional-detalle-panel"><h3>${kpiExpandido} (${lista.length})</h3>${tablaDetalleIndicador(lista)}</div>`;
+  } else {
+    detalleEl.innerHTML = '';
+  }
+}
+
+let kpiExpandido = null;
+function toggleKpiDetalle(estado) {
+  if (document.body.classList.contains('modo-reunion')) {
+    kpiExpandido = kpiExpandido === estado ? null : estado;
+    renderKPIs();
+  } else {
+    aplicarDrilldown('estado', estado);
+  }
 }
 
 let profesionalExpandido = null;
+
+function numeroReloj(n) {
+  return String(n).split('').map(c =>
+    /[0-9]/.test(c) ? `<span class="flip-digito">${c}</span>` : `<span class="flip-separador">${c}</span>`
+  ).join('');
+}
 
 function circuloUrgencia(dias) {
   const n = Number(dias);
@@ -898,7 +935,7 @@ function renderIndicadoresModoReunion() {
   elTrad.innerHTML = PROGRAMAS_TRAD.map(programa => {
     const n = filtered.filter(d => d.programa === programa && String(d.anio_postulacion) === '2026').length;
     const activo = indicadorExpandido && indicadorExpandido.tipo === 'programaTrad' && indicadorExpandido.valor === programa;
-    return `<div class="profesional-card indicador-neutro${activo ? ' expandido' : ''}" onclick="toggleIndicadorDetalle('programaTrad', '${programa.replace(/'/g,"\\'")}')"><div class="num">${n}</div><div class="name">${programa}</div></div>`;
+    return `<div class="profesional-card indicador-neutro${activo ? ' expandido' : ''}" onclick="toggleIndicadorDetalle('programaTrad', '${programa.replace(/'/g,"\\'")}')"><div class="num">${numeroReloj(n)}</div><div class="name">${programa}</div></div>`;
   }).join('');
 
   if (indicadorExpandido && indicadorExpandido.tipo === 'programaTrad') {
@@ -920,7 +957,7 @@ function renderIndicadoresModoReunion() {
   } else {
     elEventos.innerHTML = porEvento.map(({key, n}) => {
       const activo = indicadorExpandido && indicadorExpandido.tipo === 'evento' && indicadorExpandido.valor === key;
-      return `<div class="profesional-card indicador-neutro${activo ? ' expandido' : ''}" onclick="toggleIndicadorDetalle('evento', '${key.replace(/'/g,"\\'")}')"><div class="num">${n}</div><div class="name">${key}</div></div>`;
+      return `<div class="profesional-card indicador-neutro${activo ? ' expandido' : ''}" onclick="toggleIndicadorDetalle('evento', '${key.replace(/'/g,"\\'")}')"><div class="num">${numeroReloj(n)}</div><div class="name">${key}</div></div>`;
     }).join('');
 
     if (indicadorExpandido && indicadorExpandido.tipo === 'evento') {
@@ -954,7 +991,7 @@ function renderProfesionalRevision() {
   el.innerHTML = filas.map(([nombre, n]) => {
     return `
     <div class="profesional-card${nombre === 'Sin asignar' ? ' sin-asignar' : ''}${profesionalExpandido === nombre ? ' expandido' : ''}" onclick="toggleProfesionalDetalle('${nombre.replace(/'/g,"\\'")}')">
-      <div class="num">${n}</div>
+      <div class="num">${numeroReloj(n)}</div>
       <div class="name">${nombre}</div>
     </div>
   `;
@@ -981,6 +1018,7 @@ function renderProfesionalRevision() {
 function toggleModoReunion() {
   const activo = document.body.classList.toggle('modo-reunion');
   document.getElementById('btn-salir-reunion').style.display = activo ? 'block' : 'none';
+  if (!activo && kpiExpandido) { kpiExpandido = null; renderKPIs(); }
   if (activo && document.documentElement.requestFullscreen) {
     document.documentElement.requestFullscreen().catch(() => {});
   } else if (!activo && document.fullscreenElement) {
