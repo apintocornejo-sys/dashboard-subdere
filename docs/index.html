@@ -17,7 +17,12 @@
   --radius:18px;
 }
 * { box-sizing:border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; letter-spacing:-0.01em; }
+body { margin:0; background:transparent; color:var(--ink); font-family:'Segoe UI',system-ui,-apple-system,sans-serif; letter-spacing:-0.01em; }
+#matrix-bg { position:fixed; inset:0; width:100%; height:100%; z-index:-1; background:#080d18; }
+header { background:rgba(20,29,51,0.94); backdrop-filter:blur(2px); }
+.sidebar { background:rgba(20,29,51,0.9); backdrop-filter:blur(2px); }
+.filters { background:rgba(26,37,64,0.9); backdrop-filter:blur(2px); }
+.panel, .kpi { background:rgba(20,29,51,0.93); backdrop-filter:blur(1px); }
 header { padding:20px 28px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; background:var(--panel); }
 header h1 { font-size:1.25rem; margin:0; font-weight:600; }
 header .sub { color:var(--ink-dim); font-size:0.75rem; }
@@ -285,6 +290,8 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 </head>
 <body>
 
+<canvas id="matrix-bg"></canvas>
+
 <button id="btn-salir-reunion" onclick="toggleModoReunion()" style="display:none">✕ Salir del Modo Reunión</button>
 
 <header>
@@ -383,7 +390,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     </div>
 
     <div class="panel wide solo-modo-reunion">
-      <h2>PMB Tradicional / Tradicional — Año Postulación 2026</h2>
+      <h2>PMB Tradicional y PMU Tradicional / Año 2026</h2>
       <div id="indicadores-tradicional-2026" class="profesional-revision-grid"></div>
       <div id="indicador-tradicional-detalle"></div>
     </div>
@@ -399,7 +406,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       <div class="panel"><h2>Distribución por programa</h2><canvas id="chartProgramaDonut"></canvas></div>
       <div class="panel"><h2>Aporte SUBDERE por provincia ($)</h2><canvas id="chartAportePorProvincia"></canvas></div>
       <div class="panel wide">
-        <h2>PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)</h2>
+        <h2>PMB Tradicional y PMU Tradicional / Año 2026 (por comuna y estado)</h2>
         <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
           <button class="btn btn-ghost tabla-trad-toggle activo" data-vista="ambos" onclick="cambiarVistaTradicional('ambos', this)">Ambos</button>
           <button class="btn btn-ghost tabla-trad-toggle" data-vista="PMB Tradicional" onclick="cambiarVistaTradicional('PMB Tradicional', this)">Solo PMB Tradicional</button>
@@ -590,6 +597,43 @@ Chart.defaults.set('plugins.datalabels', {
 });
 
 let charts = {};
+
+// ---------- Fondo decorativo tipo "lluvia digital" (efecto genérico de
+// programación, implementación propia — no usa imágenes ni video de
+// ninguna película) ----------
+(function initMatrixBackground() {
+  const canvas = document.getElementById('matrix-bg');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const caracteres = 'アイウエオカキクケコサシスセソ0123456789<>/[]{}=+*';
+  let columnas, gotas;
+
+  function ajustarTamano() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    columnas = Math.floor(canvas.width / 16);
+    gotas = new Array(columnas).fill(0).map(() => Math.random() * -50);
+  }
+  ajustarTamano();
+  window.addEventListener('resize', ajustarTamano);
+
+  function dibujar() {
+    ctx.fillStyle = 'rgba(8,13,24,0.12)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.font = '14px monospace';
+    for (let i = 0; i < columnas; i++) {
+      const char = caracteres[Math.floor(Math.random() * caracteres.length)];
+      const x = i * 16;
+      const y = gotas[i] * 16;
+      ctx.fillStyle = Math.random() > 0.96 ? 'rgba(200,255,220,0.7)' : 'rgba(0,255,140,0.35)';
+      ctx.fillText(char, x, y);
+      if (y > canvas.height && Math.random() > 0.975) gotas[i] = 0;
+      gotas[i]++;
+    }
+  }
+  setInterval(dibujar, 60);
+})();
+
 let filtered = [];
 let tablaSort = { col:'monto_subdere', dir:-1 };
 let tablaPage = 0;
@@ -1095,6 +1139,7 @@ function renderTablaTradicional2026() {
   const PROGRAMAS_TRAD = tradicionalProgramaVista === 'ambos'
     ? ['PMB Tradicional', 'Tradicional']
     : [tradicionalProgramaVista];
+  const COLOR_PROGRAMA = { 'PMB Tradicional': [91,141,255], 'Tradicional': [230,159,0] };
   const proyectosTrad2026 = filtered.filter(d =>
     PROGRAMAS_TRAD.includes(d.programa) && String(d.anio_postulacion) === '2026'
   );
@@ -1106,18 +1151,25 @@ function renderTablaTradicional2026() {
     return;
   }
 
-  const headerPrograma = PROGRAMAS_TRAD.map(p => `<th colspan="${estadosTrad.length}" style="text-align:center;border-left:2px solid var(--border)">${p}</th>`).join('');
-  const headerEstados = PROGRAMAS_TRAD.map(() =>
-    estadosTrad.map((e, i) => `<th class="num" title="${e}"${i === 0 ? ' style="border-left:2px solid var(--border)"' : ''}>${abreviarEstado(e)}</th>`).join('')
-  ).join('');
+  const headerPrograma = PROGRAMAS_TRAD.map(p => {
+    const c = COLOR_PROGRAMA[p] || [140,140,140];
+    return `<th colspan="${estadosTrad.length}" style="text-align:center;border-left:2px solid var(--border);background:rgba(${c[0]},${c[1]},${c[2]},0.3)">${p}</th>`;
+  }).join('');
+  const headerEstados = PROGRAMAS_TRAD.map(p => {
+    const c = COLOR_PROGRAMA[p] || [140,140,140];
+    return estadosTrad.map((e, i) =>
+      `<th class="num" title="${e}" style="background:rgba(${c[0]},${c[1]},${c[2]},0.16)${i === 0 ? ';border-left:2px solid var(--border)' : ''}">${abreviarEstado(e)}</th>`
+    ).join('');
+  }).join('');
 
   const filasHtml = TODAS_LAS_COMUNAS.map(comuna => {
-    const celdas = PROGRAMAS_TRAD.map(programa =>
-      estadosTrad.map((estado, i) => {
+    const celdas = PROGRAMAS_TRAD.map(programa => {
+      const c = COLOR_PROGRAMA[programa] || [140,140,140];
+      return estadosTrad.map((estado, i) => {
         const n = proyectosTrad2026.filter(d => d.comuna === comuna && d.programa === programa && d.estado === estado).length;
-        return `<td class="num"${i === 0 ? ' style="border-left:2px solid var(--border)"' : ''}>${n || '—'}</td>`;
-      }).join('')
-    ).join('');
+        return `<td class="num" style="background:rgba(${c[0]},${c[1]},${c[2]},0.08)${i === 0 ? ';border-left:2px solid var(--border)' : ''}">${n || '—'}</td>`;
+      }).join('');
+    }).join('');
     return `<tr><td>${comuna}</td>${celdas}</tr>`;
   }).join('');
 
@@ -1855,7 +1907,7 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
 
   doc.setFontSize(9);
   doc.setTextColor(70, 70, 70);
-  const titulo = 'PMB Tradicional / Tradicional — Año Postulación 2026 (por comuna y estado)';
+  const titulo = 'PMB Tradicional y PMU Tradicional / Año 2026 (por comuna y estado)';
   const tituloLineas = doc.splitTextToSize(titulo, maxW);
   doc.text(tituloLineas, x, y);
   const yTabla = y + (tituloLineas.length - 1) * 4 + 2;
@@ -1872,10 +1924,20 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
     return;
   }
 
+  const COLOR_PROGRAMA_PDF = { 'PMB Tradicional': [91,141,255], 'Tradicional': [230,159,0] };
+  const tintClaro = (c) => c.map(v => Math.round(v + (255 - v) * 0.8)); // versión pastel para celdas de cuerpo
+  const tintMedio = (c) => c.map(v => Math.round(v + (255 - v) * 0.55)); // versión intermedia para sub-encabezado
+
   const head1 = [{ content: 'Comuna', rowSpan: 2 }].concat(
-    PROGRAMAS_TRAD.map(p => ({ content: p, colSpan: estadosTrad.length, styles: { halign: 'center' } }))
+    PROGRAMAS_TRAD.map(p => ({
+      content: p, colSpan: estadosTrad.length,
+      styles: { halign: 'center', fillColor: COLOR_PROGRAMA_PDF[p] || [140,140,140], textColor: [255,255,255] },
+    }))
   );
-  const head2 = PROGRAMAS_TRAD.flatMap(() => estadosTrad.map(e => abreviarEstado(e)));
+  const head2 = PROGRAMAS_TRAD.flatMap(p => estadosTrad.map(e => ({
+    content: abreviarEstado(e),
+    styles: { fillColor: tintMedio(COLOR_PROGRAMA_PDF[p] || [140,140,140]), textColor: [40,40,40] },
+  })));
 
   const body = TODAS_LAS_COMUNAS.map(comuna => {
     const celdas = PROGRAMAS_TRAD.flatMap(programa =>
@@ -1886,6 +1948,17 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
     return [comuna, ...celdas];
   });
 
+  // Estilos de columna: una tinta pastel por cada bloque de programa.
+  const columnStylesTrad = {};
+  let colIdx = 1;
+  PROGRAMAS_TRAD.forEach(p => {
+    const color = tintClaro(COLOR_PROGRAMA_PDF[p] || [140,140,140]);
+    for (let i = 0; i < estadosTrad.length; i++) {
+      columnStylesTrad[colIdx] = { fillColor: color };
+      colIdx++;
+    }
+  });
+
   doc.autoTable({
     startY: yTabla,
     margin: { left: x },
@@ -1893,7 +1966,7 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
     head: [head1, head2],
     body,
     styles: { fontSize: 6.3, cellPadding: 1, halign: 'center' },
-    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+    columnStyles: Object.assign({ 0: { halign: 'left', fontStyle: 'bold' } }, columnStylesTrad),
     headStyles: { fillColor: [35, 49, 108], fontSize: 6.3 },
   });
 }
