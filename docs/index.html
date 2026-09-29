@@ -879,6 +879,8 @@ function aplicarDrilldown(campo, valor) {
   multiselectState[idFiltro].add(valor);
   refreshFilterOptions();
   applyFilters();
+  const buscadorTabla = document.getElementById('tabla-search');
+  if (buscadorTabla) buscadorTabla.value = '';
   const tabTabla = document.querySelector('.tab[data-view="tabla"]');
   if (tabTabla) tabTabla.click();
 }
@@ -1164,6 +1166,8 @@ function renderResumen() {
         multiselectState['f-estado'].add(estadosEvento[el.datasetIndex]);
         refreshFilterOptions();
         applyFilters();
+        const buscadorTabla = document.getElementById('tabla-search');
+        if (buscadorTabla) buscadorTabla.value = '';
         const tabTabla = document.querySelector('.tab[data-view="tabla"]');
         if (tabTabla) tabTabla.click();
       },
