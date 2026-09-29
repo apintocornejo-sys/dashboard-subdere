@@ -49,6 +49,7 @@ LOG_FILE = BASE_DIR / "agente_log.txt"
 
 DRIVE_FILE_ID = "1ZRi0TAbjIozOnZ00cbH9O68sX4Ejlds8"
 DATOS_EXTRA_FILE_ID = "1oThL9AfQ1_3i_h676ORmL6MSAi58VF7Z"
+HISTORIAL_ESTADOS_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_HISTORIAL_ESTADOS"
 CLIENT_SECRET_PATH = BASE_DIR / "client_secret.json"
 TOKEN_PATH = BASE_DIR / "token.json"
 DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive"]
@@ -333,6 +334,63 @@ def asignar_profesionales_automatico(ruta_json: Path):
 
 
 # ----------------------------------------------------------------------
+# PASO 3.6: Trazabilidad — registra cada cambio de estado con su fecha,
+# para poder calcular después cuánto tiempo pasa cada proyecto en cada
+# instancia (Municipio / Unidad Regional / Nivel Central).
+#
+# Formato del archivo: { "<id_proyecto>": [ {"estado": "...", "fecha": "YYYY-MM-DD"}, ... ], ... }
+# Cada vez que el estado ACTUAL de un proyecto no coincide con el último
+# registrado, se agrega una entrada nueva con la fecha de hoy. Si coincide,
+# no se toca nada (no se duplica).
+# ----------------------------------------------------------------------
+def actualizar_historial_estados(ruta_json: Path):
+    import io
+    from googleapiclient.discovery import build
+    from googleapiclient.http import MediaIoBaseUpload
+
+    if HISTORIAL_ESTADOS_FILE_ID.startswith("PEGA_AQUI"):
+        log("Trazabilidad: falta configurar HISTORIAL_ESTADOS_FILE_ID. Se omite este paso por ahora.")
+        return
+
+    proyectos = json.loads(ruta_json.read_text(encoding="utf-8"))["proyectos"]
+
+    creds = obtener_credenciales_drive()
+    service = build("drive", "v3", credentials=creds)
+
+    log("Revisando cambios de estado para trazabilidad...")
+    contenido = service.files().get_media(fileId=HISTORIAL_ESTADOS_FILE_ID).execute()
+    historial = json.loads(contenido.decode("utf-8")) if contenido else {}
+
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    cambios = 0
+
+    for p in proyectos:
+        id_proyecto = p.get("id_proyecto")
+        estado_actual = p.get("estado")
+        if not id_proyecto or not estado_actual:
+            continue
+
+        entradas = historial.get(id_proyecto, [])
+        estado_previo = entradas[-1]["estado"] if entradas else None
+
+        if estado_actual != estado_previo:
+            entradas.append({"estado": estado_actual, "fecha": hoy})
+            historial[id_proyecto] = entradas
+            cambios += 1
+
+    if cambios == 0:
+        log("Trazabilidad: no hubo cambios de estado esta semana.")
+        return
+
+    media = MediaIoBaseUpload(
+        io.BytesIO(json.dumps(historial, ensure_ascii=False).encode("utf-8")),
+        mimetype="application/json",
+    )
+    service.files().update(fileId=HISTORIAL_ESTADOS_FILE_ID, media_body=media).execute()
+    log(f"Trazabilidad: {cambios} proyecto(s) con cambio de estado registrado(s).")
+
+
+# ----------------------------------------------------------------------
 # PASO 4: Respaldo en GitHub
 # ----------------------------------------------------------------------
 def publicar_en_github():
@@ -393,6 +451,12 @@ def main():
     except Exception as e:
         log(f"ERROR al asignar profesionales automáticamente: {e}")
         log("Esto no detiene el resto del flujo — se puede corregir manualmente en el dashboard.")
+
+    try:
+        actualizar_historial_estados(ruta_json)
+    except Exception as e:
+        log(f"ERROR al actualizar el historial de trazabilidad: {e}")
+        log("Esto no detiene el resto del flujo.")
 
     try:
         publicar_en_github()

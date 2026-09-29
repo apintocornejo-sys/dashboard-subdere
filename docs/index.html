@@ -88,6 +88,7 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .tab[data-view="evolucion"].active { border-left-color:#8e6bc4; color:#8e6bc4; background:var(--panel-2); }
 .tab[data-view="tabla"].active { border-left-color:#c9576b; color:#c9576b; background:var(--panel-2); }
 .tab[data-view="datos-extra"].active { border-left-color:#6fae4f; color:#6fae4f; background:var(--panel-2); }
+.tab[data-view="trazabilidad"].active { border-left-color:#e83e8c; color:#e83e8c; background:var(--panel-2); }
 
 .view { display:none; padding:22px 28px 40px; }
 .view.active { display:block; }
@@ -107,6 +108,8 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .panel.wide { grid-column:1/-1; margin-bottom:20px; }
 
 .panel-contraste { background:#3a1420; border:1px solid #c9576b; box-shadow:0 2px 10px rgba(201,87,107,0.25); }
+.panel-trazabilidad { background:#3a1230; border:1px solid #e83e8c; box-shadow:0 2px 10px rgba(232,62,140,0.25); }
+.panel-trazabilidad h2 { color:#ffb3dc; }
 .panel-contraste h2 { color:#ffd7dd; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
 .profesional-card { background:#c9576b; border-radius:8px; padding:14px 12px; text-align:center; }
@@ -221,6 +224,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .tab[data-view="evolucion"].active { border-left-color:transparent; border-bottom-color:#8e6bc4; }
   .tab[data-view="tabla"].active { border-left-color:transparent; border-bottom-color:#c9576b; }
   .tab[data-view="datos-extra"].active { border-left-color:transparent; border-bottom-color:#6fae4f; }
+  .tab[data-view="trazabilidad"].active { border-left-color:transparent; border-bottom-color:#e83e8c; }
 
   .filters { padding:12px calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left)); gap:8px; }
   .filter-group, .multiselect { min-width:0; width:100%; }
@@ -331,6 +335,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="tab" data-view="evolucion">Evolución</div>
     <div class="tab" data-view="tabla">Tabla dinámica</div>
     <div class="tab" data-view="datos-extra">📝 Datos adicionales</div>
+    <div class="tab" data-view="trazabilidad">⏱️ Trazabilidad</div>
 </nav>
 <div class="main-content">
   <div class="filters">
@@ -555,6 +560,45 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       </div>
     </div>
   </div>
+
+  <div class="view" id="view-trazabilidad">
+    <div class="panel wide panel-trazabilidad">
+      <h2>⏱️ Trazabilidad — Tiempo por lugar</h2>
+      <p style="margin:6px 0 0;color:#f5c9de;font-size:0.85rem;line-height:1.5">
+        Registro de cuánto tiempo pasa cada iniciativa en cada instancia de revisión. Se empezó a registrar el
+        <strong id="fecha-inicio-trazabilidad">—</strong> — los datos se irán completando semana a semana a medida que los proyectos cambien de estado.
+        <br>
+        🏛️ <strong>Municipio</strong>: En Creación Municipal, Observado URS, Observado Programa, En Corrección Municipal &nbsp;|&nbsp;
+        🏢 <strong>Unidad Regional</strong>: En Revisión URS &nbsp;|&nbsp;
+        🏛️ <strong>Nivel Central</strong>: En Evaluación Técnica, Elegible
+      </p>
+    </div>
+
+    <div class="grid">
+      <div class="panel wide">
+        <h2>Promedio de días por lugar (proyectos activos en el ciclo de revisión)</h2>
+        <canvas id="chartTrazabilidadPromedio" style="height:300px !important"></canvas>
+      </div>
+    </div>
+
+    <div class="panel wide">
+      <h2>Detalle por proyecto</h2>
+      <div id="tabla-trazabilidad-wrap" style="overflow-x:auto">
+        <table id="tbl-trazabilidad">
+          <thead>
+            <tr>
+              <th>ID</th><th>Proyecto</th><th>Comuna</th><th>Estado actual</th>
+              <th class="num">Días en Municipio</th>
+              <th class="num">Días en Unidad Regional</th>
+              <th class="num">Días en Nivel Central</th>
+              <th class="num">Total días en ciclo</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
   </div>
 </div>
 </div>
@@ -581,6 +625,13 @@ const DRIVE_URL = `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?al
 // El login con Google solo hace falta para EDITAR estos datos.
 const DATOS_EXTRA_FILE_ID = "1oThL9AfQ1_3i_h676ORmL6MSAi58VF7Z";
 const DATOS_EXTRA_URL = `https://www.googleapis.com/drive/v3/files/${DATOS_EXTRA_FILE_ID}?alt=media&key=${DRIVE_API_KEY}&_ts=${Date.now()}`;
+
+// Archivo de "Trazabilidad" (historial de cambios de estado por proyecto).
+// Lo actualiza automáticamente el agente semanal; el dashboard solo lo LEE,
+// de forma pública igual que Datos adicionales.
+const HISTORIAL_ESTADOS_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_HISTORIAL_ESTADOS";
+const HISTORIAL_ESTADOS_URL = `https://www.googleapis.com/drive/v3/files/${HISTORIAL_ESTADOS_FILE_ID}?alt=media&key=${DRIVE_API_KEY}&_ts=${Date.now()}`;
+let HISTORIAL_ESTADOS = {};
 
 let RAW_DATA = [];
 const fmtCLP = n => '$' + Math.round(n).toLocaleString('es-CL');
@@ -632,15 +683,28 @@ async function cargarDatosExtraPublico() {
   }
 }
 
+async function cargarHistorialEstadosPublico() {
+  try {
+    if (HISTORIAL_ESTADOS_FILE_ID.startsWith('PEGA_AQUI')) return {};
+    const r = await fetch(HISTORIAL_ESTADOS_URL);
+    if (!r.ok) return {};
+    return await r.json();
+  } catch (e) {
+    return {};
+  }
+}
+
 Promise.all([
   fetch(DRIVE_URL).then(r => {
     if (!r.ok) throw new Error('No se pudo leer el archivo desde Drive (HTTP ' + r.status + '). Revisa que el archivo esté compartido como "Cualquiera con el enlace" y que la API Key sea correcta.');
     return r.json();
   }),
   cargarDatosExtraPublico(),
+  cargarHistorialEstadosPublico(),
 ])
-  .then(([payload, extraPublico]) => {
+  .then(([payload, extraPublico, historialPublico]) => {
     datosExtra = extraPublico || {};
+    HISTORIAL_ESTADOS = historialPublico || {};
     RAW_DATA = payload.proyectos.map(p => Object.assign({}, p, {
       evento: datosExtra[p.id_proyecto]?.evento || '',
       profesional: datosExtra[p.id_proyecto]?.profesional || '',
@@ -1289,7 +1353,94 @@ function renderAll() {
   renderProgramas();
   renderEvolucion();
   renderTabla();
+  renderTrazabilidad();
 }
+
+// ========================================================================
+// TRAZABILIDAD: tiempo por lugar (Municipio / Unidad Regional / Nivel Central)
+// ========================================================================
+const LUGAR_POR_ESTADO = {
+  'En Creación Municipal': 'Municipio',
+  'Observado URS': 'Municipio',
+  'Observado Programa': 'Municipio',
+  'En Corrección Municipal': 'Municipio',
+  'En Revisión URS': 'Unidad Regional',
+  'En Evaluación Técnica': 'Nivel Central',
+  'Elegible': 'Nivel Central',
+};
+const LUGARES = ['Municipio', 'Unidad Regional', 'Nivel Central'];
+const FECHA_INICIO_TRAZABILIDAD = '2026-09-29'; // fecha en que empezó a registrarse el historial
+
+function diasPorLugar(idProyecto, estadoActual, diasEnEstadoActual) {
+  const totales = { 'Municipio': 0, 'Unidad Regional': 0, 'Nivel Central': 0 };
+  const historial = HISTORIAL_ESTADOS[idProyecto];
+
+  if (historial && historial.length > 1) {
+    // Tramos ya completados: la duración real es la diferencia de fechas
+    // entre un cambio de estado y el siguiente.
+    for (let i = 0; i < historial.length - 1; i++) {
+      const lugar = LUGAR_POR_ESTADO[historial[i].estado];
+      if (!lugar) continue;
+      const d1 = new Date(historial[i].fecha);
+      const d2 = new Date(historial[i + 1].fecha);
+      const dias = Math.round((d2 - d1) / 86400000);
+      if (dias > 0) totales[lugar] += dias;
+    }
+  }
+
+  // Tramo actual (en curso): se usa "Días en Estado", el dato oficial de
+  // SUBDERE — es más preciso que calcularlo desde la fecha del último
+  // registro de nuestro propio historial.
+  const lugarActual = LUGAR_POR_ESTADO[estadoActual];
+  if (lugarActual) totales[lugarActual] += Number(diasEnEstadoActual) || 0;
+
+  return totales;
+}
+
+function renderTrazabilidad() {
+  const fechaInicioEl = document.getElementById('fecha-inicio-trazabilidad');
+  if (fechaInicioEl) fechaInicioEl.textContent = FECHA_INICIO_TRAZABILIDAD;
+
+  const filasCalculadas = filtered
+    .map(d => ({ d, dias: diasPorLugar(d.id_proyecto, d.estado, d.dias_en_estado) }))
+    .filter(({ dias }) => dias['Municipio'] + dias['Unidad Regional'] + dias['Nivel Central'] > 0);
+
+  // ---- Gráfico: promedio de días por lugar ----
+  const promedios = LUGARES.map(lugar => {
+    const valores = filasCalculadas.map(f => f.dias[lugar]).filter(v => v > 0);
+    return valores.length ? valores.reduce((a, b) => a + b, 0) / valores.length : 0;
+  });
+  makeChart('chartTrazabilidadPromedio', 'bar', LUGARES, [{
+    data: promedios.map(v => Math.round(v * 10) / 10),
+    backgroundColor: [palette[0], palette[1], palette[2]],
+    borderRadius: 4,
+  }]);
+
+  // ---- Tabla de detalle ----
+  const tbody = document.querySelector('#tbl-trazabilidad tbody');
+  if (filasCalculadas.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--ink-dim);padding:16px">
+      Todavía no hay datos de trazabilidad para la vista actual — se irán acumulando a medida que los proyectos cambien de estado.
+    </td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filasCalculadas
+    .sort((a, b) => (b.dias['Municipio'] + b.dias['Unidad Regional'] + b.dias['Nivel Central']) - (a.dias['Municipio'] + a.dias['Unidad Regional'] + a.dias['Nivel Central']))
+    .map(({ d, dias }) => {
+      const total = dias['Municipio'] + dias['Unidad Regional'] + dias['Nivel Central'];
+      return `<tr>
+        <td>${d.id_proyecto ?? ''}</td>
+        <td>${d.nombre_proyecto ?? ''}</td>
+        <td>${d.comuna ?? ''}</td>
+        <td>${d.estado ?? ''}</td>
+        <td class="num">${dias['Municipio'] || '—'}</td>
+        <td class="num">${dias['Unidad Regional'] || '—'}</td>
+        <td class="num">${dias['Nivel Central'] || '—'}</td>
+        <td class="num"><b>${total}</b></td>
+      </tr>`;
+    }).join('');
+}
+
 
 // ========================================================================
 // DATOS ADICIONALES: login con Google + lectura/escritura en Drive
