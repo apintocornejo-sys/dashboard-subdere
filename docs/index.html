@@ -570,7 +570,8 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         <br>
         🏛️ <strong>Municipio</strong>: En Creación Municipal, Observado URS, Observado Programa, En Corrección Municipal &nbsp;|&nbsp;
         🏢 <strong>Unidad Regional</strong>: En Revisión URS &nbsp;|&nbsp;
-        🏛️ <strong>Nivel Central</strong>: En Evaluación Técnica, Elegible
+        🏛️ <strong>Nivel Central</strong>: En Evaluación Técnica &nbsp;|&nbsp;
+        💤 <strong>Apartado a la espera de recursos</strong>: Elegible
       </p>
     </div>
 
@@ -591,6 +592,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
               <th class="num">Días en Municipio</th>
               <th class="num">Días en Unidad Regional</th>
               <th class="num">Días en Nivel Central</th>
+              <th class="num">Días Apartado (espera de recursos)</th>
               <th class="num">Total días en ciclo</th>
             </tr>
           </thead>
@@ -1366,13 +1368,13 @@ const LUGAR_POR_ESTADO = {
   'En Corrección Municipal': 'Municipio',
   'En Revisión URS': 'Unidad Regional',
   'En Evaluación Técnica': 'Nivel Central',
-  'Elegible': 'Nivel Central',
+  'Elegible': 'Apartado a la espera de recursos',
 };
-const LUGARES = ['Municipio', 'Unidad Regional', 'Nivel Central'];
+const LUGARES = ['Municipio', 'Unidad Regional', 'Nivel Central', 'Apartado a la espera de recursos'];
 const FECHA_INICIO_TRAZABILIDAD = '2026-09-29'; // fecha en que empezó a registrarse el historial
 
 function diasPorLugar(idProyecto, estadoActual, diasEnEstadoActual) {
-  const totales = { 'Municipio': 0, 'Unidad Regional': 0, 'Nivel Central': 0 };
+  const totales = { 'Municipio': 0, 'Unidad Regional': 0, 'Nivel Central': 0, 'Apartado a la espera de recursos': 0 };
   const historial = HISTORIAL_ESTADOS[idProyecto];
 
   if (historial && historial.length > 1) {
@@ -1401,9 +1403,11 @@ function renderTrazabilidad() {
   const fechaInicioEl = document.getElementById('fecha-inicio-trazabilidad');
   if (fechaInicioEl) fechaInicioEl.textContent = FECHA_INICIO_TRAZABILIDAD;
 
+  const sumaTotal = (dias) => LUGARES.reduce((s, lugar) => s + dias[lugar], 0);
+
   const filasCalculadas = filtered
     .map(d => ({ d, dias: diasPorLugar(d.id_proyecto, d.estado, d.dias_en_estado) }))
-    .filter(({ dias }) => dias['Municipio'] + dias['Unidad Regional'] + dias['Nivel Central'] > 0);
+    .filter(({ dias }) => sumaTotal(dias) > 0);
 
   // ---- Gráfico: promedio de días por lugar ----
   const promedios = LUGARES.map(lugar => {
@@ -1412,22 +1416,21 @@ function renderTrazabilidad() {
   });
   makeChart('chartTrazabilidadPromedio', 'bar', LUGARES, [{
     data: promedios.map(v => Math.round(v * 10) / 10),
-    backgroundColor: [palette[0], palette[1], palette[2]],
+    backgroundColor: [palette[0], palette[1], palette[2], palette[3]],
     borderRadius: 4,
   }]);
 
   // ---- Tabla de detalle ----
   const tbody = document.querySelector('#tbl-trazabilidad tbody');
   if (filasCalculadas.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--ink-dim);padding:16px">
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--ink-dim);padding:16px">
       Todavía no hay datos de trazabilidad para la vista actual — se irán acumulando a medida que los proyectos cambien de estado.
     </td></tr>`;
     return;
   }
   tbody.innerHTML = filasCalculadas
-    .sort((a, b) => (b.dias['Municipio'] + b.dias['Unidad Regional'] + b.dias['Nivel Central']) - (a.dias['Municipio'] + a.dias['Unidad Regional'] + a.dias['Nivel Central']))
+    .sort((a, b) => sumaTotal(b.dias) - sumaTotal(a.dias))
     .map(({ d, dias }) => {
-      const total = dias['Municipio'] + dias['Unidad Regional'] + dias['Nivel Central'];
       return `<tr>
         <td>${d.id_proyecto ?? ''}</td>
         <td>${d.nombre_proyecto ?? ''}</td>
@@ -1436,7 +1439,8 @@ function renderTrazabilidad() {
         <td class="num">${dias['Municipio'] || '—'}</td>
         <td class="num">${dias['Unidad Regional'] || '—'}</td>
         <td class="num">${dias['Nivel Central'] || '—'}</td>
-        <td class="num"><b>${total}</b></td>
+        <td class="num">${dias['Apartado a la espera de recursos'] || '—'}</td>
+        <td class="num"><b>${sumaTotal(dias)}</b></td>
       </tr>`;
     }).join('');
 }
