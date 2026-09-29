@@ -49,7 +49,7 @@ body.modo-reunion .panel-contraste { padding:24px; }
 body.modo-reunion .panel-contraste h2 { font-size:1.4rem; }
 body.modo-reunion .profesional-revision-grid { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:20px; }
 body.modo-reunion .profesional-card { padding:26px 20px; }
-body.modo-reunion .profesional-card .num,
+body.modo-reunion .profesional-card .num { font-size:5.2rem; }
 body.modo-reunion .profesional-card .name { font-size:2.6rem; }
 @keyframes pulso-actualizado { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(79,178,168,0.5); } 50% { opacity:0.6; box-shadow:0 0 0 4px rgba(79,178,168,0); } }
 
@@ -112,9 +112,9 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .panel-trazabilidad h2 { color:#ffb3dc; }
 .panel-contraste h2 { color:#ffd7dd; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
-.profesional-card { background:#c9576b; border-radius:8px; padding:14px 12px; text-align:center; }
-.profesional-card .num { font-size:1.6rem; font-weight:800; color:#fff; line-height:1; text-align:center !important; display:flex; justify-content:center; gap:2px; }
-.profesional-card .name { font-size:1.6rem; color:#ffe3e8; margin-top:6px; letter-spacing:.01em; font-weight:600; text-align:center !important; }
+.profesional-card { background:#c9576b; border-radius:8px; padding:14px 12px; text-align:center; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
+.profesional-card .num { font-size:3.2rem; font-weight:800; color:#fff; line-height:1; text-align:center !important; display:flex; justify-content:center; gap:2px; }
+.profesional-card .name { font-size:1.6rem; color:#ffe3e8; margin-top:0; letter-spacing:.01em; font-weight:600; text-align:center !important; }
 .flip-digito { display:inline-block; background:#1b1f27; color:#f5f5f5; border-radius:4px; padding:2px 5px; min-width:0.85em; box-shadow:0 2px 4px rgba(0,0,0,0.4), inset 0 -1px 0 rgba(255,255,255,0.08); border:1px solid #33383f; position:relative; font-variant-numeric:tabular-nums; }
 .flip-digito::after { content:''; position:absolute; left:0; right:0; top:50%; height:1px; background:rgba(0,0,0,0.5); }
 .flip-separador { display:inline-flex; align-items:center; color:inherit; opacity:0.7; }
@@ -253,8 +253,8 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
   body.modo-reunion .kpis { grid-template-columns:repeat(2, 1fr); }
   body.modo-reunion .kpi .value { font-size:2.2rem; }
-  body.modo-reunion .profesional-card .num,
-  body.modo-reunion .profesional-card .name { font-size:1.6rem; }
+  body.modo-reunion .profesional-card .num { font-size:2.6rem; }
+  body.modo-reunion .profesional-card .name { font-size:1.3rem; }
   body.modo-reunion .profesional-detalle-panel { padding:10px; margin-top:10px; }
   body.modo-reunion .profesional-detalle-panel h3 { font-size:0.8rem; }
   body.modo-reunion .profesional-detalle-tabla { font-size:0.68rem; }
@@ -294,7 +294,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .panel-contraste h2 { font-size:0.82rem; }
   .profesional-revision-grid { grid-template-columns:repeat(2, minmax(0,1fr)); gap:8px; }
   .profesional-card { padding:10px 8px; }
-  .profesional-card .num { font-size:1.25rem; }
+  .profesional-card .num { font-size:2.0rem; }
   .profesional-card .name { font-size:1.0rem; }
   .profesional-detalle-tabla { font-size:0.68rem; }
   .profesional-detalle-tabla th, .profesional-detalle-tabla td { padding:4px 5px; }
@@ -716,8 +716,8 @@ Promise.all([
       profesional: datosExtra[p.id_proyecto]?.profesional || '',
     }));
     filtered = RAW_DATA;
-    const horaCarga = new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
-    document.getElementById('badge-actualizado-texto').textContent = `Actualizado: ${payload.fecha_actualizacion} · Cargado a las ${horaCarga}`;
+    const horaTexto = payload.hora_actualizacion ? ` ${payload.hora_actualizacion}` : '';
+    document.getElementById('badge-actualizado-texto').textContent = `Actualizado: ${payload.fecha_actualizacion}${horaTexto}`;
     document.getElementById('header-sub').textContent =
       `Módulo: Presentación de Proyectos · ${payload.total_proyectos} proyectos · fuente: Google Drive`;
     document.getElementById('loading').style.display = 'none';

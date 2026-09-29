@@ -136,7 +136,9 @@ def main():
     df = parse_file(src)
 
     # Respaldo del archivo original (referencia histórica / trazabilidad)
-    today = datetime.now().strftime("%Y-%m-%d")
+    ahora = datetime.now()
+    today = ahora.strftime("%Y-%m-%d")
+    hora = ahora.strftime("%H:%M")
     backup_path = RAW_BACKUP_DIR / f"Listado_Proyectos_{today}.xls"
     backup_path.write_bytes(src.read_bytes())
 
@@ -146,6 +148,7 @@ def main():
 
     payload = {
         "fecha_actualizacion": today,
+        "hora_actualizacion": hora,
         "total_proyectos": len(df_pub),
         "proyectos": json.loads(df_pub.to_json(orient="records", force_ascii=False)),
     }

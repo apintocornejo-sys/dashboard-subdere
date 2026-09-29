@@ -248,7 +248,9 @@ def procesar_excel(ruta_excel: Path) -> Path:
     DRIVE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     RAW_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
-    today = datetime.now().strftime("%Y-%m-%d")
+    ahora = datetime.now()
+    today = ahora.strftime("%Y-%m-%d")
+    hora = ahora.strftime("%H:%M")
     if ruta_excel.parent != RAW_BACKUP_DIR:
         backup_path = RAW_BACKUP_DIR / f"Listado_Proyectos_{today}.xls"
         backup_path.write_bytes(ruta_excel.read_bytes())
@@ -260,6 +262,7 @@ def procesar_excel(ruta_excel: Path) -> Path:
 
     payload = {
         "fecha_actualizacion": today,
+        "hora_actualizacion": hora,
         "total_proyectos": len(df_pub),
         "proyectos": json.loads(df_pub.to_json(orient="records", force_ascii=False)),
     }
