@@ -1462,6 +1462,17 @@ function renderTrazabilidad() {
 // ========================================================================
 const OAUTH_CLIENT_ID = "263773563980-qri1cqlqnk4kirtqmv2en0nblmmlqm1u.apps.googleusercontent.com";
 const PROFESIONALES = ["Tamara Huerta", "Romina Canihuante", "Martin Rodriguez", "Carlos Pinto"];
+// Lista de correos autorizados para editar "Datos adicionales". Solo estas
+// cuentas de Gmail/Google pueden iniciar sesión y guardar cambios — para
+// agregar o quitar a alguien, edita este arreglo directamente.
+// NOTA: el correo de Martin Rodriguez tenía un error de tipeo ("@@") en el
+// mensaje original — se corrigió a un solo "@" aquí. Confirmar con Carlos.
+const EMAILS_AUTORIZADOS = [
+  "romina.canihuante@subdere.gov.cl",
+  "tamara.huerta@subdere.gov.cl",
+  "martin.rodriguez@subdere.gov.cl",
+  "maria.palma@gmail.com",
+];
 // Las 15 comunas reales de la Región de Coquimbo (evita mezclar con filas
 // administrativas como "Delegación Presidencial..." que a veces aparecen
 // en el dato crudo de comuna).
@@ -1520,14 +1531,45 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+let usuarioActualEmail = null;
+
 function initGoogleSignIn() {
   if (!window.google || !google.accounts) { setTimeout(initGoogleSignIn, 300); return; }
   const client = google.accounts.oauth2.initTokenClient({
     client_id: OAUTH_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/drive',
+    scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
     callback: async (resp) => {
       if (resp.error) { alert('Error al iniciar sesión: ' + resp.error); return; }
       oauthToken = resp.access_token;
+
+      // Verifica el correo de la cuenta que inició sesión contra la lista
+      // de personas autorizadas a editar Datos adicionales.
+      let email = null;
+      try {
+        const infoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${oauthToken}` },
+        });
+        const info = await infoRes.json();
+        email = (info.email || '').toLowerCase();
+      } catch (e) {
+        alert('No se pudo verificar la cuenta de Google. Intenta de nuevo.');
+        return;
+      }
+
+      if (!EMAILS_AUTORIZADOS.map(e => e.toLowerCase()).includes(email)) {
+        document.getElementById('signin-container').innerHTML =
+          `<div style="color:#ffd7dd;background:#3a1420;border:1px solid #c9576b;border-radius:8px;padding:14px 16px;max-width:420px">
+            <b>Cuenta no autorizada</b><br>
+            La cuenta <b>${email || 'desconocida'}</b> no tiene permiso para editar Datos adicionales.
+            Si crees que deberías tener acceso, contacta a Carlos Pinto para que agregue tu correo a la lista.
+            <br><br>
+            <button class="btn btn-ghost" onclick="location.reload()">Intentar con otra cuenta</button>
+          </div>`;
+        oauthToken = null;
+        return;
+      }
+
+      usuarioActualEmail = email;
       document.getElementById('signin-container').style.display = 'none';
       document.getElementById('extra-content').style.display = 'block';
       await cargarDatosExtraParaEditar();
@@ -1592,10 +1634,13 @@ function seleccionarProyectoExtra(idProyecto) {
   document.getElementById('picker-results').classList.remove('open');
   document.getElementById('proyecto-search').value = '';
   document.getElementById('extra-form-wrap').style.display = 'block';
-  document.getElementById('selected-project-banner').innerHTML =
-    `<b>${proyectoSeleccionado.nombre_proyecto}</b> — ${proyectoSeleccionado.id_proyecto} · ${proyectoSeleccionado.comuna} · ${proyectoSeleccionado.estado}`;
-
   const existing = datosExtra[idProyecto] || {};
+  const infoEdicion = existing.ultima_edicion_por
+    ? ` <span style="color:var(--ink-dim);font-size:0.82rem">· Última edición por: ${existing.ultima_edicion_por}${existing.actualizado ? ' (' + existing.actualizado + ')' : ''}</span>`
+    : '';
+  document.getElementById('selected-project-banner').innerHTML =
+    `<b>${proyectoSeleccionado.nombre_proyecto}</b> — ${proyectoSeleccionado.id_proyecto} · ${proyectoSeleccionado.comuna} · ${proyectoSeleccionado.estado}${infoEdicion}`;
+
   document.getElementById('f-evento').value = existing.evento || '';
   document.getElementById('f-profesional').value = existing.profesional || '';
   document.getElementById('f-revisiones').value = existing.revisiones ?? '';
@@ -1626,6 +1671,7 @@ async function guardarDatosExtra() {
     descripcion: document.getElementById('f-descripcion').value,
     observaciones: document.getElementById('f-observaciones').value,
     actualizado: new Date().toLocaleString('es-CL'),
+    ultima_edicion_por: usuarioActualEmail || 'desconocido',
   };
   const statusEl = document.getElementById('save-status');
   statusEl.textContent = 'Guardando...';
