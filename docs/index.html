@@ -875,7 +875,7 @@ function groupBy(arr, key) {
 function aplicarDrilldown(campo, valor) {
   const idFiltro = { provincia: 'f-provincia', comuna: 'f-comuna', programa: 'f-programa', estado: 'f-estado', evento: 'f-evento-filtro' }[campo];
   if (!idFiltro || !multiselectState[idFiltro]) return;
-  Object.keys(multiselectState).forEach(id => multiselectState[id].clear());
+  multiselectState[idFiltro].clear();
   multiselectState[idFiltro].add(valor);
   refreshFilterOptions();
   applyFilters();
@@ -1158,8 +1158,9 @@ function renderResumen() {
       onClick: (evt, elements) => {
         if (!elements.length) return;
         const el = elements[0];
-        Object.keys(multiselectState).forEach(id => multiselectState[id].clear());
+        multiselectState['f-evento-filtro'].clear();
         multiselectState['f-evento-filtro'].add(eventosOrdenados[el.index]);
+        multiselectState['f-estado'].clear();
         multiselectState['f-estado'].add(estadosEvento[el.datasetIndex]);
         refreshFilterOptions();
         applyFilters();
