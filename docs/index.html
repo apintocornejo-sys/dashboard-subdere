@@ -150,6 +150,9 @@ tbody tr:hover { background:var(--panel-2); }
 
 .table-controls { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:10px; flex-wrap:wrap; }
 input[type=text] { background:var(--panel-2); border:1px solid var(--border); color:var(--ink); border-radius:6px; padding:7px 10px; font-size:0.85rem; min-width:220px; }
+.buscador-contraste { border:2px solid #e83e8c !important; background:#241220 !important; color:#fff !important; box-shadow:0 0 0 3px rgba(232,62,140,0.15); font-weight:500; }
+.buscador-contraste::placeholder { color:#e896c2; }
+.buscador-contraste:focus { outline:none; box-shadow:0 0 0 4px rgba(232,62,140,0.35); }
 .pager { display:flex; gap:8px; align-items:center; font-size:0.8rem; color:var(--ink-dim); }
 .pager button { background:var(--panel-2); border:1px solid var(--border); color:var(--ink); border-radius:6px; padding:4px 10px; cursor:pointer; }
 .pager button:disabled { opacity:.4; cursor:default; }
@@ -470,7 +473,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
   <div class="view" id="view-tabla">
     <div class="table-controls">
-      <input type="text" id="tabla-search" placeholder="Buscar por nombre de proyecto, comuna, id..." oninput="renderTabla()">
+      <input type="text" id="tabla-search" class="buscador-contraste" placeholder="Buscar por nombre de proyecto, comuna, id..." oninput="renderTabla()">
       <button class="btn btn-primary" onclick="descargarResumenPDF()">📄 Descargar resumen PDF</button>
       <div class="pager">
         <span id="pager-info"></span>
@@ -584,6 +587,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
     <div class="panel wide">
       <h2>Detalle por proyecto</h2>
+      <input type="text" id="trazabilidad-search" class="buscador-contraste" placeholder="Buscar por nombre de proyecto, comuna, id..." oninput="renderTrazabilidad()" style="margin-bottom:12px;width:100%">
       <div id="tabla-trazabilidad-wrap" style="overflow-x:auto">
         <table id="tbl-trazabilidad">
           <thead>
@@ -1405,7 +1409,14 @@ function renderTrazabilidad() {
 
   const sumaTotal = (dias) => LUGARES.reduce((s, lugar) => s + dias[lugar], 0);
 
-  const filasCalculadas = filtered
+  const q = document.getElementById('trazabilidad-search').value.trim().toLowerCase();
+  let baseFiltrada = filtered;
+  if (q) baseFiltrada = baseFiltrada.filter(d =>
+    String(d.nombre_proyecto||'').toLowerCase().includes(q) ||
+    String(d.comuna||'').toLowerCase().includes(q) ||
+    String(d.id_proyecto||'').toLowerCase().includes(q));
+
+  const filasCalculadas = baseFiltrada
     .map(d => ({ d, dias: diasPorLugar(d.id_proyecto, d.estado, d.dias_en_estado) }))
     .filter(({ dias }) => sumaTotal(dias) > 0);
 
