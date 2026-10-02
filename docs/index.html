@@ -9,6 +9,7 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root {
   --bg:#0d1424; --panel:#141d33; --panel-2:#1a2540; --border:#293a5c;
@@ -400,6 +401,14 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
           <path d="M8 13h8M8 17h5" stroke="#F5F5DC" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
         Descargar informe PDF
+      </button>
+      <button class="btn btn-primary" onclick="descargarInformeResumenXLS()" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg, #2e7d32, #1b5e20)">
+        <svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M14 2v6h6" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+          <path d="M9 13l2.2 4L13.5 13M9 17l2.2-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Informe XLS
       </button>
       <button class="btn btn-modo-reunion" id="btn-modo-reunion" onclick="toggleModoReunion()">🖥️ Modo Reunión</button>
     </div>
@@ -1778,6 +1787,135 @@ function resumenFiltrosActivos() {
     return `${labels[id]}: ${[...sel].join(', ')}`;
   }).filter(Boolean);
   return partes.length ? partes.join('   |   ') : 'Sin filtros aplicados (todos los proyectos)';
+}
+
+function descargarInformeResumenXLS() {
+  const wb = XLSX.utils.book_new();
+
+  // ---- Hoja 1: Resumen (filtros + KPIs + En Revisión URS por profesional) ----
+  const enRevisionURS = filtered.filter(d => d.estado === 'En Revisión URS').length;
+  const enEvaluacionTecnica = filtered.filter(d => d.estado === 'En Evaluación Técnica').length;
+  const elegibles = filtered.filter(d => d.estado === 'Elegible').length;
+  const conteoProfesional = {};
+  filtered.filter(d => d.estado === 'En Revisión URS').forEach(d => {
+    const nombre = d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar';
+    conteoProfesional[nombre] = (conteoProfesional[nombre] || 0) + 1;
+  });
+  const filasResumen = [
+    ['SUBDERE en Línea — Informe de Resumen (Región de Coquimbo)'],
+    [`Generado el ${new Date().toLocaleDateString('es-CL')}`],
+    [],
+    ['Filtros aplicados', resumenFiltrosActivos()],
+    [],
+    ['Indicador', 'Valor'],
+    ['Proyectos', filtered.length],
+    ['En Revisión URS', enRevisionURS],
+    ['En Evaluación Técnica', enEvaluacionTecnica],
+    ['Elegibles', elegibles],
+    [],
+    ['En Revisión URS por Profesional', ''],
+    ...Object.entries(conteoProfesional).sort((a,b) => b[1]-a[1]),
+  ];
+  const wsResumen = XLSX.utils.aoa_to_sheet(filasResumen);
+  wsResumen['!cols'] = [{ wch: 35 }, { wch: 45 }];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // ---- Hoja 2: Distribución por estado ----
+  const porEstado = groupBy(filtered,'estado').sort((a,b)=>b.n-a.n);
+  const wsEstado = XLSX.utils.aoa_to_sheet([['Estado', 'N° Proyectos'], ...porEstado.map(d => [d.key, d.n])]);
+  wsEstado['!cols'] = [{ wch: 35 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, wsEstado, 'Por Estado');
+
+  // ---- Hoja 3: Distribución por programa ----
+  const porPrograma = groupBy(filtered,'programa').sort((a,b)=>b.n-a.n);
+  const wsPrograma = XLSX.utils.aoa_to_sheet([
+    ['Programa', 'N° Proyectos', 'Aporte Total ($)'],
+    ...porPrograma.map(d => [d.key, d.n, d.monto]),
+  ]);
+  wsPrograma['!cols'] = [{ wch: 45 }, { wch: 14 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsPrograma, 'Por Programa');
+
+  // ---- Hoja 4: Aporte por provincia ----
+  const porProvincia = groupBy(filtered,'provincia').sort((a,b)=>b.monto-a.monto);
+  const wsProvincia = XLSX.utils.aoa_to_sheet([
+    ['Provincia', 'N° Proyectos', 'Aporte Total ($)'],
+    ...porProvincia.map(d => [d.key, d.n, d.monto]),
+  ]);
+  wsProvincia['!cols'] = [{ wch: 20 }, { wch: 14 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, wsProvincia, 'Por Provincia');
+
+  // ---- Hoja 5: Distribución por evento (desglosado por estado) ----
+  const proyectosConEvento = filtered.filter(d => d.evento && d.evento.trim() !== '');
+  const wsEventoFilas = [['Evento', 'Estado', 'N° Proyectos']];
+  groupBy(proyectosConEvento, 'evento').sort((a,b)=>b.n-a.n).forEach(({key: evento}) => {
+    groupBy(proyectosConEvento.filter(d => d.evento === evento), 'estado').sort((a,b)=>b.n-a.n).forEach(({key: estado, n}) => {
+      wsEventoFilas.push([evento, estado, n]);
+    });
+  });
+  const wsEvento = XLSX.utils.aoa_to_sheet(wsEventoFilas);
+  wsEvento['!cols'] = [{ wch: 40 }, { wch: 30 }, { wch: 14 }];
+  XLSX.utils.book_append_sheet(wb, wsEvento, 'Por Evento');
+
+  // ---- Hoja 6: Resumen por comuna (5 estados clave) ----
+  const ESTADOS_CLAVE_XLS = ['Elegible', 'Observado Programa', 'Observado URS', 'En Revisión URS', 'En Evaluación Técnica'];
+  const wsComunaFilas = [['Comuna', ...ESTADOS_CLAVE_XLS]];
+  TODAS_LAS_COMUNAS.forEach(comuna => {
+    const fila = [comuna];
+    ESTADOS_CLAVE_XLS.forEach(estado => {
+      fila.push(filtered.filter(d => d.comuna === comuna && d.estado === estado).length);
+    });
+    wsComunaFilas.push(fila);
+  });
+  const wsComuna = XLSX.utils.aoa_to_sheet(wsComunaFilas);
+  wsComuna['!cols'] = [{ wch: 16 }, ...ESTADOS_CLAVE_XLS.map(() => ({ wch: 14 }))];
+  XLSX.utils.book_append_sheet(wb, wsComuna, 'Resumen por Comuna');
+
+  // ---- Hoja 7: PMB Tradicional / Tradicional — Año Postulación 2026 ----
+  const PROGRAMAS_TRAD_XLS = ['PMB Tradicional', 'Tradicional'];
+  const proyectosTrad2026 = filtered.filter(d => PROGRAMAS_TRAD_XLS.includes(d.programa) && String(d.anio_postulacion) === '2026');
+  const estadosTradXls = unique(proyectosTrad2026, 'estado');
+  const wsTradFilas = [['Comuna', 'Programa', ...estadosTradXls]];
+  TODAS_LAS_COMUNAS.forEach(comuna => {
+    PROGRAMAS_TRAD_XLS.forEach(programa => {
+      const fila = [comuna, programa];
+      estadosTradXls.forEach(estado => {
+        fila.push(proyectosTrad2026.filter(d => d.comuna === comuna && d.programa === programa && d.estado === estado).length);
+      });
+      wsTradFilas.push(fila);
+    });
+  });
+  const wsTrad = XLSX.utils.aoa_to_sheet(wsTradFilas);
+  wsTrad['!cols'] = [{ wch: 16 }, { wch: 18 }, ...estadosTradXls.map(() => ({ wch: 12 }))];
+  XLSX.utils.book_append_sheet(wb, wsTrad, 'PMB Trad-Tradicional 2026');
+
+  // ---- Hoja 8: Listado detallado "En Revisión URS" (por profesional, ordenado por días) ----
+  const proyectosRevisionXls = filtered
+    .filter(d => d.estado === 'En Revisión URS')
+    .map(d => ({ ...d, profesional: d.profesional && d.profesional.trim() !== '' ? d.profesional : 'Sin asignar' }))
+    .sort((a, b) => (Number(b.dias_en_estado) || 0) - (Number(a.dias_en_estado) || 0));
+  const wsRevision = XLSX.utils.aoa_to_sheet([
+    ['Días', 'Profesional', 'ID', 'Proyecto', 'Comuna', 'Programa'],
+    ...proyectosRevisionXls.map(d => [d.dias_en_estado ?? '', d.profesional, d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '']),
+  ]);
+  wsRevision['!cols'] = [{ wch: 8 }, { wch: 20 }, { wch: 16 }, { wch: 55 }, { wch: 16 }, { wch: 35 }];
+  XLSX.utils.book_append_sheet(wb, wsRevision, 'En Revisión URS - Detalle');
+
+  // ---- Hoja 9 y 10: Listados por evento (Ficha Simplificada Catastrofe / Transferencia GR 2026) ----
+  const hojaListadoEvento = (nombreEvento, nombreHoja) => {
+    const lista = filtered
+      .filter(d => d.evento === nombreEvento)
+      .sort((a, b) => a.estado.localeCompare(b.estado) || a.comuna.localeCompare(b.comuna));
+    const ws = XLSX.utils.aoa_to_sheet([
+      ['Estado', 'ID', 'Proyecto', 'Comuna', 'Programa'],
+      ...lista.map(d => [d.estado ?? '', d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '']),
+    ]);
+    ws['!cols'] = [{ wch: 25 }, { wch: 16 }, { wch: 55 }, { wch: 16 }, { wch: 35 }];
+    XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+  };
+  hojaListadoEvento('Ficha Simplificada SUBDERE Catastrofe 2026', 'Ficha Simplificada Catastrofe');
+  hojaListadoEvento('Transferencia Gobierno Regional 2026', 'Transferencia GR 2026');
+
+  XLSX.writeFile(wb, `informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 function descargarInformeResumenPDF() {
