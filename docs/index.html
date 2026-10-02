@@ -484,6 +484,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="table-controls">
       <input type="text" id="tabla-search" class="buscador-contraste" placeholder="Buscar por nombre de proyecto, comuna, id..." oninput="renderTabla()">
       <button class="btn btn-primary" onclick="descargarResumenPDF()">📄 Descargar resumen PDF</button>
+      <button class="btn btn-primary" onclick="descargarResumenXLS()" style="background:linear-gradient(135deg, #2e7d32, #1b5e20)">📊 Informe XLS</button>
       <div class="pager">
         <span id="pager-info"></span>
         <button onclick="pagerPrev()">‹ Anterior</button>
@@ -2332,6 +2333,45 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
     columnStyles: Object.assign({ 0: { halign: 'left', fontStyle: 'bold' } }, columnStylesTrad),
     headStyles: { fillColor: [35, 49, 108], fontSize: 6.3 },
   });
+}
+
+function descargarResumenXLS() {
+  // Mismas filas que ve la tabla en pantalla y que usa el PDF de esta
+  // pestaña (respeta filtros generales + buscador de Tabla dinámica).
+  const filasDatos = filteredTablaRows();
+  const montoTotal = filasDatos.reduce((s, d) => s + (d.monto_subdere || 0), 0);
+
+  const wb = XLSX.utils.book_new();
+
+  // ---- Hoja 1: Resumen ----
+  const wsResumen = XLSX.utils.aoa_to_sheet([
+    ['SUBDERE en Línea — Resumen de Proyectos (Región de Coquimbo)'],
+    [`Generado el ${new Date().toLocaleDateString('es-CL')}`],
+    [],
+    ['Filtros aplicados', resumenFiltrosActivos()],
+    [],
+    ['Total proyectos', filasDatos.length],
+    ['Aporte SUBDERE total', montoTotal],
+    ['Comunas', new Set(filasDatos.map(d => d.comuna)).size],
+  ]);
+  wsResumen['!cols'] = [{ wch: 35 }, { wch: 45 }];
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // ---- Hoja 2: Proyectos (mismas columnas que la tabla/PDF de esta pestaña) ----
+  const wsProyectos = XLSX.utils.aoa_to_sheet([
+    ['ID', 'Proyecto', 'Comuna', 'Programa', 'Estado', 'Días en Estado', 'Evento', 'Profesional', 'Año Aprob.', 'Aporte ($)'],
+    ...filasDatos.map(d => [
+      d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '',
+      d.estado ?? '', d.dias_en_estado ?? '', d.evento ?? '', d.profesional ?? '', d.anio_aprobacion ?? '', d.monto_subdere || 0,
+    ]),
+  ]);
+  wsProyectos['!cols'] = [
+    { wch: 16 }, { wch: 55 }, { wch: 16 }, { wch: 35 }, { wch: 25 },
+    { wch: 14 }, { wch: 35 }, { wch: 20 }, { wch: 11 }, { wch: 16 },
+  ];
+  XLSX.utils.book_append_sheet(wb, wsProyectos, 'Proyectos');
+
+  XLSX.writeFile(wb, `resumen_proyectos_subdere_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
 function descargarResumenPDF() {
