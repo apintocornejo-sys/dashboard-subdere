@@ -90,6 +90,7 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .tab[data-view="tabla"].active { border-left-color:#c9576b; color:#c9576b; background:var(--panel-2); }
 .tab[data-view="datos-extra"].active { border-left-color:#6fae4f; color:#6fae4f; background:var(--panel-2); }
 .tab[data-view="trazabilidad"].active { border-left-color:#e83e8c; color:#e83e8c; background:var(--panel-2); }
+.tab[data-view="gr2026"].active { border-left-color:#22d3ee; color:#22d3ee; background:var(--panel-2); }
 
 .view { display:none; padding:22px 28px 40px; }
 .view.active { display:block; }
@@ -111,6 +112,16 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .panel-contraste { background:#3a1420; border:1px solid #c9576b; box-shadow:0 2px 10px rgba(201,87,107,0.25); }
 .panel-trazabilidad { background:#3a1230; border:1px solid #e83e8c; box-shadow:0 2px 10px rgba(232,62,140,0.25); }
 .panel-trazabilidad h2 { color:#ffb3dc; }
+.panel-gr2026 { background:#0d2a38; border:1px solid #22d3ee; box-shadow:0 2px 10px rgba(34,211,238,0.22); }
+.panel-gr2026 h2 { color:#a5f3fc; }
+.panel-gr2026 p { margin:6px 0 10px; color:#c4eef5; font-size:0.85rem; line-height:1.5; }
+.barra-gr { height:4px; background:rgba(255,255,255,0.12); border-radius:2px; margin-top:3px; }
+.barra-gr span { display:block; height:100%; background:#22d3ee; border-radius:2px; }
+.barra-gr.excede span { background:#c9576b; }
+.fila-clic { cursor:pointer; }
+.fila-clic:hover td { background:rgba(34,211,238,0.08); }
+.fila-total td { font-weight:700; border-top:2px solid var(--border); }
+.kpi.kpi-monto .value { font-size:1.35rem; }
 .panel-contraste h2 { color:#ffd7dd; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
 .profesional-card { background:#c9576b; border-radius:8px; padding:14px 12px; text-align:center; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
@@ -229,6 +240,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .tab[data-view="tabla"].active { border-left-color:transparent; border-bottom-color:#c9576b; }
   .tab[data-view="datos-extra"].active { border-left-color:transparent; border-bottom-color:#6fae4f; }
   .tab[data-view="trazabilidad"].active { border-left-color:transparent; border-bottom-color:#e83e8c; }
+  .tab[data-view="gr2026"].active { border-left-color:transparent; border-bottom-color:#22d3ee; }
 
   .filters { padding:12px calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left)); gap:8px; }
   .filter-group, .multiselect { min-width:0; width:100%; }
@@ -265,6 +277,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
   .profesional-revision-grid { grid-template-columns:repeat(2, 1fr); }
   .tabla-compacta { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  #tbl-gr2026, #tbl-gr2026-estado { font-size:0.7rem; white-space:nowrap; }
   #tabla-tradicional-2026 table { white-space:nowrap; }
 }
 
@@ -287,6 +300,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .kpis { gap:8px; }
   .kpi { padding:10px 12px; }
   .kpi .value { font-size:1.15rem; }
+  .kpi.kpi-monto .value { font-size:0.95rem; }
   .kpi .label { font-size:0.62rem; }
 
   .panel h2 { font-size:0.82rem; }
@@ -340,6 +354,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="tab" data-view="tabla">Tabla dinámica</div>
     <div class="tab" data-view="datos-extra">📝 Datos adicionales</div>
     <div class="tab" data-view="trazabilidad">⏱️ Trazabilidad</div>
+    <div class="tab" data-view="gr2026">💰 Transf. GR 2026</div>
 </nav>
 <div class="main-content">
   <div class="filters">
@@ -608,6 +623,66 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
               <th class="num">Días en Nivel Central</th>
               <th class="num">Días Apartado (espera de recursos)</th>
               <th class="num">Total días en ciclo</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-gr2026">
+    <div class="panel wide panel-gr2026">
+      <h2>💰 Transferencia Gobierno Regional 2026 — Asignado vs. Postulado</h2>
+      <p>
+        Compara el monto <strong>asignado</strong> a cada comuna con el monto <strong>postulado</strong>
+        (suma del aporte SUBDERE de los proyectos del evento "Transferencia Gobierno Regional 2026").
+        Haz clic en una comuna de la tabla para ver sus proyectos en la Tabla dinámica.<br>
+        Filtros activos: <strong id="gr2026-filtros">—</strong>
+      </p>
+      <div id="gr2026-nota" style="color:#ffd7dd;font-size:0.82rem;margin-bottom:8px"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="descargarInformeGR2026PDF()">📄 Descargar informe PDF</button>
+        <button class="btn btn-primary" onclick="descargarInformeGR2026XLS()" style="background:linear-gradient(135deg, #2e7d32, #1b5e20)">📊 Informe XLS</button>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis-gr2026"></div>
+
+    <div class="panel wide">
+      <h2>Asignado vs. Postulado por comuna</h2>
+      <canvas id="chartGR2026" style="height:600px !important"></canvas>
+    </div>
+
+    <div class="panel wide">
+      <h2>Comparativo por comuna (monto y porcentaje)</h2>
+      <div style="overflow-x:auto">
+        <table id="tbl-gr2026">
+          <thead>
+            <tr>
+              <th>Comuna</th>
+              <th class="num">Asignado ($)</th>
+              <th class="num">Postulado ($)</th>
+              <th class="num">Saldo ($)</th>
+              <th class="num">% Postulado</th>
+              <th class="num">N° proyectos</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel wide">
+      <h2>Monto postulado por estado</h2>
+      <div style="overflow-x:auto">
+        <table id="tbl-gr2026-estado">
+          <thead>
+            <tr>
+              <th>Estado</th>
+              <th class="num">N° proyectos</th>
+              <th class="num">Monto postulado ($)</th>
+              <th class="num">% del postulado</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -1375,6 +1450,7 @@ function renderAll() {
   renderEvolucion();
   renderTabla();
   renderTrazabilidad();
+  renderGR2026();
 }
 
 // ========================================================================
@@ -1471,6 +1547,397 @@ function renderTrazabilidad() {
     }).join('');
 }
 
+
+// ========================================================================
+// TRANSFERENCIA GOBIERNO REGIONAL 2026: asignado vs. postulado por comuna
+// ========================================================================
+const EVENTO_GR_2026 = 'Transferencia Gobierno Regional 2026';
+// Monto asignado a cada comuna (según el listado entregado, en el mismo
+// orden: por provincia). Para corregir o actualizar un monto, edita el
+// número de la comuna correspondiente aquí.
+const ASIGNACION_GR_2026 = [
+  ['ANDACOLLO', 430271555],
+  ['COQUIMBO', 287107697],
+  ['LA HIGUERA', 588458572],
+  ['LA SERENA', 305958317],
+  ['PAIGUANO', 433288779],
+  ['VICUÑA', 341605631],
+  ['COMBARBALÁ', 428729459],
+  ['MONTE PATRIA', 420989211],
+  ['OVALLE', 357375994],
+  ['PUNITAQUI', 517106487],
+  ['RÍO HURTADO', 478896468],
+  ['CANELA', 410044093],
+  ['ILLAPEL', 334102993],
+  ['LOS VILOS', 315849570],
+  ['SALAMANCA', 350215174],
+];
+
+function fmtPctGR(x) {
+  return (x * 100).toLocaleString('es-CL', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
+}
+function fmtCLPn(n) { return (n < 0 ? '-' : '') + fmtCLP(Math.abs(n)); }
+const fmtMillonesGR = v => '$' + Math.round(v / 1e6).toLocaleString('es-CL') + 'M';
+
+// Cálculo único, compartido por la pestaña, el PDF y el Excel.
+// Respeta los filtros activos del dashboard (igual que el resto de las pestañas).
+function datosGR2026() {
+  const comunasConocidas = new Set(ASIGNACION_GR_2026.map(([c]) => c));
+  const delEvento = filtered.filter(d => d.evento === EVENTO_GR_2026);
+  const proyectos = delEvento.filter(d => comunasConocidas.has(d.comuna));
+  const sinComuna = delEvento.filter(d => !comunasConocidas.has(d.comuna));
+
+  const filas = ASIGNACION_GR_2026.map(([comuna, asignado]) => {
+    const delComuna = proyectos.filter(d => d.comuna === comuna);
+    const postulado = delComuna.reduce((s, d) => s + (d.monto_subdere || 0), 0);
+    return { comuna, asignado, postulado, saldo: asignado - postulado, pct: asignado ? postulado / asignado : 0, n: delComuna.length };
+  });
+
+  const totalAsignado = filas.reduce((s, f) => s + f.asignado, 0);
+  const totalPostulado = filas.reduce((s, f) => s + f.postulado, 0);
+  return {
+    proyectos, filas, sinComuna,
+    porEstado: groupBy(proyectos, 'estado').sort((a, b) => b.monto - a.monto),
+    totales: {
+      asignado: totalAsignado,
+      postulado: totalPostulado,
+      saldo: totalAsignado - totalPostulado,
+      pct: totalAsignado ? totalPostulado / totalAsignado : 0,
+      n: proyectos.length,
+    },
+  };
+}
+
+function renderGR2026() {
+  const kpisEl = document.getElementById('kpis-gr2026');
+  if (!kpisEl) return;
+  const { filas, totales, sinComuna, porEstado } = datosGR2026();
+
+  document.getElementById('gr2026-filtros').textContent = resumenFiltrosActivos();
+  document.getElementById('gr2026-nota').textContent = sinComuna.length
+    ? `⚠️ ${sinComuna.length} proyecto(s) del evento tienen una comuna que no está en el listado de asignaciones y no se incluyen en estos totales.`
+    : '';
+
+  // ---- Indicadores ----
+  const excede = totales.saldo < 0;
+  kpisEl.innerHTML = `
+    <div class="kpi kpi-monto"><div class="value">${fmtCLP(totales.asignado)}</div><div class="label">Total asignado</div></div>
+    <div class="kpi kpi-monto"><div class="value">${fmtCLP(totales.postulado)}</div><div class="label">Total postulado</div></div>
+    <div class="kpi kpi-monto"><div class="value" style="color:${excede ? '#ff8a9b' : 'var(--accent)'}">${fmtCLPn(totales.saldo)}</div><div class="label">${excede ? 'Excede lo asignado' : 'Saldo por postular'}</div></div>
+    <div class="kpi"><div class="value">${fmtPctGR(totales.pct)}</div><div class="label">% postulado del asignado</div></div>
+    <div class="kpi"><div class="value">${totales.n.toLocaleString('es-CL')}</div><div class="label">Proyectos</div></div>
+  `;
+
+  // ---- Gráfico: asignado vs. postulado por comuna ----
+  makeChart('chartGR2026', 'bar', filas.map(f => f.comuna), [
+    { label: 'Asignado', data: filas.map(f => f.asignado), backgroundColor: palette[1], borderRadius: 3 },
+    { label: 'Postulado', data: filas.map(f => f.postulado), backgroundColor: palette[0], borderRadius: 3 },
+  ], {
+    indexAxis: 'y',
+    layout: { padding: { right: 46 } },
+    scales: {
+      x: { grid: { color: '#293a5c' }, beginAtZero: true, ticks: { callback: v => fmtMillonesGR(v) } },
+      y: { grid: { display: false } },
+    },
+    plugins: {
+      legend: { display: true, position: 'bottom' },
+      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtCLP(ctx.parsed.x)}` } },
+      datalabels: { font: { size: 8, weight: '600' }, formatter: v => v > 0 ? fmtMillonesGR(v) : '' },
+    },
+  });
+
+  // ---- Tabla comparativa por comuna ----
+  const filaHtml = f => `
+    <tr class="fila-clic" onclick="irATablaGR2026('${f.comuna}')" title="Ver los proyectos de ${f.comuna}">
+      <td>${f.comuna}</td>
+      <td class="num">${fmtCLP(f.asignado)}</td>
+      <td class="num">${fmtCLP(f.postulado)}</td>
+      <td class="num" style="${f.saldo < 0 ? 'color:#ff8a9b' : ''}">${fmtCLPn(f.saldo)}</td>
+      <td class="num">${fmtPctGR(f.pct)}<div class="barra-gr${f.pct > 1 ? ' excede' : ''}"><span style="width:${Math.min(100, f.pct * 100)}%"></span></div></td>
+      <td class="num">${f.n || '—'}</td>
+    </tr>`;
+  const filaTotal = `
+    <tr class="fila-total">
+      <td>TOTAL</td>
+      <td class="num">${fmtCLP(totales.asignado)}</td>
+      <td class="num">${fmtCLP(totales.postulado)}</td>
+      <td class="num" style="${excede ? 'color:#ff8a9b' : ''}">${fmtCLPn(totales.saldo)}</td>
+      <td class="num">${fmtPctGR(totales.pct)}</td>
+      <td class="num">${totales.n}</td>
+    </tr>`;
+  document.querySelector('#tbl-gr2026 tbody').innerHTML = filas.map(filaHtml).join('') + filaTotal;
+
+  // ---- Tabla: monto postulado por estado ----
+  const tbodyEstado = document.querySelector('#tbl-gr2026-estado tbody');
+  tbodyEstado.innerHTML = porEstado.length
+    ? porEstado.map(e => `
+        <tr>
+          <td>${e.key}</td>
+          <td class="num">${e.n}</td>
+          <td class="num">${fmtCLP(e.monto)}</td>
+          <td class="num">${fmtPctGR(totales.postulado ? e.monto / totales.postulado : 0)}</td>
+        </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:var(--ink-dim);padding:14px">Sin proyectos del evento en la vista actual.</td></tr>';
+}
+
+// Clic en una comuna: lleva a la Tabla dinámica con sus proyectos del evento.
+function irATablaGR2026(comuna) {
+  ['f-provincia', 'f-comuna', 'f-evento-filtro'].forEach(id => multiselectState[id].clear());
+  multiselectState['f-evento-filtro'].add(EVENTO_GR_2026);
+  multiselectState['f-comuna'].add(comuna);
+  refreshFilterOptions();
+  applyFilters();
+  const buscadorTabla = document.getElementById('tabla-search');
+  if (buscadorTabla) buscadorTabla.value = '';
+  const tabTabla = document.querySelector('.tab[data-view="tabla"]');
+  if (tabTabla) tabTabla.click();
+}
+
+// ---------- Descarga: informe PDF ----------
+function descargarInformeGR2026PDF() {
+  const { jsPDF } = window.jspdf;
+  const logoImg = new Image();
+  logoImg.onload = () => generarInformeGR2026Seguro(jsPDF, logoImg.naturalWidth, logoImg.naturalHeight);
+  logoImg.onerror = () => generarInformeGR2026Seguro(jsPDF, null, null);
+  logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
+}
+
+function generarInformeGR2026Seguro(jsPDF, logoW, logoH) {
+  try {
+    generarInformeGR2026ConLogo(jsPDF, logoW, logoH);
+  } catch (err) {
+    console.error('Error generando el informe PDF (GR 2026):', err);
+    alert('No se pudo generar el PDF: ' + err.message);
+  }
+}
+
+function generarInformeGR2026ConLogo(jsPDF, logoW, logoH) {
+  const { filas, totales, proyectos, porEstado } = datosGR2026();
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  doc.setFont('helvetica', 'normal');
+  const marginX = 14;
+  const pageW = 279.4;
+  const pageH = 215.9;
+  const contentW = pageW - marginX * 2;
+  let textoX = marginX;
+
+  if (logoW && logoH) {
+    const alturaLogo = 15;
+    const anchoLogo = alturaLogo * (logoW / logoH);
+    doc.addImage(`data:image/jpeg;base64,${LOGO_BASE64}`, 'JPEG', marginX, 8, anchoLogo, alturaLogo);
+    textoX = marginX + anchoLogo + 6;
+  }
+
+  doc.setFont(undefined, 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(35, 49, 108);
+  doc.text('SUBDERE en Línea', textoX, 13);
+  doc.setFontSize(11);
+  doc.setTextColor(70, 80, 120);
+  doc.text('Transferencia Gobierno Regional 2026 — Asignado vs. Postulado', textoX, 19.5);
+  doc.setFont(undefined, 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 110);
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}`, textoX, 25);
+
+  let y = 30;
+
+  // Recuadro con los filtros aplicados
+  doc.setFontSize(8);
+  const filtrosLineas = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW - 8).slice(0, 2);
+  const alturaFiltrosCaja = 6 + filtrosLineas.length * 4;
+  doc.setFillColor(24, 34, 74);
+  doc.setDrawColor(70, 90, 160);
+  doc.roundedRect(marginX, y, contentW, alturaFiltrosCaja, 1.5, 1.5, 'FD');
+  doc.setTextColor(210, 216, 240);
+  doc.text(filtrosLineas, marginX + 4, y + 5);
+  y += alturaFiltrosCaja + 5;
+
+  // Tarjetas de indicadores
+  const excede = totales.saldo < 0;
+  const kpis = [
+    { label: 'Total asignado', valor: fmtCLP(totales.asignado), color: [86, 180, 233] },
+    { label: 'Total postulado', valor: fmtCLP(totales.postulado), color: [230, 159, 0] },
+    { label: excede ? 'Excede lo asignado' : 'Saldo por postular', valor: fmtCLPn(totales.saldo), color: excede ? [201, 87, 107] : [0, 158, 115] },
+    { label: '% postulado del asignado', valor: fmtPctGR(totales.pct), color: [91, 141, 255] },
+    { label: 'Proyectos', valor: String(totales.n), color: [120, 130, 150] },
+  ];
+  const gapKpi = 6;
+  const kpiW = (contentW - gapKpi * (kpis.length - 1)) / kpis.length;
+  const kpiH = 20;
+  kpis.forEach((k, i) => {
+    const kx = marginX + i * (kpiW + gapKpi);
+    doc.setFillColor(245, 246, 249);
+    doc.setDrawColor(225, 227, 232);
+    doc.roundedRect(kx, y, kpiW, kpiH, 1.5, 1.5, 'FD');
+    doc.setFillColor(k.color[0], k.color[1], k.color[2]);
+    doc.roundedRect(kx, y, 2.2, kpiH, 1, 1, 'F');
+    doc.setFontSize(12.5);
+    doc.setTextColor(k.color[0], k.color[1], k.color[2]);
+    doc.setFont(undefined, 'bold');
+    doc.text(k.valor, kx + 6, y + 11, { maxWidth: kpiW - 8 });
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(90, 90, 95);
+    doc.text(k.label, kx + 6, y + 16.5, { maxWidth: kpiW - 8 });
+  });
+  y += kpiH + 8;
+
+  // Tabla comparativa por comuna
+  doc.setFontSize(10);
+  doc.setTextColor(35, 49, 108);
+  doc.setFont(undefined, 'bold');
+  doc.text('Comparativo por comuna: asignado vs. postulado', marginX, y);
+  doc.setFont(undefined, 'normal');
+  y += 3;
+
+  const rojo = { textColor: [190, 40, 60], fontStyle: 'bold' };
+  doc.autoTable({
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [['Comuna', 'Asignado ($)', 'Postulado ($)', 'Saldo ($)', '% Postulado', 'N° proyectos']],
+    body: filas.map(f => [
+      f.comuna,
+      fmtCLP(f.asignado),
+      fmtCLP(f.postulado),
+      { content: fmtCLPn(f.saldo), styles: f.saldo < 0 ? rojo : {} },
+      { content: fmtPctGR(f.pct), styles: f.pct > 1 ? rojo : {} },
+      f.n || '—',
+    ]),
+    foot: [['TOTAL', fmtCLP(totales.asignado), fmtCLP(totales.postulado), fmtCLPn(totales.saldo), fmtPctGR(totales.pct), String(totales.n)]],
+    styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
+    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+    headStyles: { fillColor: [35, 49, 108], textColor: [255, 255, 255] },
+    footStyles: { fillColor: [226, 230, 244], textColor: [20, 20, 20], fontStyle: 'bold' },
+    didParseCell: (data) => { if (data.column.index === 0) data.cell.styles.halign = 'left'; },
+  });
+
+  // Gráfico en hoja propia (para que se lea bien)
+  doc.addPage();
+  agregarImagenChart(doc, 'chartGR2026', marginX, 14, contentW, pageH - 40, 'Asignado vs. Postulado por comuna');
+
+  // Monto postulado por estado
+  doc.addPage();
+  y = 14;
+  doc.setFontSize(10);
+  doc.setTextColor(35, 49, 108);
+  doc.setFont(undefined, 'bold');
+  doc.text('Monto postulado por estado', marginX, y);
+  doc.setFont(undefined, 'normal');
+  doc.autoTable({
+    startY: y + 3,
+    margin: { left: marginX, right: marginX },
+    head: [['Estado', 'N° proyectos', 'Monto postulado ($)', '% del postulado']],
+    body: porEstado.map(e => [e.key, e.n, fmtCLP(e.monto), fmtPctGR(totales.postulado ? e.monto / totales.postulado : 0)]),
+    styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' },
+    columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+    headStyles: { fillColor: [35, 49, 108], textColor: [255, 255, 255] },
+    didParseCell: (data) => { if (data.column.index === 0) data.cell.styles.halign = 'left'; },
+  });
+
+  // Detalle de proyectos
+  y = doc.lastAutoTable.finalY + 10;
+  if (y > pageH - 40) { doc.addPage(); y = 14; }
+  doc.setFontSize(10);
+  doc.setTextColor(35, 49, 108);
+  doc.setFont(undefined, 'bold');
+  doc.text('Detalle de proyectos del evento', marginX, y);
+  doc.setFont(undefined, 'normal');
+
+  const ordenComuna = Object.fromEntries(ASIGNACION_GR_2026.map(([c], i) => [c, i]));
+  const detalle = [...proyectos].sort((a, b) =>
+    (ordenComuna[a.comuna] - ordenComuna[b.comuna]) || ((b.monto_subdere || 0) - (a.monto_subdere || 0)));
+  doc.autoTable({
+    startY: y + 3,
+    margin: { left: marginX, right: marginX },
+    head: [['Comuna', 'ID', 'Proyecto', 'Estado', 'Días en estado', 'Profesional', 'Monto ($)']],
+    body: detalle.map(d => [
+      d.comuna ?? '', d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.estado ?? '',
+      d.dias_en_estado ?? '', d.profesional ?? '', fmtCLP(d.monto_subdere || 0),
+    ]),
+    styles: { fontSize: 6.8, cellPadding: 1.3 },
+    columnStyles: { 2: { cellWidth: contentW * 0.33 }, 4: { halign: 'center' }, 6: { halign: 'right' } },
+    headStyles: { fillColor: [35, 49, 108], textColor: [255, 255, 255] },
+    rowPageBreak: 'avoid',
+  });
+
+  doc.save(`informe_transferencia_gr2026_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+// ---------- Descarga: informe Excel ----------
+function formatearColumnaXLS(ws, col, formato, filaDesde, filaHasta) {
+  for (let r = filaDesde; r <= filaHasta; r++) {
+    const celda = ws[XLSX.utils.encode_cell({ r, c: col })];
+    if (celda && celda.t === 'n') celda.z = formato;
+  }
+}
+
+function descargarInformeGR2026XLS() {
+  const { filas, totales, proyectos, porEstado } = datosGR2026();
+  const FMT_MONTO = '$#,##0;-$#,##0';
+  const FMT_PCT = '0.0%';
+  const wb = XLSX.utils.book_new();
+
+  // ---- Hoja 1: Resumen ----
+  const wsResumen = XLSX.utils.aoa_to_sheet([
+    ['SUBDERE en Línea — Transferencia Gobierno Regional 2026: Asignado vs. Postulado'],
+    [`Generado el ${new Date().toLocaleDateString('es-CL')}`],
+    [],
+    ['Filtros aplicados', resumenFiltrosActivos()],
+    [],
+    ['Indicador', 'Valor'],
+    ['Total asignado', totales.asignado],
+    ['Total postulado', totales.postulado],
+    [totales.saldo < 0 ? 'Excede lo asignado' : 'Saldo por postular', totales.saldo],
+    ['% postulado del asignado', totales.pct],
+    ['Proyectos', totales.n],
+  ]);
+  wsResumen['!cols'] = [{ wch: 34 }, { wch: 45 }];
+  formatearColumnaXLS(wsResumen, 1, FMT_MONTO, 6, 8);
+  formatearColumnaXLS(wsResumen, 1, FMT_PCT, 9, 9);
+  XLSX.utils.book_append_sheet(wb, wsResumen, 'Resumen');
+
+  // ---- Hoja 2: Comparativo por comuna ----
+  const wsComparativo = XLSX.utils.aoa_to_sheet([
+    ['Comuna', 'Asignado ($)', 'Postulado ($)', 'Saldo ($)', '% Postulado', 'N° proyectos'],
+    ...filas.map(f => [f.comuna, f.asignado, f.postulado, f.saldo, f.pct, f.n]),
+    ['TOTAL', totales.asignado, totales.postulado, totales.saldo, totales.pct, totales.n],
+  ]);
+  wsComparativo['!cols'] = [{ wch: 16 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 13 }, { wch: 13 }];
+  const ultimaFila = filas.length + 1;
+  formatearColumnaXLS(wsComparativo, 1, FMT_MONTO, 1, ultimaFila);
+  formatearColumnaXLS(wsComparativo, 2, FMT_MONTO, 1, ultimaFila);
+  formatearColumnaXLS(wsComparativo, 3, FMT_MONTO, 1, ultimaFila);
+  formatearColumnaXLS(wsComparativo, 4, FMT_PCT, 1, ultimaFila);
+  XLSX.utils.book_append_sheet(wb, wsComparativo, 'Comparativo por Comuna');
+
+  // ---- Hoja 3: Monto postulado por estado ----
+  const wsEstado = XLSX.utils.aoa_to_sheet([
+    ['Estado', 'N° proyectos', 'Monto postulado ($)', '% del postulado'],
+    ...porEstado.map(e => [e.key, e.n, e.monto, totales.postulado ? e.monto / totales.postulado : 0]),
+  ]);
+  wsEstado['!cols'] = [{ wch: 30 }, { wch: 14 }, { wch: 20 }, { wch: 16 }];
+  formatearColumnaXLS(wsEstado, 2, FMT_MONTO, 1, porEstado.length);
+  formatearColumnaXLS(wsEstado, 3, FMT_PCT, 1, porEstado.length);
+  XLSX.utils.book_append_sheet(wb, wsEstado, 'Por Estado');
+
+  // ---- Hoja 4: Detalle de proyectos ----
+  const ordenComuna = Object.fromEntries(ASIGNACION_GR_2026.map(([c], i) => [c, i]));
+  const detalle = [...proyectos].sort((a, b) =>
+    (ordenComuna[a.comuna] - ordenComuna[b.comuna]) || ((b.monto_subdere || 0) - (a.monto_subdere || 0)));
+  const wsDetalle = XLSX.utils.aoa_to_sheet([
+    ['Comuna', 'ID', 'Proyecto', 'Estado', 'Días en Estado', 'Profesional', 'Monto ($)'],
+    ...detalle.map(d => [
+      d.comuna ?? '', d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.estado ?? '',
+      d.dias_en_estado ?? '', d.profesional ?? '', d.monto_subdere || 0,
+    ]),
+  ]);
+  wsDetalle['!cols'] = [{ wch: 16 }, { wch: 16 }, { wch: 60 }, { wch: 25 }, { wch: 14 }, { wch: 20 }, { wch: 18 }];
+  formatearColumnaXLS(wsDetalle, 6, FMT_MONTO, 1, detalle.length);
+  XLSX.utils.book_append_sheet(wb, wsDetalle, 'Proyectos');
+
+  XLSX.writeFile(wb, `informe_transferencia_gr2026_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
 
 // ========================================================================
 // DATOS ADICIONALES: login con Google + lectura/escritura en Drive
