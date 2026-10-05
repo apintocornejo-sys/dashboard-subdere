@@ -23,6 +23,16 @@ Uso (desde la carpeta del proyecto):
 Para otro evento o listado:
     python3 scripts/asignar_evento_listado.py "FET 2022" --lista mi_listado.txt
 
+Para uno o pocos proyectos, escribiendo el nombre directo (entre comillas):
+    python3 scripts/asignar_evento_listado.py ficha --nombre "CATÁSTROFE - HABILITACIÓN ... COMUNA DE PUNITAQUI"
+    (se puede repetir --nombre para varios proyectos)
+
+Para un proyecto puntual que no calzó por nombre:
+    # 1) buscarlo por palabras clave (muestra ID, año, evento actual y nombre):
+    python3 scripts/asignar_evento_listado.py ficha --buscar andacollo caldera pozos
+    # 2) asignarlo por su ID (pide confirmación igual que siempre):
+    python3 scripts/asignar_evento_listado.py ficha --ids 1-C-2026-1234
+
 Los listados son archivos de texto con un nombre de proyecto por línea.
 """
 
@@ -76,6 +86,12 @@ def normalizar(texto: str) -> str:
     nfkd = unicodedata.normalize("NFKD", str(texto or ""))
     sin_tildes = "".join(c for c in nfkd if not unicodedata.combining(c))
     return re.sub(r"[^a-z0-9]+", " ", sin_tildes.lower()).strip()
+
+
+def anio_del_evento(evento: str):
+    """Año que termina el nombre del evento ('... 2026' -> 2026); None si no tiene."""
+    m = re.findall(r"\b(20\d\d)\b", evento)
+    return int(m[-1]) if m else None
 
 
 def comunas_mencionadas(texto_norm: str) -> set:
@@ -161,15 +177,26 @@ def anio_postulacion(p):
         return None
 
 
-def buscar(nombres: list, proyectos: list) -> dict:
-    """Devuelve {'exactos', 'aproximados', 'sin_coincidencia', 'ambiguos'} con el detalle."""
-    indice = {}
-    for p in proyectos:
-        if p.get("id_proyecto"):
-            indice.setdefault(normalizar(p.get("nombre_proyecto")), []).append(p)
+def puntaje_pistas(n_listado: str, n_proyecto: str) -> float:
+    """Parecido para SUGERIR candidatos (solo orienta; nunca asigna): el mayor entre la similitud
+    de texto y la fracción de palabras del listado que aparecen en el proyecto."""
+    sm = SequenceMatcher(None, n_listado, n_proyecto)
+    if sm.real_quick_ratio() < 0.45 or sm.quick_ratio() < 0.45:
+        texto = 0.0
+    else:
+        texto = sm.ratio()
+    palabras = set(n_listado.split())
+    comunes = len(palabras & set(n_proyecto.split())) / len(palabras) if palabras else 0.0
+    return max(texto, comunes)
 
-    pool_2026 = [p for p in proyectos if p.get("id_proyecto") and anio_postulacion(p) == 2026]
-    pool_fuzzy = [(normalizar(p.get("nombre_proyecto")), p) for p in (pool_2026 or proyectos) if p.get("id_proyecto")]
+
+def buscar(nombres: list, proyectos: list, anio_preferido=None) -> dict:
+    """Devuelve {'exactos', 'aproximados', 'sin_coincidencia', 'ambiguos'} con el detalle."""
+    con_id = [p for p in proyectos if p.get("id_proyecto")]
+    indice = {}
+    for p in con_id:
+        indice.setdefault(normalizar(p.get("nombre_proyecto")), []).append(p)
+    todos_norm = [(normalizar(p.get("nombre_proyecto")), p) for p in con_id]
 
     res = {"exactos": [], "aproximados": [], "sin_coincidencia": [], "ambiguos": []}
     pendientes = []
@@ -178,9 +205,9 @@ def buscar(nombres: list, proyectos: list) -> dict:
     for nombre in nombres:
         n = normalizar(nombre)
         candidatos = indice.get(n, [])
-        if len(candidatos) > 1:                      # mismo nombre repetido: preferir los de postulación 2026
-            c2026 = [p for p in candidatos if anio_postulacion(p) == 2026]
-            candidatos = c2026 if c2026 else candidatos
+        if len(candidatos) > 1 and anio_preferido:   # mismo nombre repetido: preferir el año del evento
+            preferidos = [p for p in candidatos if anio_postulacion(p) == anio_preferido]
+            candidatos = preferidos if preferidos else candidatos
         if len(candidatos) == 1:
             res["exactos"].append({"nombre": nombre, "proyecto": candidatos[0], "parecido": 1.0})
         elif len(candidatos) > 1:
@@ -194,12 +221,13 @@ def buscar(nombres: list, proyectos: list) -> dict:
     for r in res["ambiguos"]:
         reservados |= {p["id_proyecto"] for p in r["proyectos"]}
 
-    # Pasada 2: para los que quedaron sin calzar, la coincidencia más parecida (aproximada)
+    # Pasada 2: para los que quedaron sin calzar, la coincidencia más parecida (aproximada).
+    # Se busca en TODOS los proyectos, de cualquier año.
     for nombre in pendientes:
         n = normalizar(nombre)
         mencionadas = comunas_mencionadas(n)
         puntajes = []
-        for nombre_p, p in pool_fuzzy:
+        for nombre_p, p in todos_norm:
             if p["id_proyecto"] in reservados:
                 continue
             # Si el listado nombra una comuna y el proyecto está en otra, es otro proyecto (hermano): descartar
@@ -216,8 +244,25 @@ def buscar(nombres: list, proyectos: list) -> dict:
             res["aproximados"].append({"nombre": nombre, "proyecto": puntajes[0][1], "parecido": puntajes[0][0]})
             reservados.add(puntajes[0][1]["id_proyecto"])
         else:
-            res["sin_coincidencia"].append({"nombre": nombre, "mejor": puntajes[0] if puntajes else None})
+            # Sin coincidencia: las 3 pistas más cercanas (de cualquier año) para que puedas identificarlo
+            pistas = sorted(((puntaje_pistas(n, nombre_p), p) for nombre_p, p in todos_norm
+                             if p["id_proyecto"] not in reservados),
+                            key=lambda t: t[0], reverse=True)[:3]
+            res["sin_coincidencia"].append({"nombre": nombre, "pistas": pistas})
     return res
+
+
+def buscar_por_palabras(palabras: list, proyectos: list) -> list:
+    """Proyectos cuyo nombre contiene TODAS las palabras (ignorando tildes y mayúsculas)."""
+    tokens = [normalizar(w) for w in palabras if normalizar(w)]
+    out = []
+    for p in proyectos:
+        if not p.get("id_proyecto"):
+            continue
+        nombre = normalizar(p.get("nombre_proyecto")) + " " + normalizar(p.get("comuna"))
+        if all(t in nombre for t in tokens):
+            out.append(p)
+    return out
 
 
 # ----------------------------------------------------------------------
@@ -235,7 +280,7 @@ def linea_proyecto(p, datos_extra, evento):
         marca = f"  [⚠ ahora tiene: {actual}]"
     else:
         marca = "  [nuevo]"
-    return f"{p['id_proyecto']} | {p.get('comuna')} | {p.get('estado')}{marca}"
+    return f"{p['id_proyecto']} | {p.get('comuna')} | post. {anio_postulacion(p) or '?'} | {p.get('estado')}{marca}"
 
 
 def aviso_comuna(nombre_listado, proyecto):
@@ -286,8 +331,11 @@ def mostrar_resumen(res, datos_extra, evento, total_nombres):
         print("\n✘ NO ESTÁN EN EL DASHBOARD  (no encontré ningún proyecto con ese nombre)")
         for r in res["sin_coincidencia"]:
             print(f"  - {r['nombre']}")
-            if r["mejor"]:
-                print(f"      lo más parecido ({r['mejor'][0]:.0%}): {r['mejor'][1].get('id_proyecto')} | {r['mejor'][1].get('nombre_proyecto')}")
+            for puntaje, p in r["pistas"]:
+                print(f"      pista ({puntaje:.0%}): {p['id_proyecto']} | {p.get('comuna')} | post. {anio_postulacion(p) or '?'} | {p.get('nombre_proyecto')}")
+        print("\n  Si alguno de estos SÍ existe con otro nombre, asígnalo por su ID:")
+        print("    python3 scripts/asignar_evento_listado.py <evento> --ids <ID>")
+        print("  o búscalo por palabras:  --buscar palabra1 palabra2")
 
 
 def mostrar_otros_con_el_evento(proyectos, datos_extra, evento, ids_del_listado):
@@ -314,21 +362,30 @@ def main(argv=None):
     ap.add_argument("evento", help='atajo ("ficha", "tgr2026") o nombre exacto del evento entre comillas')
     ap.add_argument("--simular", action="store_true", help="solo muestra el resultado; no cambia nada")
     ap.add_argument("--lista", help="archivo de texto con los nombres (uno por línea)")
+    ap.add_argument("--nombre", action="append", metavar="NOMBRE",
+                    help="nombre de un proyecto (entre comillas); se puede repetir. Reemplaza al archivo de listado")
+    ap.add_argument("--buscar", nargs="+", metavar="PALABRA",
+                    help="busca proyectos por palabras clave y los muestra (no cambia nada)")
+    ap.add_argument("--ids", nargs="+", metavar="ID", help="asigna el evento a estos proyectos, por su ID")
     args = ap.parse_args(argv)
 
     evento = resolver_evento(args.evento)
-    if args.lista:
-        ruta_lista = Path(args.lista)
-    elif args.evento.lower() in ALIAS:
-        ruta_lista = LISTADOS_DIR / f"{args.evento.lower()}.txt"
-    else:
-        raise SystemExit("Para este evento indica el archivo de nombres con --lista archivo.txt")
-    if not ruta_lista.exists():
-        raise SystemExit(f"No encuentro el listado: {ruta_lista}")
-
-    nombres = leer_listado(ruta_lista)
+    nombres, ruta_lista = [], None
+    if args.nombre and not args.buscar and not args.ids:
+        nombres = [n.strip() for n in args.nombre if n.strip()]
+        ruta_lista = Path("(escrito en el comando)")
+    elif not args.buscar and not args.ids:
+        if args.lista:
+            ruta_lista = Path(args.lista)
+        elif args.evento.lower() in ALIAS:
+            ruta_lista = LISTADOS_DIR / f"{args.evento.lower()}.txt"
+        else:
+            raise SystemExit("Para este evento indica el archivo de nombres con --lista archivo.txt "
+                             "(o usa --ids / --buscar)")
+        if not ruta_lista.exists():
+            raise SystemExit(f"No encuentro el listado: {ruta_lista}")
+        nombres = leer_listado(ruta_lista)
     print(f"Evento: '{evento}'")
-    print(f"Listado: {len(nombres)} proyectos ({ruta_lista.name}).")
 
     print("Conectando con Google Drive...")
     servicio = obtener_servicio_drive()
@@ -336,7 +393,33 @@ def main(argv=None):
     datos_extra = leer_json_drive(servicio, DATOS_EXTRA_FILE_ID)
     print(f"Proyectos cargados: {len(proyectos)}")
 
-    res = buscar(nombres, proyectos)
+    # ---- Modo búsqueda por palabras: solo muestra ----
+    if args.buscar:
+        hallados = buscar_por_palabras(args.buscar, proyectos)
+        print(f"\nProyectos que contienen {' + '.join(args.buscar)}: {len(hallados)}")
+        for p in hallados[:40]:
+            actual = evento_de(datos_extra, p["id_proyecto"]) or "(sin evento)"
+            print(f"  - {p['id_proyecto']} | {p.get('comuna')} | post. {anio_postulacion(p) or '?'} | {p.get('estado')} | evento: {actual}")
+            print(f"      {p.get('nombre_proyecto')}")
+        if len(hallados) > 40:
+            print(f"  ... y {len(hallados) - 40} más (agrega más palabras para acotar)")
+        if hallados:
+            print(f"\nPara asignar '{evento}' a alguno: python3 scripts/asignar_evento_listado.py {args.evento} --ids <ID>")
+        return
+
+    # ---- Modo por ID: el listado son los proyectos indicados ----
+    if args.ids:
+        por_id = {p["id_proyecto"]: p for p in proyectos if p.get("id_proyecto")}
+        faltan = [i for i in args.ids if i not in por_id]
+        if faltan:
+            raise SystemExit("No encuentro estos ID en el listado de proyectos: " + ", ".join(faltan))
+        res = {"exactos": [{"nombre": i, "proyecto": por_id[i], "parecido": 1.0} for i in dict.fromkeys(args.ids)],
+               "aproximados": [], "sin_coincidencia": [], "ambiguos": []}
+        nombres = list(args.ids)
+        print(f"Proyectos indicados por ID: {len(nombres)}")
+    else:
+        print(f"Listado: {len(nombres)} proyecto(s) ({ruta_lista.name}).")
+        res = buscar(nombres, proyectos, anio_del_evento(evento))
     mostrar_resumen(res, datos_extra, evento, len(nombres))
 
     exactos = [r["proyecto"] for r in res["exactos"]]
