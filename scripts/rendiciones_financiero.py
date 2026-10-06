@@ -128,11 +128,23 @@ def _puntaje_encabezado(valores) -> int:
     return sum(1 for v in valores if norm(v) in conocidos)
 
 
+def leer_texto(ruta: Path) -> str:
+    """Decodifica el archivo SIN perder letras: UTF-8 (con o sin BOM) y, si no, Windows-1252/Latin-1.
+    (SUBDERE guarda el Excel en una codificación antigua: leerlo como UTF-8 con errors="ignore" borraba las tildes.)"""
+    crudo = Path(ruta).read_bytes()
+    for codificacion in ("utf-8-sig", "cp1252"):
+        try:
+            return crudo.decode(codificacion)
+        except UnicodeDecodeError:
+            continue
+    return crudo.decode("latin-1")
+
+
 def leer_tabla(ruta: Path):
     """Lee el Excel de SUBDERE (tabla HTML con extensión .xls). Devuelve (encabezados, filas) como texto."""
     import pandas as pd
     try:
-        tablas = pd.read_html(io.StringIO(Path(ruta).read_text(encoding="utf-8", errors="ignore")))
+        tablas = pd.read_html(io.StringIO(leer_texto(ruta)))
     except Exception:
         try:
             tablas = pd.read_html(str(ruta))
