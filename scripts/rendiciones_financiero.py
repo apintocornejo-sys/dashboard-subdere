@@ -368,6 +368,14 @@ def _esperar_frame(page, texto, intentos=10, pausa=1000):
     return None
 
 
+# El menú del portal son IMÁGENES con ID: el grupo INFORMES es #imenu3 y sus reportes son #imenu3_1, _5, _6 y _9.
+# "Resumen Financiero" es probablemente el segundo (#imenu3_5), pero NO se asume: se prueba cada uno y se
+# verifica por su contenido (el filtro "Fuente Financiamiento" solo lo tiene este informe).
+GRUPO_INFORMES = "#imenu3"
+ITEMS_INFORMES = [5, 6, 9, 1]
+MARCA_RESUMEN_FINANCIERO = "Fuente Financiamiento"
+
+
 def descargar_en_sesion(page, log, base_dir: Path = BASE_DIR) -> Path:
     """Con la sesión ya abierta: INFORMES -> Resumen Financiero -> Cargar Informe -> Exportar Excel."""
     global ULTIMO_EXCEL
@@ -382,47 +390,50 @@ def descargar_en_sesion(page, log, base_dir: Path = BASE_DIR) -> Path:
 
     def falla(paso, extra=""):
         foto("error")
+        for i, f in enumerate(page.frames):          # texto de cada frame, para diagnosticar sin adivinar
+            try:
+                (debug / f"rf_frame_{i}_{f.name or 'principal'}.txt").write_text(f.inner_text("body")[:3000], encoding="utf-8")
+            except Exception:
+                pass
         nombres = [f.name for f in page.frames]
-        raise RuntimeError(f"{paso} {extra}. Frames disponibles: {nombres}. Revisa debug/rf_*.png")
+        raise RuntimeError(f"{paso} {extra} Frames disponibles: {nombres}. Revisa debug/rf_*.png y debug/rf_frame_*.txt")
 
-    log("Rendiciones: abriendo el grupo INFORMES...")
-    for selector in ("#imenu2", "text=INFORMES", 'img[alt*="INFORMES" i]', '[title*="INFORMES" i]'):
-        try:
-            page.click(selector, timeout=5000)
-            log(f"Rendiciones: INFORMES abierto ({selector}).")
-            break
-        except Exception:
-            continue
-    page.wait_for_timeout(2000)
+    log(f"Rendiciones: abriendo el grupo INFORMES ({GRUPO_INFORMES})...")
+    try:
+        page.click(GRUPO_INFORMES, timeout=10000)
+    except Exception as e:
+        falla(f"No pude abrir el grupo INFORMES ({GRUPO_INFORMES}).", f"Detalle: {e}.")
+    page.wait_for_timeout(1500)
     foto("01_informes")
 
-    # 1) Llegar al informe "Resumen Financiero": primero por el texto del menú; si no, probando los ítems del grupo
+    # Reportes que ofrece el portal (por si cambian los números); se prueban primero los esperados
+    try:
+        existentes = page.evaluate("[...document.querySelectorAll('img[id^=\"imenu3_\"]')].map(e => e.id)")
+    except Exception:
+        existentes = []
+    preferidos = [f"imenu3_{n}" for n in ITEMS_INFORMES]
+    candidatos = [c for c in preferidos if not existentes or c in existentes] + [c for c in existentes if c not in preferidos]
+    log(f"Rendiciones: reportes del grupo INFORMES: {existentes or '(no pude listarlos; uso los esperados)'}")
+
     frame = None
-    for _ in range(2):
-        for f in _frames_con_texto(page, "Resumen Financiero", exacto=True):
-            try:
-                f.get_by_text("Resumen Financiero", exact=True).first.click(timeout=5000)
-                page.wait_for_timeout(2500)
-                frame = _esperar_frame(page, "Cargar Informe", intentos=8)
-                break
-            except Exception:
-                continue
-        if frame:
+    for cid in candidatos:
+        log(f"Rendiciones: probando #{cid}...")
+        try:
+            page.click(f"#{cid}", timeout=8000)
+        except Exception as e:
+            log(f"Rendiciones: no pude hacer clic en #{cid} ({e}).")
+            continue
+        page.wait_for_timeout(3000)
+        candidato = _esperar_frame(page, MARCA_RESUMEN_FINANCIERO, intentos=6)
+        foto(f"02_{cid}")
+        if candidato is not None and _frames_con_texto(page, "Cargar Informe"):
+            frame = candidato if candidato.get_by_text("Cargar Informe").count() > 0 else _frames_con_texto(page, "Cargar Informe")[0]
+            log(f"Rendiciones: 'Resumen Financiero' encontrado en #{cid}.")
             break
-        for n in range(1, 9):                         # sin texto visible: se prueban los ítems #imenu2_N
-            try:
-                page.click(f"#imenu2_{n}", timeout=2500)
-                page.wait_for_timeout(2500)
-                if _frames_con_texto(page, "Resumen Financiero"):
-                    break
-            except Exception:
-                continue
-        page.wait_for_timeout(1500)
-    foto("02_tras_menu")
+        log(f"Rendiciones: #{cid} no es el Resumen Financiero; pruebo el siguiente.")
     if frame is None:
-        frame = _esperar_frame(page, "Cargar Informe", intentos=6)
-    if frame is None:
-        falla("No encontré el informe 'Resumen Financiero' con el botón 'Cargar Informe'.")
+        falla("No encontré el informe 'Resumen Financiero' (con el filtro 'Fuente Financiamiento' y el botón 'Cargar Informe').",
+              f"Probé: {candidatos}.")
 
     log("Rendiciones: cargando el informe (puede tardar)...")
     try:
@@ -440,7 +451,7 @@ def descargar_en_sesion(page, log, base_dir: Path = BASE_DIR) -> Path:
         with page.expect_download(timeout=120000) as info:
             frame.get_by_text("Exportar Excel").first.click(timeout=10000)
     except Exception as e:
-        falla("No pude exportar el Excel del Resumen Financiero.", f"Detalle: {e}")
+        falla("No pude exportar el Excel del Resumen Financiero.", f"Detalle: {e}.")
     RAW_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
     dest = RAW_BACKUP_DIR / f"Resumen_Financiero_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xls"
     info.value.save_as(dest)
