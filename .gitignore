@@ -5,3 +5,7 @@ token.json
 agente_log.txt
 __pycache__/
 *.pyc
+# Rendiciones: datos financieros que no deben subirse a GitHub
+data_raw/Resumen_Financiero_*
+para_subir_a_drive/rendiciones.json
+debug/

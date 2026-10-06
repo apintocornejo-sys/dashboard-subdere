@@ -231,14 +231,6 @@ def descargar_excel_subdere() -> Path:
         download.save_as(dest)
         log(f"Excel descargado: {dest}")
 
-        # --- Rendiciones: mismo inicio de sesión, segundo informe (si falla, NO interrumpe la descarga de proyectos) ---
-        try:
-            sys.path.insert(0, str(BASE_DIR / "scripts"))
-            import rendiciones_financiero
-            rendiciones_financiero.descargar_en_sesion(page, log, BASE_DIR)
-        except Exception as e:
-            log(f"Rendiciones: no se pudo descargar el Resumen Financiero ({e}). El flujo de proyectos continúa.")
-
         browser.close()
         return dest
 
@@ -467,14 +459,6 @@ def main():
         actualizar_historial_estados(ruta_json)
     except Exception as e:
         log(f"ERROR al actualizar el historial de trazabilidad: {e}")
-        log("Esto no detiene el resto del flujo.")
-
-    try:
-        sys.path.insert(0, str(BASE_DIR / "scripts"))
-        import rendiciones_financiero
-        rendiciones_financiero.publicar(log, obtener_credenciales_drive, base_dir=BASE_DIR)
-    except Exception as e:
-        log(f"ERROR en Rendiciones: {e}")
         log("Esto no detiene el resto del flujo.")
 
     try:

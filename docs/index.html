@@ -97,6 +97,7 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .tab[data-view="trazabilidad"].active { border-left-color:#E0607E; color:#E0607E; background:var(--panel-2); }
 .tab[data-view="gr2026"].active { border-left-color:#5FB3A7; color:#5FB3A7; background:var(--panel-2); }
 .tab[data-view="despliegue"].active { border-left-color:#C6CF5E; color:#C6CF5E; background:var(--panel-2); }
+.tab[data-view="rendiciones"].active { border-left-color:#9E94E0; color:#9E94E0; background:var(--panel-2); }
 
 .view { display:none; padding:22px 28px 40px; }
 .view.active { display:block; }
@@ -173,6 +174,56 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .btn-borrar { background:transparent; border:1px solid #C8643C88; color:#FFB8A6; border-radius:999px; padding:3px 12px; font-size:0.72rem; cursor:pointer; }
 .btn-borrar:hover { background:#C8643C33; }
 @media (max-width:768px) { .form-visita { grid-template-columns:1fr; } }
+.panel-rend { background:#2a2740; border:1px solid #9E94E0; box-shadow:0 2px 10px rgba(158,148,224,0.2); }
+.panel-rend h2 { color:#DAD5F7; }
+.panel-rend p { margin:6px 0 0; color:#CFCAEF; font-size:0.85rem; line-height:1.5; }
+.rf-aviso { margin-top:10px; background:rgba(0,0,0,0.22); border:1px solid #9E94E055; border-radius:8px; padding:8px 12px; font-size:0.76rem; color:#CFCAEF; }
+.rf-aviso summary { cursor:pointer; font-weight:600; }
+.rf-aviso ul { margin:6px 0 0 18px; padding:0; }
+.rf-filtros { position:relative; z-index:55; }   /* para que los desplegables queden por encima de los indicadores */
+.rf-filtros-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px 14px; }
+.rf-filtros-pie { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; margin-top:12px; }
+.rf-campo label { display:block; font-size:0.68rem; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-dim); margin-bottom:4px; }
+.rf-campo.doble { grid-column:span 2; }
+.rf-campo input[type=date] { width:100%; box-sizing:border-box; }
+.rf-fechas input { flex:1; min-width:0; }
+.rf-fechas { display:flex; gap:6px; }
+.rf-ms { position:relative; }
+.rf-ms-btn { width:100%; text-align:left; background:var(--panel-2); color:var(--ink); border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:0.84rem; cursor:pointer; display:flex; justify-content:space-between; gap:8px; }
+.rf-ms-btn.activo { border-color:#9E94E0; box-shadow:0 0 0 2px rgba(158,148,224,0.25); }
+.rf-ms-panel { display:none; position:absolute; z-index:60; top:calc(100% + 4px); left:0; min-width:100%; width:max-content; max-width:360px; background:var(--panel); border:1px solid #9E94E0; border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,0.5); padding:8px; }
+.rf-ms.abierto .rf-ms-panel { display:block; }
+.rf-ms-panel input[type=text] { width:100%; box-sizing:border-box; margin-bottom:6px; }
+.rf-ms-lista { max-height:240px; overflow-y:auto; }
+.rf-ms-lista label { display:flex; gap:8px; align-items:flex-start; padding:4px 6px; font-size:0.8rem; cursor:pointer; border-radius:6px; color:var(--ink); text-transform:none; letter-spacing:0; margin:0; }
+.rf-ms-lista label:hover { background:rgba(158,148,224,0.18); }
+.rf-ms-acciones { display:flex; justify-content:space-between; margin-top:6px; font-size:0.72rem; }
+.rf-ms-acciones a { color:#B9B1F2; cursor:pointer; text-decoration:underline; }
+.kpi .sub { font-size:0.68rem; color:var(--ink-dim); margin-top:4px; }
+#rf-kpis { grid-template-columns:repeat(auto-fit,minmax(235px,1fr)); }
+#rf-kpis .kpi-monto .value { font-size:1.2rem; overflow-wrap:anywhere; }
+.rf-metrica-barra { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-top:12px; padding-bottom:12px; }
+.chip-filtro.rf-chip:hover { border-color:#9E94E0; }
+.chip-filtro.rf-chip.activo { background:#9E94E0; border-color:#9E94E0; color:#26233a; }
+.chip-filtro.deshabilitado { opacity:.4; cursor:not-allowed; }
+.rf-alerta-cab { display:flex; gap:14px; flex-wrap:wrap; margin:8px 0 10px; }
+.rf-alerta-caja { flex:1; min-width:220px; border-radius:12px; padding:12px 16px; }
+.rf-alerta-caja.roja { background:#3d231c; border:1px solid #C8643C; }
+.rf-alerta-caja.ocre { background:#3b3220; border:1px solid #D9A441; }
+.rf-alerta-caja .cifra { font-size:1.9rem; font-weight:700; line-height:1.1; }
+.rf-alerta-caja.roja .cifra { color:#FF9C7A; } .rf-alerta-caja.ocre .cifra { color:#F2C14E; }
+.rf-alerta-caja .txt { font-size:0.78rem; color:var(--ink-dim); margin-top:2px; }
+.rf-tabla-barra { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+.rf-tabla-barra #rf-buscador { flex:1; min-width:240px; }
+.rf-paginacion { display:flex; align-items:center; gap:8px; font-size:0.78rem; color:var(--ink-dim); }
+#tbl-rf th { cursor:pointer; white-space:nowrap; user-select:none; }
+#tbl-rf th.orden::after { content:' ▲'; font-size:0.65rem; } #tbl-rf th.orden.desc::after { content:' ▼'; }
+#tbl-rf td.nombre { max-width:320px; min-width:200px; font-size:0.78rem; }
+#tbl-rf td.neg { color:#FF9C7A; }
+#tbl-rf tr.rf-vencido td:first-child { box-shadow:inset 3px 0 0 #C8643C; }
+#tbl-rf tr.rf-porvencer td:first-child { box-shadow:inset 3px 0 0 #D9A441; }
+.rf-mini td, .rf-mini th { font-size:0.78rem; }
+
 
 .panel-contraste h2 { color:#F7D9C9; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
@@ -294,6 +345,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .tab[data-view="trazabilidad"].active { border-left-color:transparent; border-bottom-color:#E0607E; }
   .tab[data-view="gr2026"].active { border-left-color:transparent; border-bottom-color:#5FB3A7; }
   .tab[data-view="despliegue"].active { border-left-color:transparent; border-bottom-color:#C6CF5E; }
+  .tab[data-view="rendiciones"].active { border-left-color:transparent; border-bottom-color:#9E94E0; }
 
   .filters { padding:12px calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left)); gap:8px; }
   .filter-group, .multiselect { min-width:0; width:100%; }
@@ -330,7 +382,9 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
   .profesional-revision-grid { grid-template-columns:repeat(2, 1fr); }
   .tabla-compacta { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  #tbl-gr2026, #tbl-gr2026-estado, #tbl-despliegue, #tbl-manuales { font-size:0.7rem; white-space:nowrap; }
+  #tbl-gr2026, #tbl-gr2026-estado, #tbl-despliegue, #tbl-manuales, #tbl-rf, .rf-mini { font-size:0.7rem; white-space:nowrap; }
+  .rf-ms-panel { max-width:80vw; }
+  .rf-campo.doble { grid-column:1 / -1; }
   .despliegue-layout { grid-template-columns:1fr; }
   #tabla-tradicional-2026 table { white-space:nowrap; }
 }
@@ -410,6 +464,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="tab" data-view="trazabilidad">⏱️ Trazabilidad</div>
     <div class="tab" data-view="gr2026">💰 Transf. GR 2026</div>
     <div class="tab" data-view="despliegue">🗺️ Despliegue Territorial</div>
+    <div class="tab" data-view="rendiciones">🧾 Rendiciones</div>
 </nav>
 <div class="main-content">
   <div class="filters">
@@ -842,6 +897,77 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       </div>
     </div>
   </div>
+
+  <div class="view" id="view-rendiciones">
+    <div class="panel wide panel-rend">
+      <h2>🧾 Rendiciones — Situación financiera de los proyectos <span id="rf-cinta"></span></h2>
+      <p>
+        Montos asignados, contratados y vigentes, y los saldos por transferir y por rendir de cada proyecto, según el informe
+        <strong>Resumen Financiero</strong> de SUBDERE en Línea. Haz clic en una barra de los gráficos para filtrar.
+        Esta pestaña usa sus propios filtros (no los de proyectos). <span id="rf-actualizado" style="opacity:.8"></span>
+      </p>
+      <div id="rf-avisos"></div>
+    </div>
+
+    <div id="rf-vacio" class="panel wide" style="display:none">
+      <h2>Aún no hay datos de Rendiciones</h2>
+      <p style="color:var(--ink-dim);margin:6px 0 0;font-size:0.88rem;line-height:1.5">
+        Esta pestaña se llena cuando el agente descarga el informe <em>Resumen Financiero</em> de SUBDERE en Línea
+        (<code>python3 scripts/agente_actualizacion.py</code>) y lo sube a Drive.
+      </p>
+    </div>
+
+    <div id="rf-contenido">
+      <div class="panel wide rf-filtros">
+        <div class="rf-filtros-grid" id="rf-filtros-grid"></div>
+        <div class="rf-filtros-pie">
+          <span id="rf-resumen-filtros" style="font-size:0.78rem;color:var(--ink-dim)"></span>
+          <button class="btn btn-ghost" onclick="rfLimpiarFiltros()">✕ Limpiar filtros</button>
+        </div>
+      </div>
+
+      <div class="kpis" id="rf-kpis"></div>
+
+      <div class="panel wide" id="rf-alertas"></div>
+
+      <div class="panel wide rf-metrica-barra">
+        <span class="filtro-titulo">Graficar</span>
+        <div class="chips" id="rf-chips-metrica"></div>
+      </div>
+
+      <div class="grid">
+        <div class="panel"><h2 id="rf-t-programa">Por programa</h2><canvas id="chartRfPrograma" style="height:340px !important"></canvas></div>
+        <div class="panel"><h2 id="rf-t-provincia">Por provincia</h2><canvas id="chartRfProvincia" style="height:340px !important"></canvas></div>
+        <div class="panel"><h2 id="rf-t-comuna">Por comuna</h2><canvas id="chartRfComuna" style="height:420px !important"></canvas></div>
+        <div class="panel">
+          <h2 id="rf-t-anio">Evolución por año</h2>
+          <div class="chips" id="rf-chips-anio" style="margin-bottom:8px"></div>
+          <canvas id="chartRfAnio" style="height:340px !important"></canvas>
+        </div>
+      </div>
+
+      <div class="panel wide">
+        <h2>Detalle por proyecto</h2>
+        <div class="rf-tabla-barra">
+          <input type="text" id="rf-buscador" class="buscador-contraste" placeholder="Buscar por nombre, Id. proyecto, comuna o programa…" oninput="rfBuscar(this.value)">
+          <div class="chips" id="rf-chips-alerta"></div>
+          <div id="rf-paginacion" class="rf-paginacion"></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="tbl-rf">
+            <thead><tr id="rf-thead"></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:8px">
+          Saldo Contable = Monto Asignado − Monto Contratado · Saldo por Transferir = Monto Contratado − Total Transferido ·
+          rojo = saldo negativo · borde rojo = plazo vencido con saldo por rendir · borde ocre = vence en 30 días ·
+          (est.) = fecha de término estimada con el plazo de ejecución.
+        </div>
+      </div>
+    </div>
+  </div>
+
 
   </div>
 </div>
@@ -2103,7 +2229,7 @@ function descargarInformeGR2026XLS() {
 // Del calendario solo se publican fecha, comuna, tipo y modalidad — nunca títulos ni datos de las reuniones.
 const VISITAS_DESDE = '2026-03-01';
 const VISITAS_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_VISITAS";                     // actualización automática del calendario (siguiente paso)
-const VISITAS_MANUALES_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_VISITAS_MANUALES";   // registros ingresados a mano en esta pestaña
+const VISITAS_MANUALES_FILE_ID = "1dzR7-1qmocC-ZR6oC1UBMRS13hqcUhHk";   // registros ingresados a mano en esta pestaña
 const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 const PROVINCIAS_COLOR = { 'Elqui': '#D9A441', 'Limarí': '#8FA37E', 'Choapa': '#6FA3B5' };
 const TIPOS_VISITA = { reunion: 'Reuniones', ceremonia: 'Ceremonias', inauguracion: 'Inauguraciones', visita: 'Visitas' };
@@ -2439,6 +2565,316 @@ async function eliminarVisitaManual(id) {
 renderDespliegue();
 leerJsonPublico(VISITAS_FILE_ID).then(v => { if (v && Array.isArray(v.visitas)) { VISITAS = v; renderDespliegue(); } });
 leerJsonPublico(VISITAS_MANUALES_FILE_ID).then(m => { if (m && Array.isArray(m.entradas)) { VISITAS_MANUALES = m; renderDespliegue(); } });
+
+
+// ========================================================================
+// RENDICIONES: situación financiera de los proyectos (informe "Resumen Financiero" de SUBDERE en Línea)
+// ========================================================================
+const RENDICIONES_FILE_ID = "1sCsHF4NxTFcIwRkCTTbUq6rf0_dSviBT";
+let RENDICIONES = null;
+let RF_CARGADO = false;   // false mientras se leen los datos (evita mostrar "sin datos" por un instante)   // { fecha_actualizacion, hora_actualizacion, columnas_detectadas, advertencias, proyectos: [...] }
+const RF_PAG = 40;
+const RF = {
+  filtros: { provincia: new Set(), comuna: new Set(), programa: new Set(), subprograma: new Set(), anioAprob: new Set(), anioPost: new Set(),
+             asigDesde: '', asigHasta: '', terDesde: '', terHasta: '' },
+  metrica: 'saldo_por_rendir', anioDe: 'aprobacion', busqueda: '', alerta: null,
+  orden: { k: 'saldo_por_rendir', dir: -1 }, pagina: 0, abierto: null, busquedaMs: {}, verMas: false, _ops: {},
+};
+const RF_METRICAS = [['monto_asignado', 'Monto Asignado'], ['monto_contratado', 'Monto Contratado'], ['monto_vigente', 'Monto Vigente'],
+                     ['saldo_contable', 'Saldo Contable'], ['saldo_por_transferir', 'Saldo por Transferir'], ['saldo_por_rendir', 'Saldo por Rendir']];
+const RF_COLOR = { monto_asignado: '#D9A441', monto_contratado: '#6FA3B5', monto_vigente: '#8FA37E', saldo_contable: '#D8C3A5', saldo_por_transferir: '#B07AA1', saldo_por_rendir: '#9E94E0' };
+const RF_COLS = [
+  { k: 'provincia', t: 'Provincia' }, { k: 'comuna', t: 'Comuna' }, { k: 'programa', t: 'Programa' }, { k: 'subprograma', t: 'Subprograma' },
+  { k: 'id_proyecto', t: 'Id. Proyecto' }, { k: 'nombre', t: 'Nombre' },
+  { k: 'monto_asignado', t: 'Monto Asignado', num: true }, { k: 'monto_contratado', t: 'Monto Contratado', num: true }, { k: 'monto_vigente', t: 'Monto Vigente', num: true },
+  { k: 'saldo_contable', t: 'Saldo Contable', num: true }, { k: 'saldo_por_transferir', t: 'Saldo por Transferir', num: true }, { k: 'saldo_por_rendir', t: 'Saldo por Rendir', num: true },
+  { k: 'plazo_ejecucion', t: 'Plazo de ejecución', num: true, plazo: true },
+];
+const RF_MS = [
+  { id: 'provincia', t: 'Provincia', campo: 'provincia' }, { id: 'comuna', t: 'Comuna', campo: 'comuna' },
+  { id: 'programa', t: 'Programa', campo: 'programa' }, { id: 'subprograma', t: 'Subprograma', campo: 'subprograma' },
+  { id: 'anioAprob', t: 'Año Aprobación', campo: 'anio_aprobacion' }, { id: 'anioPost', t: 'Año Postulación', campo: 'anio_postulacion' },
+];
+
+// ---------- Utilidades ----------
+const rfEsc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const rfNum = v => (typeof v === 'number' && isFinite(v)) ? v : 0;
+const rfNorm = t => String(t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const rfCompacto = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n) / 1e6).toLocaleString('es-CL') + ' MM';
+const rfFecha = f => f ? f.split('-').reverse().join('-') : '—';
+const rfHoy = () => { const h = new Date(); return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`; };
+const rfDias = (a, b) => Math.round((new Date(b + 'T00:00:00') - new Date(a + 'T00:00:00')) / 86400000);
+function rfSumarDias(iso, n) { const d = new Date(iso + 'T00:00:00'); d.setDate(d.getDate() + n); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; }
+
+// Qué columnas trajo realmente el informe (para no mostrar ceros inventados)
+function rfDisp() {
+  const c = RENDICIONES && RENDICIONES.columnas_detectadas;
+  const t = k => !c || (k in c);
+  return {
+    monto_asignado: t('monto_asignado'), monto_contratado: t('monto_contratado'), monto_vigente: t('monto_vigente'),
+    saldo_contable: t('monto_asignado') && t('monto_contratado'),
+    saldo_por_transferir: t('monto_contratado') && t('total_transferido'),
+    saldo_por_rendir: t('saldo_por_rendir') || (t('total_transferido') && t('total_rendido')),
+    fecha_asignacion: t('fecha_asignacion'),
+    fecha_termino: t('fecha_termino') || t('fecha_inicio') || t('fecha_asignacion'),
+    anio_aprobacion: t('fecha_asignacion'),
+  };
+}
+
+// 'vencido' = término anterior a hoy y aún con saldo por rendir; 'porvencer' = termina dentro de los próximos 30 días
+function rfEstadoPlazo(p, hoy, lim, disp) {
+  if (!p.fecha_termino) return null;
+  if (p.fecha_termino < hoy) return (!disp.saldo_por_rendir || rfNum(p.saldo_por_rendir) > 0) ? 'vencido' : null;
+  return p.fecha_termino <= lim ? 'porvencer' : null;
+}
+
+function rfFiltrados() {
+  const F = RF.filtros;
+  const enSet = (set, v) => set.size === 0 || set.has(v);
+  const enRango = (v, d, h) => (!d && !h) || (v && (!d || v >= d) && (!h || v <= h));
+  return ((RENDICIONES && RENDICIONES.proyectos) || []).filter(p =>
+    enSet(F.provincia, p.provincia) && enSet(F.comuna, p.comuna) && enSet(F.programa, p.programa) && enSet(F.subprograma, p.subprograma) &&
+    enSet(F.anioAprob, p.anio_aprobacion) && enSet(F.anioPost, p.anio_postulacion) &&
+    enRango(p.fecha_asignacion, F.asigDesde, F.asigHasta) && enRango(p.fecha_termino, F.terDesde, F.terHasta));
+}
+
+// ---------- Filtros ----------
+function rfOpciones(def) {
+  let base = (RENDICIONES && RENDICIONES.proyectos) || [];
+  if (def.id === 'comuna' && RF.filtros.provincia.size) base = base.filter(p => RF.filtros.provincia.has(p.provincia));
+  if (def.id === 'subprograma' && RF.filtros.programa.size) base = base.filter(p => RF.filtros.programa.has(p.programa));
+  const vals = [...new Set(base.map(p => p[def.campo]).filter(v => v !== undefined && v !== null && v !== ''))];
+  return def.id.startsWith('anio') ? vals.sort((a, b) => b - a) : vals.sort((a, b) => String(a).localeCompare(String(b), 'es'));
+}
+function rfLimpiarCascada() {   // al cambiar provincia/programa se descartan las comunas/subprogramas que ya no corresponden
+  const base = (RENDICIONES && RENDICIONES.proyectos) || [];
+  if (RF.filtros.provincia.size) { const ok = new Set(base.filter(p => RF.filtros.provincia.has(p.provincia)).map(p => p.comuna)); [...RF.filtros.comuna].forEach(v => { if (!ok.has(v)) RF.filtros.comuna.delete(v); }); }
+  if (RF.filtros.programa.size) { const ok = new Set(base.filter(p => RF.filtros.programa.has(p.programa)).map(p => p.subprograma)); [...RF.filtros.subprograma].forEach(v => { if (!ok.has(v)) RF.filtros.subprograma.delete(v); }); }
+}
+function rfRenderFiltros(disp) {
+  const campos = RF_MS.map(def => {
+    const ops = rfOpciones(def); RF._ops[def.id] = ops;
+    const sel = RF.filtros[def.id];
+    const txt = sel.size === 0 ? 'Todas' : sel.size === 1 ? String([...sel][0]) : `${sel.size} seleccionadas`;
+    const q = rfNorm(RF.busquedaMs[def.id] || '');
+    return `<div class="rf-campo"><label>${def.t}</label>
+      <div class="rf-ms${RF.abierto === def.id ? ' abierto' : ''}" id="rf-ms-${def.id}">
+        <button type="button" class="rf-ms-btn${sel.size ? ' activo' : ''}" onclick="rfMsAbrir('${def.id}', event)"><span>${rfEsc(txt)}</span><span>▾</span></button>
+        <div class="rf-ms-panel" onclick="event.stopPropagation()">
+          ${ops.length > 8 ? `<input type="text" placeholder="Buscar…" value="${rfEsc(RF.busquedaMs[def.id] || '')}" oninput="rfMsBuscar('${def.id}', this.value)">` : ''}
+          <div class="rf-ms-lista">${ops.map((v, i) => `<label data-t="${rfEsc(rfNorm(v))}"${q && !rfNorm(v).includes(q) ? ' style="display:none"' : ''}><input type="checkbox"${sel.has(v) ? ' checked' : ''} onchange="rfMsMarcar('${def.id}', ${i}, this.checked)"><span>${rfEsc(v)}</span></label>`).join('')}</div>
+          <div class="rf-ms-acciones"><a onclick="rfMsTodas('${def.id}')">Quitar filtro</a><a onclick="rfMsCerrar()">Cerrar</a></div>
+        </div></div></div>`;
+  }).join('');
+  const fechas = (titulo, k, ok) => `<div class="rf-campo doble"><label>${titulo}</label><div class="rf-fechas"${ok ? '' : ' title="El informe no trae esta fecha"'}>
+      <input type="date" value="${RF.filtros[k + 'Desde']}" onchange="rfFechaFiltro('${k}Desde', this.value)"${ok ? '' : ' disabled'} aria-label="${titulo} desde">
+      <input type="date" value="${RF.filtros[k + 'Hasta']}" onchange="rfFechaFiltro('${k}Hasta', this.value)"${ok ? '' : ' disabled'} aria-label="${titulo} hasta"></div></div>`;
+  document.getElementById('rf-filtros-grid').innerHTML = campos + fechas('Fecha Asignación (desde / hasta)', 'asig', disp.fecha_asignacion) + fechas('Fecha de Término (desde / hasta)', 'ter', disp.fecha_termino);
+}
+function rfMsAbrir(id, ev) {
+  ev.stopPropagation(); RF.abierto = RF.abierto === id ? null : id;
+  document.querySelectorAll('.rf-ms').forEach(el => el.classList.toggle('abierto', el.id === 'rf-ms-' + RF.abierto));
+}
+function rfMsCerrar() { RF.abierto = null; document.querySelectorAll('.rf-ms.abierto').forEach(el => el.classList.remove('abierto')); }
+function rfMsMarcar(id, i, on) {
+  const v = RF._ops[id][i]; if (on) RF.filtros[id].add(v); else RF.filtros[id].delete(v);
+  rfLimpiarCascada(); RF.pagina = 0; renderRendiciones();
+}
+function rfMsTodas(id) { RF.filtros[id].clear(); rfLimpiarCascada(); RF.pagina = 0; renderRendiciones(); }
+function rfMsBuscar(id, texto) {
+  RF.busquedaMs[id] = texto; const q = rfNorm(texto);
+  document.querySelectorAll(`#rf-ms-${id} .rf-ms-lista label`).forEach(l => { l.style.display = l.dataset.t.includes(q) ? '' : 'none'; });
+}
+function rfFechaFiltro(campo, valor) { RF.filtros[campo] = valor; RF.pagina = 0; renderRendiciones(); }
+function rfLimpiarFiltros() {
+  Object.values(RF.filtros).forEach((v, i) => { if (v instanceof Set) v.clear(); });
+  ['asigDesde', 'asigHasta', 'terDesde', 'terHasta'].forEach(k => RF.filtros[k] = '');
+  RF.busqueda = ''; RF.alerta = null; RF.busquedaMs = {}; RF.pagina = 0;
+  const b = document.getElementById('rf-buscador'); if (b) b.value = '';
+  renderRendiciones();
+}
+function rfFiltrarPor(id, valor) {   // clic en una barra de un gráfico
+  const set = RF.filtros[id];
+  if (set.size === 1 && set.has(valor)) set.clear(); else { set.clear(); set.add(valor); }
+  rfLimpiarCascada(); RF.pagina = 0; renderRendiciones();
+}
+document.addEventListener('click', e => { if (RF.abierto && e.target.isConnected && !e.target.closest('.rf-ms')) rfMsCerrar(); });
+
+// ---------- Indicadores ----------
+function rfRenderKpis(f, disp) {
+  const suma = k => f.reduce((s, p) => s + rfNum(p[k]), 0);
+  const asig = suma('monto_asignado'), contr = suma('monto_contratado');
+  const conSaldo = f.filter(p => rfNum(p.saldo_por_rendir) > 0).length;
+  const kpi = (titulo, k, sub) => disp[k]
+    ? `<div class="kpi kpi-monto"><div class="value">${fmtCLPn(suma(k))}</div><div class="label">${titulo}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div>`
+    : `<div class="kpi kpi-monto" title="El informe no trae las columnas necesarias"><div class="value" style="opacity:.5">—</div><div class="label">${titulo}</div><div class="sub">No viene en el informe</div></div>`;
+  document.getElementById('rf-kpis').innerHTML =
+    `<div class="kpi"><div class="value">${f.length.toLocaleString('es-CL')}</div><div class="label">Proyectos</div></div>` +
+    kpi('Monto Asignado', 'monto_asignado', '') +
+    kpi('Monto Contratado', 'monto_contratado', asig > 0 ? `${(contr / asig * 100).toFixed(1).replace('.', ',')}% del asignado` : '') +
+    kpi('Monto Vigente', 'monto_vigente', '') +
+    kpi('Saldo Contable', 'saldo_contable', 'Asignado − Contratado') +
+    kpi('Saldo por Transferir', 'saldo_por_transferir', 'Contratado − Transferido') +
+    kpi('Saldo por Rendir', 'saldo_por_rendir', disp.saldo_por_rendir ? `${conSaldo.toLocaleString('es-CL')} proyectos con saldo` : '');
+}
+
+// ---------- Alerta de plazos ----------
+function rfRenderAlertas(f, disp, hoy, lim) {
+  const el = document.getElementById('rf-alertas');
+  if (!disp.fecha_termino) { el.innerHTML = '<h2>⏰ Plazos de ejecución</h2><p style="color:var(--ink-dim);font-size:0.85rem;margin:6px 0 0">El informe no trae fechas de término ni una fecha desde la cual calcularlas, por eso no hay alertas de plazo.</p>'; return; }
+  const venc = [], porv = [];
+  f.forEach(p => { const e = rfEstadoPlazo(p, hoy, lim, disp); if (e === 'vencido') venc.push(p); else if (e === 'porvencer') porv.push(p); });
+  venc.sort((a, b) => rfNum(b.saldo_por_rendir) - rfNum(a.saldo_por_rendir) || a.fecha_termino.localeCompare(b.fecha_termino));
+  porv.sort((a, b) => a.fecha_termino.localeCompare(b.fecha_termino));
+  const saldoVenc = venc.reduce((s, p) => s + rfNum(p.saldo_por_rendir), 0);
+  const lim_ = RF.verMas ? 25 : 6;
+  const fila = (p, tipo) => {
+    const d = rfDias(p.fecha_termino, hoy);
+    const cuando = tipo === 'vencido' ? `hace ${d} día${d === 1 ? '' : 's'}` : (d === 0 ? 'hoy' : `en ${-d} día${d === -1 ? '' : 's'}`);
+    return `<tr><td>${rfEsc(p.comuna || '—')}</td><td title="${rfEsc(p.nombre || '')}">${rfEsc((p.nombre || p.id_proyecto || '').slice(0, 70))}${(p.nombre || '').length > 70 ? '…' : ''}<div style="font-size:0.66rem;color:var(--ink-dim)">${rfEsc(p.id_proyecto || '')}</div></td>
+      <td class="num">${rfFecha(p.fecha_termino)}${p.termino_estimado ? ' (est.)' : ''}<div style="font-size:0.66rem;color:var(--ink-dim)">${cuando}</div></td>
+      <td class="num">${disp.saldo_por_rendir && p.saldo_por_rendir != null ? fmtCLPn(p.saldo_por_rendir) : '—'}</td></tr>`;
+  };
+  const tabla = (lista, tipo) => lista.length ? `<div style="overflow-x:auto"><table class="rf-mini"><thead><tr><th>Comuna</th><th>Proyecto</th><th class="num">Término</th><th class="num">Saldo por rendir</th></tr></thead><tbody>${lista.slice(0, lim_).map(p => fila(p, tipo)).join('')}</tbody></table></div>` : '';
+  el.innerHTML = `<h2>⏰ Plazos de ejecución</h2>
+    <div class="rf-alerta-cab">
+      <div class="rf-alerta-caja roja"><div class="cifra">${venc.length.toLocaleString('es-CL')}</div><div class="txt"><b>Plazo vencido</b> con saldo por rendir${disp.saldo_por_rendir ? ` · ${fmtCLPn(saldoVenc)} pendientes` : ''}</div>
+        ${venc.length ? `<button class="btn btn-ghost" style="margin-top:8px;padding:4px 12px;font-size:0.72rem" onclick="rfVerAlerta('vencido')">Ver en la tabla</button>` : ''}</div>
+      <div class="rf-alerta-caja ocre"><div class="cifra">${porv.length.toLocaleString('es-CL')}</div><div class="txt"><b>Vence en los próximos 30 días</b></div>
+        ${porv.length ? `<button class="btn btn-ghost" style="margin-top:8px;padding:4px 12px;font-size:0.72rem" onclick="rfVerAlerta('porvencer')">Ver en la tabla</button>` : ''}</div>
+    </div>
+    ${venc.length ? `<h3 style="margin:10px 0 4px;font-size:0.82rem;color:#FF9C7A">Plazo vencido (mayor saldo por rendir primero)</h3>${tabla(venc, 'vencido')}` : ''}
+    ${porv.length ? `<h3 style="margin:12px 0 4px;font-size:0.82rem;color:#F2C14E">Por vencer (más próximos primero)</h3>${tabla(porv, 'porvencer')}` : ''}
+    ${(venc.length > 6 || porv.length > 6) ? `<button class="btn btn-ghost" style="margin-top:10px;padding:4px 14px;font-size:0.74rem" onclick="RF.verMas = !RF.verMas; renderRendiciones()">${RF.verMas ? 'Mostrar menos' : 'Mostrar más'}</button>` : ''}
+    ${(!venc.length && !porv.length) ? '<p style="color:var(--ink-dim);font-size:0.85rem;margin:4px 0 0">Ningún proyecto con plazo vencido o por vencer con los filtros actuales. ✅</p>' : ''}`;
+}
+function rfVerAlerta(tipo) {
+  RF.alerta = tipo; RF.pagina = 0; renderRendiciones();
+  const t = document.getElementById('tbl-rf'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ---------- Gráficos ----------
+function rfRenderMetricas(disp) {
+  if (!disp[RF.metrica]) RF.metrica = RF_METRICAS.find(([k]) => disp[k])?.[0] || 'monto_asignado';
+  document.getElementById('rf-chips-metrica').innerHTML = RF_METRICAS.map(([k, t]) =>
+    `<span class="chip-filtro rf-chip${RF.metrica === k ? ' activo' : ''}${disp[k] ? '' : ' deshabilitado'}"${disp[k] ? ` onclick="RF.metrica='${k}'; renderRendiciones()"` : ' title="El informe no trae esta columna"'}>${t}</span>`).join('');
+}
+function rfBarras(id, etiquetas, valores, opts) {   // opts: {horizontal, filtro, extra}
+  const color = RF_COLOR[RF.metrica];
+  const canvas = document.getElementById(id);
+  if (opts.horizontal) canvas.style.setProperty('height', Math.max(240, etiquetas.length * 30 + 70) + 'px', 'important');
+  makeChart(id, 'bar', etiquetas, [{ label: RF_METRICAS.find(m => m[0] === RF.metrica)[1], data: valores, borderRadius: 4,
+      backgroundColor: valores.map(v => v < 0 ? '#C8643C' : color) }].concat(opts.extra || []), {
+    indexAxis: opts.horizontal ? 'y' : 'x',
+    layout: { padding: { right: opts.horizontal ? 60 : 0, top: 18 } },
+    onClick: opts.filtro ? (evt, els) => { if (els.length && etiquetas[els[0].index] !== 'Otros') rfFiltrarPor(opts.filtro, etiquetas[els[0].index]); } : undefined,
+    scales: opts.scales || {
+      x: opts.horizontal ? { grid: { color: '#4f3f33' }, ticks: { callback: v => rfCompacto(v), maxRotation: 0, autoSkip: true, maxTicksLimit: 5 } } : { grid: { display: false }, ticks: { callback: function (v) { const l = this.getLabelForValue(v); return String(l).length > 16 ? String(l).slice(0, 15) + '…' : l; } } },
+      y: opts.horizontal ? { grid: { display: false }, ticks: { callback: function (v) { const l = this.getLabelForValue(v); return String(l).length > 34 ? String(l).slice(0, 33) + '…' : l; } } } : { grid: { color: '#4f3f33' }, beginAtZero: true, ticks: { callback: v => rfCompacto(v) } },
+    },
+    plugins: { legend: opts.leyenda ? { display: true, position: 'bottom' } : { display: false }, datalabels: { formatter: v => rfCompacto(v), color: '#F5F0E8', font: { size: 10, weight: '700' } },
+               tooltip: { callbacks: { label: c => ' ' + fmtCLPn(c.parsed[opts.horizontal ? 'x' : 'y']) } } },
+  });
+}
+function rfAgrupar(f, campo) {
+  const m = new Map();
+  f.forEach(p => { const k = p[campo]; if (k === undefined || k === null || k === '') return; m.set(k, (m.get(k) || 0) + rfNum(p[RF.metrica])); });
+  return [...m.entries()];
+}
+function rfRenderGraficos(f, disp) {
+  const nombreMetrica = RF_METRICAS.find(m => m[0] === RF.metrica)[1];
+  document.getElementById('rf-t-programa').textContent = `Por programa — ${nombreMetrica}`;
+  document.getElementById('rf-t-provincia').textContent = `Por provincia — ${nombreMetrica}`;
+  document.getElementById('rf-t-comuna').textContent = `Por comuna — ${nombreMetrica}`;
+
+  let prog = rfAgrupar(f, 'programa').sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]));
+  if (prog.length > 10) { const resto = prog.slice(10).reduce((s, e) => s + e[1], 0); prog = prog.slice(0, 10).concat([['Otros', resto]]); }
+  rfBarras('chartRfPrograma', prog.map(e => e[0]), prog.map(e => e[1]), { horizontal: true, filtro: 'programa' });
+
+  const orden = ['Elqui', 'Limarí', 'Choapa'], pv = new Map(rfAgrupar(f, 'provincia'));
+  const provs = orden.filter(p => pv.has(p)).concat([...pv.keys()].filter(p => !orden.includes(p)));
+  rfBarras('chartRfProvincia', provs, provs.map(p => pv.get(p)), { filtro: 'provincia' });
+
+  const com = rfAgrupar(f, 'comuna').sort((a, b) => b[1] - a[1]);
+  rfBarras('chartRfComuna', com.map(e => e[0]), com.map(e => e[1]), { horizontal: true, filtro: 'comuna' });
+
+  // Evolución por año (aprobación o postulación) + cantidad de proyectos
+  const usarAprob = RF.anioDe === 'aprobacion' && disp.anio_aprobacion;
+  const campoAnio = usarAprob ? 'anio_aprobacion' : 'anio_postulacion';
+  document.getElementById('rf-chips-anio').innerHTML = [['aprobacion', 'Año de aprobación', disp.anio_aprobacion], ['postulacion', 'Año de postulación', true]].map(([k, t, ok]) =>
+    `<span class="chip-filtro rf-chip${(usarAprob ? 'aprobacion' : 'postulacion') === k ? ' activo' : ''}${ok ? '' : ' deshabilitado'}"${ok ? ` onclick="RF.anioDe='${k}'; renderRendiciones()"` : ' title="El informe no trae la fecha de asignación"'}>${t}</span>`).join('');
+  document.getElementById('rf-t-anio').textContent = `Evolución por ${usarAprob ? 'año de aprobación' : 'año de postulación'} — ${nombreMetrica}`;
+  const porAnio = new Map(rfAgrupar(f, campoAnio)), cant = new Map();
+  f.forEach(p => { const a = p[campoAnio]; if (a) cant.set(a, (cant.get(a) || 0) + 1); });
+  const anios = [...porAnio.keys()].sort((a, b) => a - b);
+  rfBarras('chartRfAnio', anios.map(String), anios.map(a => porAnio.get(a)), {
+    leyenda: true,
+    extra: [{ type: 'line', label: 'N° de proyectos', data: anios.map(a => cant.get(a) || 0), yAxisID: 'y2', borderColor: '#F5F0E8', backgroundColor: '#F5F0E8', borderDash: [5, 4], borderWidth: 2, pointRadius: 3, tension: 0.25,
+              datalabels: { align: 'top', anchor: 'end', color: '#F5F0E8', font: { size: 10, weight: '700' }, formatter: v => v } }],
+    scales: { x: { grid: { display: false } }, y: { grid: { color: '#4f3f33' }, beginAtZero: true, ticks: { callback: v => rfCompacto(v) } },
+              y2: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'N° proyectos', color: '#BCAA95' }, ticks: { precision: 0 } } },
+  });
+}
+
+// ---------- Tabla ----------
+function rfBuscar(texto) { RF.busqueda = texto; RF.pagina = 0; renderRendiciones(false); }
+function rfOrdenar(k) { RF.orden = { k, dir: RF.orden.k === k ? -RF.orden.dir : (RF_COLS.find(c => c.k === k).num ? -1 : 1) }; RF.pagina = 0; renderRendiciones(false); }
+function rfPagina(d) { RF.pagina += d; renderRendiciones(false); }
+function rfSetAlerta(t) { RF.alerta = t; RF.pagina = 0; renderRendiciones(false); }
+function rfRenderTabla(f, disp, hoy, lim) {
+  const clase = p => rfEstadoPlazo(p, hoy, lim, disp);
+  const nVenc = f.filter(p => clase(p) === 'vencido').length, nPorv = f.filter(p => clase(p) === 'porvencer').length;
+  document.getElementById('rf-chips-alerta').innerHTML = [[null, 'Todos', f.length], ['vencido', 'Plazo vencido', nVenc], ['porvencer', 'Vence en 30 días', nPorv]].map(([k, t, n]) =>
+    `<span class="chip-filtro rf-chip${RF.alerta === k ? ' activo' : ''}" onclick="rfSetAlerta(${k ? `'${k}'` : 'null'})">${t}<span class="n">${n.toLocaleString('es-CL')}</span></span>`).join('');
+  let filas = RF.alerta ? f.filter(p => clase(p) === RF.alerta) : f;
+  if (RF.busqueda.trim()) { const q = rfNorm(RF.busqueda.trim()); filas = filas.filter(p => rfNorm([p.id_proyecto, p.nombre, p.comuna, p.programa, p.subprograma].join(' ')).includes(q)); }
+  const { k, dir } = RF.orden;
+  filas = [...filas].sort((a, b) => {
+    const x = a[k], y = b[k];
+    if (x == null && y == null) return 0; if (x == null) return 1; if (y == null) return -1;
+    return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y), 'es')) * dir;
+  });
+  const pags = Math.max(1, Math.ceil(filas.length / RF_PAG)); RF.pagina = Math.max(0, Math.min(RF.pagina, pags - 1));
+  document.getElementById('rf-thead').innerHTML = RF_COLS.map(c => `<th class="${c.num ? 'num ' : ''}${RF.orden.k === c.k ? 'orden' + (RF.orden.dir < 0 ? ' desc' : '') : ''}" onclick="rfOrdenar('${c.k}')">${c.t}</th>`).join('');
+  document.querySelector('#tbl-rf tbody').innerHTML = filas.slice(RF.pagina * RF_PAG, (RF.pagina + 1) * RF_PAG).map(p => {
+    const cl = clase(p);
+    return `<tr class="${cl === 'vencido' ? 'rf-vencido' : cl === 'porvencer' ? 'rf-porvencer' : ''}">` + RF_COLS.map(c => {
+      const v = p[c.k];
+      if (c.k === 'nombre') return `<td class="nombre" title="${rfEsc(v || '')}">${rfEsc(v || '—')}</td>`;
+      if (c.plazo) return `<td class="num">${v != null ? v + ' días' : '—'}</td>`;
+      if (c.num) return v == null ? '<td class="num">—</td>' : `<td class="num${v < 0 ? ' neg' : ''}">${fmtCLPn(v)}</td>`;
+      return `<td>${rfEsc(v ?? '—')}</td>`;
+    }).join('') + '</tr>';
+  }).join('') || `<tr><td colspan="${RF_COLS.length}" style="text-align:center;color:var(--ink-dim);padding:16px">Ningún proyecto coincide con los filtros.</td></tr>`;
+  document.getElementById('rf-paginacion').innerHTML = `${filas.length.toLocaleString('es-CL')} proyectos · página ${RF.pagina + 1} de ${pags}
+    <button class="btn btn-ghost" style="padding:3px 12px" onclick="rfPagina(-1)"${RF.pagina === 0 ? ' disabled' : ''}>‹</button>
+    <button class="btn btn-ghost" style="padding:3px 12px" onclick="rfPagina(1)"${RF.pagina >= pags - 1 ? ' disabled' : ''}>›</button>`;
+}
+
+// ---------- Orquestación ----------
+function rfRenderAvisos() {
+  const av = (RENDICIONES && RENDICIONES.advertencias) || [];
+  document.getElementById('rf-avisos').innerHTML = av.length ? `<details class="rf-aviso"><summary>Datos que el informe no trae o supuestos usados (${av.length})</summary><ul>${av.map(a => `<li>${rfEsc(a)}</li>`).join('')}</ul></details>` : '';
+  const ok = RENDICIONES && RENDICIONES.fecha_actualizacion;
+  document.getElementById('rf-actualizado').textContent = ok ? `Informe actualizado el ${rfFecha(RENDICIONES.fecha_actualizacion)}${RENDICIONES.hora_actualizacion ? ' ' + RENDICIONES.hora_actualizacion : ''}.` : '';
+}
+function renderRendiciones(completo = true) {
+  const cont = document.getElementById('rf-contenido'); if (!cont) return;
+  const hay = !!(RENDICIONES && Array.isArray(RENDICIONES.proyectos) && RENDICIONES.proyectos.length);
+  cont.style.display = hay ? 'block' : 'none'; document.getElementById('rf-vacio').style.display = hay ? 'none' : 'block';
+  const tv = document.querySelector('#rf-vacio h2'); if (tv) tv.textContent = RF_CARGADO ? 'Aún no hay datos de Rendiciones' : 'Cargando datos de Rendiciones…';
+  const pv = document.querySelector('#rf-vacio p'); if (pv) pv.style.display = RF_CARGADO ? 'block' : 'none';
+  rfRenderAvisos();
+  if (!hay) return;
+  const disp = rfDisp(), f = rfFiltrados(), hoy = rfHoy(), lim = rfSumarDias(hoy, 30);
+  const total = RENDICIONES.proyectos.length;
+  document.getElementById('rf-resumen-filtros').textContent = `Mostrando ${f.length.toLocaleString('es-CL')} de ${total.toLocaleString('es-CL')} proyectos`;
+  if (completo) { rfRenderFiltros(disp); rfRenderKpis(f, disp); rfRenderAlertas(f, disp, hoy, lim); rfRenderMetricas(disp); rfRenderGraficos(f, disp); }
+  rfRenderTabla(f, disp, hoy, lim);
+}
+
+renderRendiciones();
+leerJsonPublico(RENDICIONES_FILE_ID).then(d => { if (d && Array.isArray(d.proyectos)) RENDICIONES = d; RF_CARGADO = true; renderRendiciones(); });
 
 
 // ========================================================================
