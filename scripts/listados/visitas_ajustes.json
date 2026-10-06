@@ -1,0 +1,9 @@
+{
+  "nota": "Ajustes manuales a la clasificación automática del calendario. Cada ajuste se identifica por la fecha y un fragmento del título. Campos: comuna, tipo (reunion/ceremonia/inauguracion/visita), online (true/false), incluir (false = excluir).",
+  "ajustes": [
+    {"fecha": "2026-05-19", "titulo_contiene": "Reunión Alcalde Vicuña - SEREMI Seguridad", "comuna": "VICUÑA", "tipo": "reunion", "online": false,
+     "nota": "El título también nombra 'SUBDERE Coquimbo'; es una reunión en la comuna de Vicuña."},
+    {"fecha": "2026-03-27", "titulo_contiene": "Asamblea asociación de Municipalidades", "comuna": "ASOCIACIÓN", "tipo": "reunion", "online": false,
+     "nota": "Asociación de Municipios Rurales."}
+  ]
+}

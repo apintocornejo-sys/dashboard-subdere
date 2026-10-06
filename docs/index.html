@@ -96,6 +96,7 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .tab[data-view="datos-extra"].active { border-left-color:#D8C3A5; color:#D8C3A5; background:var(--panel-2); }
 .tab[data-view="trazabilidad"].active { border-left-color:#E0607E; color:#E0607E; background:var(--panel-2); }
 .tab[data-view="gr2026"].active { border-left-color:#5FB3A7; color:#5FB3A7; background:var(--panel-2); }
+.tab[data-view="despliegue"].active { border-left-color:#C6CF5E; color:#C6CF5E; background:var(--panel-2); }
 
 .view { display:none; padding:22px 28px 40px; }
 .view.active { display:block; }
@@ -128,6 +129,51 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .fila-clic:hover td { background:rgba(95,179,167,0.10); }
 .fila-total td { font-weight:700; border-top:2px solid var(--border); }
 .kpi.kpi-monto .value { font-size:1.35rem; }
+.panel-despliegue { background:#2c3022; border:1px solid #C6CF5E; box-shadow:0 2px 10px rgba(198,207,94,0.2); }
+.panel-despliegue h2 { color:#E3EAA6; }
+.panel-despliegue p { margin:6px 0 0; color:#D9DFAF; font-size:0.85rem; line-height:1.5; }
+.cinta-ejemplo { display:inline-block; background:#D4553C; color:#fff; font-weight:700; font-size:0.7rem; letter-spacing:.06em; padding:3px 10px; border-radius:999px; margin-left:10px; vertical-align:middle; }
+.despliegue-layout { display:grid; grid-template-columns:minmax(300px,380px) 1fr; gap:16px; align-items:start; margin-bottom:16px; }
+.despliegue-der { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.despliegue-der .kpis { margin-bottom:0; grid-template-columns:repeat(auto-fit,minmax(112px,1fr)); gap:10px; }
+.despliegue-der .kpi { padding:14px 14px; }
+.despliegue-der .kpi .value { font-size:1.55rem; }
+.despliegue-der .kpi.kpi-monto .value { font-size:1.15rem; }
+.mapa-svg { width:100%; height:auto; display:block; }
+.mapa-comuna { cursor:pointer; stroke:#2F2620; stroke-width:1; transition:filter .15s; }
+.mapa-comuna:hover { filter:brightness(1.18); stroke:#F5F0E8; }
+.mapa-comuna.sel { stroke:#F5F0E8; stroke-width:2.6; }
+.mapa-comuna.cero { stroke:#E0785A; stroke-dasharray:4 3; stroke-width:1.5; }
+.mapa-num { font-weight:800; font-size:15px; text-anchor:middle; pointer-events:none; }
+.mapa-nom { font-size:7.4px; font-weight:600; text-anchor:middle; pointer-events:none; letter-spacing:.02em; }
+.leyenda-mapa { display:flex; align-items:center; gap:8px; font-size:0.72rem; color:var(--ink-dim); margin-top:10px; }
+.leyenda-barra { flex:1; height:8px; border-radius:4px; background:linear-gradient(90deg,#5a4634,#F2C14E); }
+.chip-dias { display:inline-block; padding:2px 9px; border-radius:999px; font-size:0.72rem; font-weight:700; white-space:nowrap; }
+.chip-ok { background:rgba(143,163,126,0.22); color:#C9D8B8; }
+.chip-medio { background:rgba(217,164,65,0.22); color:#F2D58A; }
+.chip-alto { background:rgba(212,85,60,0.25); color:#FFB8A6; }
+.fila-sel td { background:rgba(198,207,94,0.14); }
+.asoc-meses { display:flex; align-items:flex-end; gap:6px; height:52px; }
+.asoc-meses div { flex:1; background:#C6CF5E; border-radius:3px 3px 0 0; min-height:3px; }
+.asoc-etq { display:flex; gap:6px; margin-top:4px; }
+.asoc-etq span { flex:1; text-align:center; font-size:0.62rem; color:var(--ink-dim); }
+.filtros-despliegue { display:flex; flex-wrap:wrap; gap:14px 28px; align-items:center; padding-top:14px; padding-bottom:14px; }
+.filtro-grupo { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.filtro-titulo { font-size:0.72rem; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-dim); }
+.chips { display:flex; gap:8px; flex-wrap:wrap; }
+.chip-filtro { cursor:pointer; user-select:none; padding:6px 14px; border-radius:999px; font-size:0.8rem; font-weight:600; border:1px solid var(--border); background:var(--panel-2); color:var(--ink-dim); transition:all .12s; }
+.chip-filtro:hover { border-color:#C6CF5E; color:var(--ink); }
+.chip-filtro.activo { background:#C6CF5E; color:#2F2620; border-color:#C6CF5E; }
+.chip-filtro .n { opacity:.75; font-weight:500; margin-left:6px; font-size:0.72rem; }
+.filtro-nota { flex-basis:100%; font-size:0.74rem; color:var(--ink-dim); }
+.panel-ingreso { border:1px solid #C6CF5E55; }
+.form-visita { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; }
+.form-visita .form-field.wide { grid-column:1 / -1; }
+.aviso-ingreso { background:#3d231c; border:1px solid #C8643C; color:#F7D9C9; border-radius:8px; padding:10px 12px; font-size:0.82rem; margin-bottom:12px; }
+.btn-borrar { background:transparent; border:1px solid #C8643C88; color:#FFB8A6; border-radius:999px; padding:3px 12px; font-size:0.72rem; cursor:pointer; }
+.btn-borrar:hover { background:#C8643C33; }
+@media (max-width:768px) { .form-visita { grid-template-columns:1fr; } }
+
 .panel-contraste h2 { color:#F7D9C9; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
 .profesional-card { background:#B4573B; border-radius:8px; padding:14px 12px; text-align:center; display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; }
@@ -247,6 +293,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .tab[data-view="datos-extra"].active { border-left-color:transparent; border-bottom-color:#D8C3A5; }
   .tab[data-view="trazabilidad"].active { border-left-color:transparent; border-bottom-color:#E0607E; }
   .tab[data-view="gr2026"].active { border-left-color:transparent; border-bottom-color:#5FB3A7; }
+  .tab[data-view="despliegue"].active { border-left-color:transparent; border-bottom-color:#C6CF5E; }
 
   .filters { padding:12px calc(14px + env(safe-area-inset-right)) 12px calc(14px + env(safe-area-inset-left)); gap:8px; }
   .filter-group, .multiselect { min-width:0; width:100%; }
@@ -283,7 +330,8 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
   .profesional-revision-grid { grid-template-columns:repeat(2, 1fr); }
   .tabla-compacta { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  #tbl-gr2026, #tbl-gr2026-estado { font-size:0.7rem; white-space:nowrap; }
+  #tbl-gr2026, #tbl-gr2026-estado, #tbl-despliegue, #tbl-manuales { font-size:0.7rem; white-space:nowrap; }
+  .despliegue-layout { grid-template-columns:1fr; }
   #tabla-tradicional-2026 table { white-space:nowrap; }
 }
 
@@ -361,6 +409,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     <div class="tab" data-view="datos-extra">📝 Datos adicionales</div>
     <div class="tab" data-view="trazabilidad">⏱️ Trazabilidad</div>
     <div class="tab" data-view="gr2026">💰 Transf. GR 2026</div>
+    <div class="tab" data-view="despliegue">🗺️ Despliegue Territorial</div>
 </nav>
 <div class="main-content">
   <div class="filters">
@@ -696,6 +745,104 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       </div>
     </div>
   </div>
+
+  <div class="view" id="view-despliegue">
+    <div class="panel wide panel-despliegue">
+      <h2>🗺️ Despliegue Territorial — Visitas a las 15 comunas <span id="despliegue-cinta"></span></h2>
+      <p>
+        Reuniones, ceremonias, inauguraciones y visitas en las comunas de la Región de Coquimbo y con la Asociación de Municipios Rurales,
+        registradas en el calendario de la URS desde el <strong>1 de marzo de 2026</strong> (más los registros ingresados manualmente abajo).
+        Una comuna cuenta <strong>una visita por día</strong>. Haz clic en una comuna (mapa o tabla) para ver su comportamiento mensual.
+        Esta pestaña no usa los filtros de proyectos. <span id="despliegue-actualizado" style="opacity:.8"></span>
+      </p>
+    </div>
+
+    <div class="panel wide filtros-despliegue">
+      <div class="filtro-grupo">
+        <span class="filtro-titulo">Tipo</span>
+        <div id="chips-tipo" class="chips"></div>
+      </div>
+      <div class="filtro-grupo">
+        <span class="filtro-titulo">Modalidad</span>
+        <div id="chips-modalidad" class="chips"></div>
+      </div>
+      <div class="filtro-nota" id="despliegue-filtro-nota"></div>
+    </div>
+
+    <div class="despliegue-layout">
+      <div class="panel">
+        <h2>Visitas por comuna</h2>
+        <div id="despliegue-mapa"></div>
+        <div class="leyenda-mapa"><span>0</span><div class="leyenda-barra"></div><span id="leyenda-max">—</span><span style="margin-left:6px">visitas</span></div>
+        <div style="font-size:0.68rem;color:var(--ink-dim);margin-top:6px">Borde punteado rojo = comuna sin visitas con los filtros actuales.</div>
+      </div>
+      <div class="despliegue-der">
+        <div class="kpis" id="kpis-despliegue"></div>
+        <div class="panel">
+          <h2 id="despliegue-chart-titulo">Comportamiento mensual de visitas</h2>
+          <canvas id="chartDespliegue" style="height:310px !important"></canvas>
+          <div style="font-size:0.68rem;color:var(--ink-dim);margin-top:6px">* mes en curso (incompleto)</div>
+        </div>
+        <div class="panel" id="panel-asociacion">
+          <h2>Asociación de Municipios Rurales</h2>
+          <div id="panel-asociacion-cuerpo"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel wide">
+      <h2>Resumen por comuna</h2>
+      <div style="overflow-x:auto">
+        <table id="tbl-despliegue">
+          <thead><tr>
+            <th>Comuna</th><th>Provincia</th><th class="num">Visitas</th><th class="num">% del total</th>
+            <th class="num">Última visita</th><th class="num">Tiempo sin visita</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:8px">Tiempo sin visita: <span class="chip-dias chip-ok">hasta 30 días</span> <span class="chip-dias chip-medio">31 a 60</span> <span class="chip-dias chip-alto">más de 60</span></div>
+    </div>
+
+    <div class="panel wide panel-ingreso">
+      <h2>➕ Registrar una visita o reunión manualmente</h2>
+      <div id="ingreso-login">
+        <p style="margin:0 0 10px;color:var(--ink-dim);font-size:0.85rem">
+          Para agregar un registro que no esté en el calendario, inicia sesión con tu cuenta de Google autorizada
+          (la misma que usas en “Datos adicionales”).
+        </p>
+        <button class="btn btn-primary" onclick="iniciarSesionVisitas()">Iniciar sesión con Google</button>
+      </div>
+      <div id="ingreso-form" style="display:none">
+        <div id="ingreso-aviso-archivo" class="aviso-ingreso" style="display:none">
+          ⚠️ Falta configurar el archivo donde se guardan los registros manuales (<code>VISITAS_MANUALES_FILE_ID</code>). Mientras tanto no se puede guardar.
+        </div>
+        <div class="form-visita">
+          <div class="form-field"><label>Fecha</label><input type="date" id="v-fecha"></div>
+          <div class="form-field"><label>Comuna / institución</label><select id="v-comuna"></select></div>
+          <div class="form-field"><label>Tipo</label><select id="v-tipo" onchange="ajustarModalidadManual()"></select></div>
+          <div class="form-field"><label>Modalidad</label><select id="v-modalidad"></select></div>
+          <div class="form-field wide"><label>Detalle (opcional)</label><input type="text" id="v-detalle" maxlength="140" placeholder="Ej.: Reunión con alcalde por proyecto de agua potable"></div>
+        </div>
+        <div style="font-size:0.72rem;color:var(--ink-dim);margin:6px 0 10px">
+          El archivo de registros es de lectura pública, igual que “Datos adicionales”: no escribas datos personales ni sensibles en el detalle.
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="guardarVisitaManual()">Guardar registro</button>
+          <button class="btn btn-ghost" onclick="limpiarFormularioVisita()">✕ Limpiar</button>
+          <span id="v-estado" class="save-status"></span>
+        </div>
+        <h3 style="margin:18px 0 8px;font-size:0.9rem">Registros manuales (los más recientes primero)</h3>
+        <div style="overflow-x:auto">
+          <table id="tbl-manuales">
+            <thead><tr><th>Fecha</th><th>Comuna / institución</th><th>Tipo</th><th>Modalidad</th><th>Detalle</th><th>Ingresado por</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </div>
 </div>
 </div>
@@ -1461,6 +1608,7 @@ function renderAll() {
   renderTabla();
   renderTrazabilidad();
   renderGR2026();
+  if (typeof renderDespliegue === 'function') renderDespliegue();
 }
 
 // ========================================================================
@@ -1950,6 +2098,350 @@ function descargarInformeGR2026XLS() {
 }
 
 // ========================================================================
+// DESPLIEGUE TERRITORIAL: reuniones, ceremonias, inauguraciones y visitas a las 15 comunas
+// ========================================================================
+// Del calendario solo se publican fecha, comuna, tipo y modalidad — nunca títulos ni datos de las reuniones.
+const VISITAS_DESDE = '2026-03-01';
+const VISITAS_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_VISITAS";                     // actualización automática del calendario (siguiente paso)
+const VISITAS_MANUALES_FILE_ID = "PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_VISITAS_MANUALES";   // registros ingresados a mano en esta pestaña
+const MESES_CORTOS = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+const PROVINCIAS_COLOR = { 'Elqui': '#D9A441', 'Limarí': '#8FA37E', 'Choapa': '#6FA3B5' };
+const TIPOS_VISITA = { reunion: 'Reuniones', ceremonia: 'Ceremonias', inauguracion: 'Inauguraciones', visita: 'Visitas' };
+const TIPO_UNO = { reunion: 'Reunión', ceremonia: 'Ceremonia', inauguracion: 'Inauguración', visita: 'Visita' };
+const ASOCIACION_CLAVE = 'ASOCIACIÓN';
+const ASOCIACION_NOMBRE = 'Asociación de Municipios Rurales';
+const MAPA_COQUIMBO = {"viewBox":"0 0 440 859","comunas":{"ANDACOLLO":{"d":"M150.3,288.8L152,293.5L157.6,295.3L162.3,301.1L163.2,304.2L158.7,308.6L161.4,312.1L162.7,320.7L165.1,318.5L168.4,318.6L182,315.8L184.2,319.3L188,329.1L179,335.4L168.9,326.6L165.5,327.9L159.6,338.7L157.1,338.7L152.7,347.6L148.8,350L152.2,354.3L146.5,355.2L131.5,358.9L130.4,353.6L120.1,345.7L120.3,338.2L117.4,335.2L119.9,326.5L119.8,320.8L123.7,321.3L126.2,319.3L126.4,310.3L119.6,298.4L120.3,291.7L123.1,288.5L130.5,288.4L134.8,284.2L138.5,282.3L145.4,288.8Z","cx":138.7,"cy":333.4,"w":71,"h":77,"provincia":"Elqui"},"LOS VILOS":{"d":"M45.4,705.3L55.2,702.7L57.2,699.8L56.8,694.2L58.9,691.4L63.2,696L65.2,696.3L68.2,704.4L73.9,704.7L76.5,706.4L77.5,711.5L79.6,714.4L78.4,718.8L81.9,721.2L86.5,717.5L90,716.9L93.6,713.2L96.3,716.9L97.7,716.3L103.6,721.2L104.3,725.5L106.6,728.8L108.8,728.5L110.2,732L114.5,732.4L115.6,738L118.1,737.1L119.5,740.8L124.6,744.8L127.5,750.5L130.5,751.1L133,747.9L139.7,745.4L146.6,745.8L148.9,751.9L153,753.2L158.8,752.9L162.6,757.8L165.7,758L173,762.7L174,764.3L173.3,775L174.7,777L174.3,783L172.3,788.8L169.9,789.4L163.7,786.4L157.6,786.2L156.7,790.4L160,795.6L156.6,797.4L152.2,802L148.1,804.1L136.6,817.5L134.4,817.7L129.6,821.6L126.3,822.6L124,817.4L119.5,811.2L117,811.1L110.8,818.4L109.1,822.9L102.6,825.3L101.7,828.1L97.1,827.7L91.2,831L85.5,830.5L80,827.7L75,827.5L69.4,825.2L68.6,823.4L62.4,821.5L59.8,818.4L56.5,819.4L54.1,825.2L46.5,824.4L48.5,818.2L46.8,812.8L51.6,811.4L51.5,807.5L47.7,805.6L49.4,803.4L48.5,800.2L50.5,790.9L48.6,787.3L52.4,783.9L51.1,777.5L53.5,772.4L56.6,768.5L54.4,767.5L54,763.7L48.8,764.1L51.8,759.3L50.1,757L51.4,753.1L53.8,753.4L55.7,750.2L54.2,747.2L54.6,743.2L51.2,738.4L41.9,738.9L42,735.9L44.3,736.7L45.3,732.4L48,730.6L50.7,726.2L50.4,722.7L52.7,720.5L53.6,716.5L52,712.5L48.5,711.7L44.7,708.7Z","cx":96.1,"cy":776.2,"w":133,"h":140,"provincia":"Choapa"},"CANELA":{"d":"M23.1,570.9L30.4,566.6L35.1,557.8L37,556.5L41.2,559.3L43.8,563L46.6,559.4L47.9,561.7L52.1,560.1L57.8,563.8L61.6,555.5L68.3,560.7L71.8,555.9L79.6,557.2L87.3,552.7L94.3,553.5L101.5,552.1L102.4,561.7L104.4,564L110,565.7L114.2,563.6L117.8,564.6L121.6,562.4L125.2,565L130.2,564.9L135.6,567.9L135.7,572.5L138.6,575.6L139.1,582.2L140.5,585L146.1,589.4L147.5,598L147.2,601.6L139,602L136,606.8L137,613.9L134.5,617.1L134.3,625.5L130.5,624.5L127.5,626.6L125.5,631.8L122,636L115.2,629.9L109.3,634.3L104.4,634.5L101.2,637.8L100.4,643.6L104,648.2L109.7,646.8L112.6,655.2L112.2,662.1L108.9,665.7L112.9,672.1L106.9,675.1L96.7,673.2L93.4,675.7L84.8,672.5L78,673.3L78,686.6L82.5,690.3L84.8,694.2L86.8,694.2L92.1,698.9L93.7,702.5L92.6,708.1L93.6,713.2L90,716.9L86.5,717.5L81.9,721.2L78.4,718.8L79.6,714.4L77.5,711.5L76.5,706.4L73.9,704.7L68.2,704.4L65.2,696.3L63.2,696L58.9,691.4L56.8,694.2L57.2,699.8L55.2,702.7L45.4,705.3L44.3,692.6L41.8,678L38.1,674L36.5,670.4L38.2,668L39.4,656L37.7,651.3L39.2,646.2L34.1,635.1L34.6,631.1L30.9,624.5L31.4,619.9L28.4,617.8L27.6,605.5L29,599.8L23.8,592.8L23.7,586L25.3,583.3L21.8,571.4Z","cx":72.6,"cy":604.9,"w":126,"h":169,"provincia":"Choapa"},"OVALLE":{"d":"M16.7,343.6L22.4,342.6L23.7,344.2L27.9,343.8L30.9,348.2L31.6,353.5L42.3,360.7L53.9,359.9L59.1,362.2L58.2,369.8L58.8,376.4L63.4,375.3L66.6,382.4L71,382.9L71.2,381.1L77.9,377.5L81.7,388.5L86.7,387L86.9,380.9L84.8,377.3L91,372L94.4,360.7L96.6,359.3L103.1,359.6L102.8,354.5L100.2,347.6L102,343.5L100.6,340.5L112.7,336.6L114.1,334.5L117.4,335.2L120.3,338.2L120.1,345.7L130.4,353.6L131.5,358.9L146.5,355.2L152.2,354.3L152.6,360.6L155.1,367L153.9,369.7L150.8,369.9L149.7,373.8L152.6,376.3L155.5,381.5L155.5,384.5L158.4,388.3L158.6,392.3L162.4,396.7L168.2,394.7L171.7,395.6L174,393.8L181.1,392.8L181.2,388.4L188.3,383.9L191.1,384.8L192.4,388.4L199.6,394.4L199,396.2L194.9,395.9L189.8,404.1L186.1,402.6L182,403L173.9,409.1L171.7,412.2L173,415.6L168.9,422.8L161.4,420.8L159.1,423.8L160.7,431L155.4,440L155.6,443.7L150.6,449L147.2,450.3L140.7,456.8L136.9,457.2L132.5,455.3L132,453.1L127.3,455.5L122.6,454.7L119.8,457.7L118,454.1L113.4,451.6L112.7,449.3L107.5,447.2L108.5,438.2L105.9,439.3L102.4,443.8L102.5,446.2L98.8,448.5L96.4,452.5L93.9,451.4L91.5,454.2L85.6,456.2L83.9,452.3L80.1,450.5L78.8,454.8L83.2,463L82.7,472.3L81.3,478.4L83.2,484.9L80.7,488.2L75.7,486.1L71.6,488.2L65.2,489.7L62,492.3L61.1,489.5L53.7,486.7L50.6,488.1L46.3,496.9L51.1,497.8L49.6,504.7L43.7,508.9L45.1,515.3L48.8,517.3L46,522L44.2,529L48.2,531.1L53.9,530.2L57.6,537.7L56.6,540.1L62.2,550.1L61.6,555.5L57.8,563.8L52.1,560.1L47.9,561.7L46.6,559.4L43.8,563L41.2,559.3L37,556.5L35.1,557.8L30.4,566.6L23.1,570.9L20.4,567.7L17.1,557.2L17.9,549.5L19.3,547.6L18.8,543.6L20.8,543.2L20.6,536.3L18.5,534.6L17.8,524.8L18.4,521.3L22.1,517.3L20.6,511.1L20.6,506L18.3,503.3L16.1,495.6L14.3,496L13.4,491L14.8,487.6L13,484.2L13.9,480.2L11.3,473.8L10.9,467.6L8.2,453L10.2,445L8,443.4L8.4,437L10.4,435.8L9.8,429.7L6.4,422.9L8.3,419.6L7.3,412.7L6,410.3L9.2,398.9L11.1,395.5L11.1,388.7L12.4,383.2L10.5,380.3L14,361.8L12.1,359L14.1,356.3L14.5,351.5L16.8,348.4L14.6,347.2L14.6,343.9Z","cx":50.4,"cy":420.6,"w":194,"h":236,"provincia":"Limarí"},"COQUIMBO":{"d":"M102.4,238.8L102.6,240.8L107.3,240.5L113,242.3L114.8,249.6L118.5,250.1L119.1,252.6L126,254.1L128.8,252.9L134.5,259.2L134.6,267.1L132.8,272.3L133.8,275.9L141.6,272.1L141.3,278.4L138.5,282.3L134.8,284.2L130.5,288.4L123.1,288.5L120.3,291.7L119.6,298.4L126.4,310.3L126.2,319.3L123.7,321.3L119.8,320.8L119.9,326.5L117.4,335.2L114.1,334.5L112.7,336.6L100.6,340.5L102,343.5L100.2,347.6L102.8,354.5L103.1,359.6L96.6,359.3L94.4,360.7L91,372L84.8,377.3L86.9,380.9L86.7,387L81.7,388.5L77.9,377.5L71.2,381.1L71,382.9L66.6,382.4L63.4,375.3L58.8,376.4L58.2,369.8L59.1,362.2L53.9,359.9L42.3,360.7L31.6,353.5L30.9,348.2L27.9,343.8L23.7,344.2L22.4,342.6L16.7,343.6L18.1,333.3L19.3,333.2L20.4,324.9L26.3,315.6L28.3,318.7L30.7,331.3L36.5,332.5L44.6,331.4L50.8,328.8L54.7,325.3L55.5,320.4L59.8,316.3L59.9,311.5L58.6,308.6L64.5,303.4L66.1,297.1L67.3,300.8L70.5,304.7L75,303.9L79.7,299.8L82.7,294.6L83.4,288L82.7,281.7L80.4,280.4L83.6,274.3L80.7,270.5L81.3,268L79.1,265.9L80.2,260.7L77.8,257.6L75.1,257.8L73.4,253.8L76.3,251.4L79.6,252.5L81.9,247.3L84.2,245.9L85.2,249.8L88.2,248.8L88,245.2L85.4,244.5L85.1,241.7L91.3,236.6L91.8,243.3L97.5,243Z","cx":74.8,"cy":341.4,"w":125,"h":152,"provincia":"Elqui"},"LA SERENA":{"d":"M96.9,163.6L98.5,164L102.2,173.9L104.5,174.6L107.1,168.7L115.3,167.9L118.5,164.3L125.5,164.1L130.4,158.5L134.3,157.2L135.4,154.6L144.8,153.7L148.6,149.6L150.8,145.3L158,144.6L160.3,141.2L162.4,141.2L163.5,145.1L168.3,150.6L174.1,150.4L174.8,147L180.4,146.1L185.3,139.7L193.5,134.7L196.9,140.2L200.2,138.6L201.9,143.1L205.3,146.7L208.4,147.8L208.2,150.1L212.6,156.1L218.3,155.8L219.5,158.5L222.8,156.8L228.1,156.7L232,158.5L235.5,165.8L235,169.5L237.6,173.6L232.1,174.9L228,174.4L216.6,175.2L213.3,178.8L206.9,181.1L205.7,183.7L201.5,184.7L200.9,192.4L197.2,194.3L197.6,196.1L191.6,201.9L189.3,210.8L185.1,213.3L181.2,212.9L174.5,214.8L170.2,218.3L172.1,222L167.6,225.9L171.6,233.3L168,240.2L167.9,242.7L165,245.3L167.1,248.4L167,253.5L163.4,258.1L165.2,262.1L161.5,265.9L160.7,271.4L158.6,274.8L158.4,279.2L155,287.3L150.3,288.8L145.4,288.8L138.5,282.3L141.3,278.4L141.6,272.1L133.8,275.9L132.8,272.3L134.6,267.1L134.5,259.2L128.8,252.9L126,254.1L119.1,252.6L118.5,250.1L114.8,249.6L113,242.3L107.3,240.5L102.6,240.8L102.4,238.8L105.1,232.2L105.7,226.4L104.3,213.2L102,208L97,207.2L95,199.8L95.4,197L90.4,194L90.7,186.9L93.1,186.1L94.2,180.3L93.5,176.7L94.9,169.1Z","cx":138.4,"cy":198.8,"w":147,"h":154,"provincia":"Elqui"},"COMBARBALÁ":{"d":"M147.2,601.6L147.5,598L146.1,589.4L140.5,585L139.1,582.2L138.6,575.6L135.7,572.5L135.6,567.9L130.2,564.9L125.2,565L121.6,562.4L117.8,564.6L114.2,563.6L110,565.7L104.4,564L102.4,561.7L101.5,552.1L103.9,550.9L106,537.5L108.8,535.3L105,528L107.9,526.1L106.1,514.4L104.8,513.7L102.7,505.8L106.2,504.6L108.6,501.6L112.5,501.4L116.2,498.8L115.4,493.4L121.6,486.7L127.2,485.9L125.1,479.5L128.6,479.8L136.1,477.4L136.2,475.7L143.8,473.7L146.1,481L145.1,483.8L146.6,487.6L151.2,490.6L151.4,497.5L154.2,500.1L160,492.2L166,497.5L167,501.6L172.9,503.9L174.4,505.9L180.1,504.3L192,508L191.1,513.7L196.4,513.1L195.6,509.8L198,507.3L203.7,507.9L205.9,510.5L205.8,517.5L208.7,521.6L211.6,530.2L213.2,529.2L218.1,534.6L217.2,538.5L222.1,542.5L229.3,545L232.9,544.6L238.4,552L245.8,557L249.5,554.1L255.2,566.9L254.4,575.9L257.8,582.9L256.2,584.8L257.6,587.6L255,593.1L251.6,594.3L245.3,600L233.5,604.8L233.4,601.1L230.7,596.5L227.4,596.5L225.8,600.5L220.9,601.2L218.8,607.6L216.1,608L210,615.1L212,617L211.2,623.1L204.8,624L202.8,626.7L198.1,624.8L196.6,622.7L191.9,620.9L192.7,610.1L192.1,607.6L188.2,606.5L187,601.1L182.8,598.7L181.3,600.7L178.7,598.7L165.2,606L163.3,611.3L160.1,615.3L155.9,614.9L152.5,608.2L147.7,604.6Z","cx":177.1,"cy":555.9,"w":156,"h":153,"provincia":"Limarí"},"PUNITAQUI":{"d":"M140.7,456.8L143.1,461.8L146.1,464L151.8,464.7L156.3,461.7L162.7,461.5L160.6,464.3L161.7,472.9L158.7,477.5L153.8,476.1L146.1,481L143.8,473.7L136.2,475.7L136.1,477.4L128.6,479.8L125.1,479.5L127.2,485.9L121.6,486.7L115.4,493.4L116.2,498.8L112.5,501.4L108.6,501.6L106.2,504.6L102.7,505.8L104.8,513.7L106.1,514.4L107.9,526.1L105,528L108.8,535.3L106,537.5L103.9,550.9L101.5,552.1L94.3,553.5L87.3,552.7L79.6,557.2L71.8,555.9L68.3,560.7L61.6,555.5L62.2,550.1L56.6,540.1L57.6,537.7L53.9,530.2L48.2,531.1L44.2,529L46,522L48.8,517.3L45.1,515.3L43.7,508.9L49.6,504.7L51.1,497.8L46.3,496.9L50.6,488.1L53.7,486.7L61.1,489.5L62,492.3L65.2,489.7L71.6,488.2L75.7,486.1L80.7,488.2L83.2,484.9L81.3,478.4L82.7,472.3L83.2,463L78.8,454.8L80.1,450.5L83.9,452.3L85.6,456.2L91.5,454.2L93.9,451.4L96.4,452.5L98.8,448.5L102.5,446.2L102.4,443.8L105.9,439.3L108.5,438.2L107.5,447.2L112.7,449.3L113.4,451.6L118,454.1L119.8,457.7L122.6,454.7L127.3,455.5L132,453.1L132.5,455.3L136.9,457.2Z","cx":77.4,"cy":516.5,"w":119,"h":122,"provincia":"Limarí"},"PAIHUANO":{"d":"M356.5,344.2L356.3,347.9L358.9,350.6L361.2,358.7L363.1,359.9L364.9,366.1L360.7,373.3L357.5,374.5L347.4,381.8L344.8,380.3L337.8,381.1L331.4,379L330.1,376.8L325.5,375L328.3,370.1L326.3,369.1L320.8,361.7L315,359.5L310.3,363L310.6,366.1L306.7,367.4L305.5,370.4L301.8,371.2L297.1,364.6L294.1,364.9L290.3,356.4L284.6,357.6L280.6,352.9L283.3,346.1L281.2,345.5L276.4,340.3L273.3,339.4L273.1,335.8L269.6,329L268.5,324.3L270.8,320.7L266.5,313.7L264.8,308.9L262.5,308L261.9,304.3L267.7,301.5L267.7,295.5L264.9,290.1L264.5,283.1L268.7,275.2L265.4,269.3L264,263.9L264.5,258.7L266.5,257L266.7,253.3L270.5,248.2L272.9,247.6L280.9,250.8L284,250.4L288.2,244.8L293.8,245.8L295.6,249.8L299.2,249.8L301.6,246.8L307.2,249.8L309.9,249.4L311.2,245.4L314.5,246L314.2,252.6L315.3,258.3L317.6,261.6L322.2,260.7L326.1,264.4L322,269.7L320.9,274.7L321.6,277.7L319.8,283.3L324.2,283.9L326.2,290.2L329.2,292.5L331.2,296.2L329.6,300.2L330.9,304.2L334.5,304.1L340.9,306.5L341.6,311.8L345.5,315.9L343.5,321L345.9,323.1L348.2,329L346.5,330.1L347.8,333.5L350.6,334.8Z","cx":303.1,"cy":320.6,"w":103,"h":137,"provincia":"Elqui"},"ILLAPEL":{"d":"M268.9,594.9L269.6,604.7L273,609.9L270.2,615.6L271.5,621.6L267.9,621.3L265.6,624.6L268.3,628.5L267.5,633.6L263.5,638.3L265.1,640.7L264,645.6L267.4,648.5L265,661.7L258.7,657.8L256.6,655.3L252.1,655.3L250.8,658.9L252,661L246.4,667.9L246.9,672.1L245.3,675.6L242.6,677.2L233.5,679.1L230.6,681.9L225.9,676.8L217.2,676.5L215.1,679.1L209.8,681.3L204.1,681.4L200.2,680.2L196.9,684.2L192.1,686.7L187.4,687.5L186.7,689.4L180.6,687.1L175.5,692.4L167.6,688.5L167.4,686.7L160.8,689.2L161.2,694.6L155.3,698L152.3,697.7L150.9,700.7L146.4,703.1L145.1,707.1L146.7,708.6L147.4,714L146.4,719.4L148,723.5L144.3,728.1L144.4,731L146.9,734.9L146,738.9L146.6,745.8L139.7,745.4L133,747.9L130.5,751.1L127.5,750.5L124.6,744.8L119.5,740.8L118.1,737.1L115.6,738L114.5,732.4L110.2,732L108.8,728.5L106.6,728.8L104.3,725.5L103.6,721.2L97.7,716.3L96.3,716.9L93.6,713.2L92.6,708.1L93.7,702.5L92.1,698.9L86.8,694.2L84.8,694.2L82.5,690.3L78,686.6L78,673.3L84.8,672.5L93.4,675.7L96.7,673.2L106.9,675.1L112.9,672.1L108.9,665.7L112.2,662.1L112.6,655.2L109.7,646.8L104,648.2L100.4,643.6L101.2,637.8L104.4,634.5L109.3,634.3L115.2,629.9L122,636L125.5,631.8L127.5,626.6L130.5,624.5L134.3,625.5L134.5,617.1L137,613.9L136,606.8L139,602L147.2,601.6L147.7,604.6L152.5,608.2L155.9,614.9L160.1,615.3L163.3,611.3L165.2,606L178.7,598.7L181.3,600.7L182.8,598.7L187,601.1L188.2,606.5L192.1,607.6L192.7,610.1L191.9,620.9L196.6,622.7L198.1,624.8L202.8,626.7L204.8,624L211.2,623.1L212,617L210,615.1L216.1,608L218.8,607.6L220.9,601.2L225.8,600.5L227.4,596.5L230.7,596.5L233.4,601.1L233.5,604.8L245.3,600L251.6,594.3L255,593.1L257.6,587.6L261,587.8L263.6,591.1L265.1,590.1L266.6,594.4Z","cx":170.9,"cy":650.6,"w":195,"h":163,"provincia":"Choapa"},"LA HIGUERA":{"d":"M284.7,88.8L279.4,87.9L273.9,89.9L272.6,95.3L268.6,99.5L269,104.8L272.4,108.5L273.2,113.4L270,116.1L273.2,119L273.6,123.8L270.7,128.3L271.9,130.1L268.2,136L266.8,140.7L269.4,143.2L267.1,146.1L266.3,151.9L262,154.2L261.2,157.7L262.4,162.2L259.1,165.6L261.8,168.9L262.7,175.5L260.8,176.3L257.7,181L254.8,176L250,173.9L246.1,175.5L239.6,172.2L237.6,173.6L235,169.5L235.5,165.8L232,158.5L228.1,156.7L222.8,156.8L219.5,158.5L218.3,155.8L212.6,156.1L208.2,150.1L208.4,147.8L205.3,146.7L201.9,143.1L200.2,138.6L196.9,140.2L193.5,134.7L185.3,139.7L180.4,146.1L174.8,147L174.1,150.4L168.3,150.6L163.5,145.1L162.4,141.2L160.3,141.2L158,144.6L150.8,145.3L148.6,149.6L144.8,153.7L135.4,154.6L134.3,157.2L130.4,158.5L125.5,164.1L118.5,164.3L115.3,167.9L107.1,168.7L104.5,174.6L102.2,173.9L98.5,164L96.9,163.6L99.3,158L102.6,155.4L100.8,150.2L97.2,147.9L94.4,143.2L93.1,138.3L93.1,126.1L91.8,122.1L95.8,121.9L97.7,118.1L96,111.9L98.6,112.2L97.9,103.8L94,104.6L93.5,99.2L90.6,99.4L92.7,94.8L93.1,89.4L91.4,88.1L93.6,85.3L87.7,77.3L77.4,67.8L68.9,61.6L63.9,62L62.7,54L56.8,48.1L55.3,43.3L64.9,43.5L67.1,42.5L73.8,43.6L79.4,41.7L80.8,37.4L83.9,33.5L88.1,32.6L96.9,38.1L104.1,44.2L107.4,41.9L111.9,41.7L116.2,43.5L122,43.9L123.4,57.9L125.8,69.2L129.2,69.8L132.1,72.8L137.7,73.7L143.3,72.6L147.7,75L148,84.5L146.1,87.8L153.5,87.9L162.5,82.3L165,78.2L165.8,72.4L164.9,69.7L169.5,64.9L169.6,58.1L173.4,46L172.7,41.8L174.5,39.7L183.5,35.1L187.7,29.8L196.7,33.4L201.9,33.2L207.1,31.8L211.3,31.9L215.9,26.9L218.2,26.7L223.5,23.1L227.1,23.2L228.1,19.2L230.7,17.9L227.9,13.8L228.8,11L237,8.5L246.1,10.2L246.2,6.4L250.1,7.5L255.1,6L256.3,9.1L263.3,10L267,7.6L271.3,12.1L269.5,17.8L269.6,21.4L273.1,24.6L271.8,29.3L275.4,30.7L280.3,37.8L281.2,48.6L280.4,52.1L286.3,58.1L287.3,64.2L283.4,70L286.6,72.3L289.3,79.3L289.1,82.4Z","cx":217.4,"cy":87.4,"w":234,"h":175,"provincia":"Elqui"},"MONTE PATRIA":{"d":"M268.9,594.9L266.6,594.4L265.1,590.1L263.6,591.1L261,587.8L257.6,587.6L256.2,584.8L257.8,582.9L254.4,575.9L255.2,566.9L249.5,554.1L245.8,557L238.4,552L232.9,544.6L229.3,545L222.1,542.5L217.2,538.5L218.1,534.6L213.2,529.2L211.6,530.2L208.7,521.6L205.8,517.5L205.9,510.5L203.7,507.9L198,507.3L195.6,509.8L196.4,513.1L191.1,513.7L192,508L180.1,504.3L174.4,505.9L172.9,503.9L167,501.6L166,497.5L160,492.2L154.2,500.1L151.4,497.5L151.2,490.6L146.6,487.6L145.1,483.8L146.1,481L153.8,476.1L158.7,477.5L161.7,472.9L160.6,464.3L162.7,461.5L156.3,461.7L151.8,464.7L146.1,464L143.1,461.8L140.7,456.8L147.2,450.3L150.6,449L155.6,443.7L155.4,440L160.7,431L159.1,423.8L161.4,420.8L168.9,422.8L173,415.6L171.7,412.2L173.9,409.1L182,403L186.1,402.6L189.8,404.1L194.9,395.9L199,396.2L199.6,394.4L202.8,393.1L207.2,393.9L213,389.1L216.6,389.1L221.4,391L226.9,390.1L228.8,386.2L232,386.4L234.8,381.5L238.5,384.6L241,384L245.3,386.6L251.7,385.4L255.4,385.8L256.8,382.7L262.2,383.1L267.4,386.3L270.7,390.1L268.8,392.7L272.4,396L274,399.8L279.3,399.9L284.6,401.7L288.7,398.8L294.1,406.2L294.1,411L295.8,413L295.5,416.9L298.4,419.1L300.7,418.4L307.2,424.5L314.1,425.3L317,430.1L323.1,429.5L327,434.3L333.5,434.5L333.8,439.6L336.1,443.3L330.6,448.2L330,457L327.5,457.6L326,462L329,465.3L328.4,470.1L324.8,474.5L322.2,485L322.4,487.4L319.1,494.6L320.6,502.4L325.5,506.6L323.2,513.1L325.2,516.6L324.3,519.5L329,519.8L330.7,525.8L329.4,527.1L319,525.6L317.6,530.7L311.1,538.5L308.5,544.4L310.4,549.3L306.7,554.4L304,554.9L301.5,558.2L298.4,555.4L297.9,549.2L295.1,545.4L294.2,540.9L288.8,536.4L284.7,544.3L279.8,546.2L280.3,549L276.9,553.2L275.6,559.6L273.6,563.8L276,565.8L274.5,571.1L275.3,575.5L272.1,578.2L273.4,580.3L273.1,587.2Z","cx":258.1,"cy":470.6,"w":195,"h":213,"provincia":"Limarí"},"RÍO HURTADO":{"d":"M333.5,434.5L327,434.3L323.1,429.5L317,430.1L314.1,425.3L307.2,424.5L300.7,418.4L298.4,419.1L295.5,416.9L295.8,413L294.1,411L294.1,406.2L288.7,398.8L284.6,401.7L279.3,399.9L274,399.8L272.4,396L268.8,392.7L270.7,390.1L267.4,386.3L262.2,383.1L256.8,382.7L255.4,385.8L251.7,385.4L245.3,386.6L241,384L238.5,384.6L234.8,381.5L232,386.4L228.8,386.2L226.9,390.1L221.4,391L216.6,389.1L213,389.1L207.2,393.9L202.8,393.1L199.6,394.4L192.4,388.4L191.1,384.8L188.3,383.9L181.2,388.4L181.1,392.8L174,393.8L171.7,395.6L168.2,394.7L162.4,396.7L158.6,392.3L158.4,388.3L155.5,384.5L155.5,381.5L152.6,376.3L149.7,373.8L150.8,369.9L153.9,369.7L155.1,367L152.6,360.6L152.2,354.3L148.8,350L152.7,347.6L157.1,338.7L159.6,338.7L165.5,327.9L168.9,326.6L179,335.4L188,329.1L184.2,319.3L182,315.8L183.3,310.8L187.3,311.3L188.9,314.5L192.1,316.2L198.7,317.1L206.6,320.1L210.3,316.2L213.9,317.9L217.5,315L220.8,316.8L228.8,319.1L236.6,314.6L241.9,310L245.5,311.5L249.5,310.9L255.9,314.1L260.2,315L262,312.8L262.5,308L264.8,308.9L266.5,313.7L270.8,320.7L268.5,324.3L269.6,329L273.1,335.8L273.3,339.4L276.4,340.3L281.2,345.5L283.3,346.1L280.6,352.9L284.6,357.6L290.3,356.4L294.1,364.9L297.1,364.6L301.8,371.2L305.5,370.4L306.7,367.4L310.6,366.1L310.3,363L315,359.5L320.8,361.7L326.3,369.1L328.3,370.1L325.5,375L330.1,376.8L331.4,379L337.8,381.1L344.8,380.3L347.4,381.8L350.4,386.7L347.2,393.1L348.2,396.8L344.6,399.1L344.9,401.9L341.6,405.4L341.4,409.4L337.8,413.1L335.9,418.6L335.1,425.8L336.7,429.1L334.6,429.6Z","cx":213.3,"cy":354.2,"w":202,"h":127,"provincia":"Limarí"},"SALAMANCA":{"d":"M172.3,788.8L174.3,783L174.7,777L173.3,775L174,764.3L173,762.7L165.7,758L162.6,757.8L158.8,752.9L153,753.2L148.9,751.9L146.6,745.8L146,738.9L146.9,734.9L144.4,731L144.3,728.1L148,723.5L146.4,719.4L147.4,714L146.7,708.6L145.1,707.1L146.4,703.1L150.9,700.7L152.3,697.7L155.3,698L161.2,694.6L160.8,689.2L167.4,686.7L167.6,688.5L175.5,692.4L180.6,687.1L186.7,689.4L187.4,687.5L192.1,686.7L196.9,684.2L200.2,680.2L204.1,681.4L209.8,681.3L215.1,679.1L217.2,676.5L225.9,676.8L230.6,681.9L233.5,679.1L242.6,677.2L245.3,675.6L246.9,672.1L246.4,667.9L252,661L250.8,658.9L252.1,655.3L256.6,655.3L258.7,657.8L265,661.7L266,665.2L264.1,667.4L264.1,671.9L268.4,673.4L272,681.7L276.4,684.6L276.9,688.5L276.1,695.5L279.1,696.7L281.7,695.3L286.5,698.4L286.2,700.2L288.6,707L285.3,713.7L286.3,714.3L287.9,725.9L290,726.9L287.9,736L289.2,737.5L295.3,738.9L300.4,743.8L307.1,747.2L309.5,745.9L313.1,748.4L320.9,745.8L328.4,746.6L332,753.8L337.2,755.6L340.2,761.6L344.2,766.8L344.5,771.5L340.1,772.1L338.4,774.6L335,775.3L335.5,783.6L332.1,787.4L327.5,787.6L326.6,790.9L317.4,790.2L314,788.5L312.7,784.4L306.5,784L304.2,789.4L316,795.8L312.9,800.5L315.3,804.5L314.7,806.5L319.7,812.2L323,813.3L320.2,819.9L321.9,825.9L321.6,829.9L323.5,831.4L321.4,836.6L322.8,838.9L319,845.8L318.9,849.8L314.4,849.1L312.7,845.4L309.7,844.8L306.2,848.2L298,852.1L293,849L294.1,837.4L289.5,836.6L288.7,833.9L291.1,826.5L288.9,823L284.9,823.9L283.1,822.2L278.2,822.6L278,818.6L271.8,816.5L272.2,820.9L269.3,823.6L264.6,821.1L258,820.7L253.6,816.1L251.1,816.1L244.6,812.8L244.9,805.3L243.7,803.5L246.6,797.9L243.8,791.8L242,793.3L236.4,794.1L233.9,786L228,784.7L225.2,782.9L218.3,787.9L213.6,788.9L212,786.5L205.2,788.7L203.5,790.8L199.3,791L194.6,794L186.8,794.1L182.4,798.3L180.2,796.3L177.8,790.2Z","cx":215.6,"cy":732.3,"w":200,"h":197,"provincia":"Choapa"},"VICUÑA":{"d":"M284.7,88.8L286.5,89.5L288.2,94.4L299.3,98.7L303.1,98.6L305.7,92.4L309.2,91.3L322.8,92.3L326.3,96.6L334.3,103.4L340.7,111.9L341,115.4L346.1,119.6L346.1,123.7L347.9,129.6L353.3,131.4L356.3,130L359.8,132.7L368.2,130.8L371.1,133.8L374.4,132L386.4,129.7L387.1,128.1L393.8,123.6L401.8,124.7L403.2,128L400.9,133.7L405.7,141.6L406,150.4L404.4,153.5L404.3,162.3L406.2,167.6L408.3,168.6L408.6,172.2L411.4,176.1L414.9,174.8L417.6,178.7L416.5,182L418.2,185.1L414.3,189.9L415.1,193.7L411,200L410.7,204.1L413.7,205.1L413.6,213.6L418.7,218.2L414.4,222.7L416.3,224.5L414.7,226.6L416.2,229.2L412.7,232.8L412.1,238.3L414.5,237.5L413.9,243.4L411.6,248.1L409,250.3L407.6,254.7L410.5,260.6L402.4,270.7L399.7,271.7L398.9,276.1L403.5,278L403.5,283.1L406.9,285L412.4,281.4L420,282.9L425.4,287.7L432,287.1L434,293.8L429.6,296.3L432.1,300.4L428.1,310.8L420.9,308.8L417,310.5L416.5,318.1L418.3,320.8L417.1,324.7L414.7,324.5L414.9,328.7L413.1,330.5L411.9,336L412.7,342.6L414.4,346L409.3,344.9L405.6,347.3L401.3,354.1L392.4,352.3L390.3,354.9L385.7,356.9L380,354.9L377,356.4L368,349.1L367.9,346L362,342.9L358.2,342.4L356.5,344.2L350.6,334.8L347.8,333.5L346.5,330.1L348.2,329L345.9,323.1L343.5,321L345.5,315.9L341.6,311.8L340.9,306.5L334.5,304.1L330.9,304.2L329.6,300.2L331.2,296.2L329.2,292.5L326.2,290.2L324.2,283.9L319.8,283.3L321.6,277.7L320.9,274.7L322,269.7L326.1,264.4L322.2,260.7L317.6,261.6L315.3,258.3L314.2,252.6L314.5,246L311.2,245.4L309.9,249.4L307.2,249.8L301.6,246.8L299.2,249.8L295.6,249.8L293.8,245.8L288.2,244.8L284,250.4L280.9,250.8L272.9,247.6L270.5,248.2L266.7,253.3L266.5,257L264.5,258.7L264,263.9L265.4,269.3L268.7,275.2L264.5,283.1L264.9,290.1L267.7,295.5L267.7,301.5L261.9,304.3L262.5,308L262,312.8L260.2,315L255.9,314.1L249.5,310.9L245.5,311.5L241.9,310L236.6,314.6L228.8,319.1L220.8,316.8L217.5,315L213.9,317.9L210.3,316.2L206.6,320.1L198.7,317.1L192.1,316.2L188.9,314.5L187.3,311.3L183.3,310.8L182,315.8L168.4,318.6L165.1,318.5L162.7,320.7L161.4,312.1L158.7,308.6L163.2,304.2L162.3,301.1L157.6,295.3L152,293.5L150.3,288.8L155,287.3L158.4,279.2L158.6,274.8L160.7,271.4L161.5,265.9L165.2,262.1L163.4,258.1L167,253.5L167.1,248.4L165,245.3L167.9,242.7L168,240.2L171.6,233.3L167.6,225.9L172.1,222L170.2,218.3L174.5,214.8L181.2,212.9L185.1,213.3L189.3,210.8L191.6,201.9L197.6,196.1L197.2,194.3L200.9,192.4L201.5,184.7L205.7,183.7L206.9,181.1L213.3,178.8L216.6,175.2L228,174.4L232.1,174.9L237.6,173.6L239.6,172.2L246.1,175.5L250,173.9L254.8,176L257.7,181L260.8,176.3L262.7,175.5L261.8,168.9L259.1,165.6L262.4,162.2L261.2,157.7L262,154.2L266.3,151.9L267.1,146.1L269.4,143.2L266.8,140.7L268.2,136L271.9,130.1L270.7,128.3L273.6,123.8L273.2,119L270,116.1L273.2,113.4L272.4,108.5L269,104.8L268.6,99.5L272.6,95.3L273.9,89.9L279.4,87.9Z","cx":348.9,"cy":194,"w":284,"h":269,"provincia":"Elqui"}}};
+const VISITAS_SNAPSHOT = {"desde": "2026-03-01", "generado": "2026-10-06 01:43", "visitas": [{"fecha": "2026-03-05", "comuna": "OVALLE", "tipo": "reunion", "online": true}, {"fecha": "2026-03-20", "comuna": "SALAMANCA", "tipo": "reunion", "online": false}, {"fecha": "2026-03-25", "comuna": "VICUÑA", "tipo": "visita", "online": false}, {"fecha": "2026-03-27", "comuna": "ASOCIACIÓN", "tipo": "reunion", "online": false}, {"fecha": "2026-03-31", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-02", "comuna": "OVALLE", "tipo": "reunion", "online": false}, {"fecha": "2026-04-07", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-04-07", "comuna": "LA HIGUERA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-07", "comuna": "PAIHUANO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-04-07", "comuna": "PAIHUANO", "tipo": "reunion", "online": false}, {"fecha": "2026-04-08", "comuna": "OVALLE", "tipo": "reunion", "online": false}, {"fecha": "2026-04-08", "comuna": "PUNITAQUI", "tipo": "reunion", "online": false}, {"fecha": "2026-04-08", "comuna": "RÍO HURTADO", "tipo": "reunion", "online": false}, {"fecha": "2026-04-09", "comuna": "ILLAPEL", "tipo": "reunion", "online": false}, {"fecha": "2026-04-09", "comuna": "SALAMANCA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-13", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-14", "comuna": "ANDACOLLO", "tipo": "reunion", "online": false}, {"fecha": "2026-04-16", "comuna": "CANELA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-16", "comuna": "SALAMANCA", "tipo": "reunion", "online": true}, {"fecha": "2026-04-17", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-21", "comuna": "OVALLE", "tipo": "reunion", "online": true}, {"fecha": "2026-04-22", "comuna": "MONTE PATRIA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-22", "comuna": "OVALLE", "tipo": "reunion", "online": false}, {"fecha": "2026-04-23", "comuna": "LA SERENA", "tipo": "visita", "online": false}, {"fecha": "2026-04-24", "comuna": "ANDACOLLO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-04-24", "comuna": "PUNITAQUI", "tipo": "ceremonia", "online": false}, {"fecha": "2026-04-27", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-04-28", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-04-28", "comuna": "COQUIMBO", "tipo": "visita", "online": false}, {"fecha": "2026-04-29", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-04-30", "comuna": "VICUÑA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-05-04", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-05-05", "comuna": "COQUIMBO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-05-07", "comuna": "OVALLE", "tipo": "reunion", "online": false}, {"fecha": "2026-05-08", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-05-11", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-05-12", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-05-12", "comuna": "PUNITAQUI", "tipo": "reunion", "online": true}, {"fecha": "2026-05-13", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-05-14", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-05-15", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-05-16", "comuna": "PAIHUANO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-05-18", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-05-19", "comuna": "VICUÑA", "tipo": "reunion", "online": false}, {"fecha": "2026-05-20", "comuna": "CANELA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-05-20", "comuna": "COMBARBALÁ", "tipo": "reunion", "online": true}, {"fecha": "2026-05-20", "comuna": "LA SERENA", "tipo": "inauguracion", "online": false}, {"fecha": "2026-05-26", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-05-27", "comuna": "LA SERENA", "tipo": "visita", "online": false}, {"fecha": "2026-05-31", "comuna": "COQUIMBO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-06-01", "comuna": "COQUIMBO", "tipo": "reunion", "online": true}, {"fecha": "2026-06-02", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-06-03", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-06-04", "comuna": "OVALLE", "tipo": "reunion", "online": false}, {"fecha": "2026-06-05", "comuna": "LA HIGUERA", "tipo": "reunion", "online": false}, {"fecha": "2026-06-06", "comuna": "VICUÑA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-06-08", "comuna": "VICUÑA", "tipo": "reunion", "online": false}, {"fecha": "2026-06-09", "comuna": "PUNITAQUI", "tipo": "reunion", "online": false}, {"fecha": "2026-06-11", "comuna": "OVALLE", "tipo": "reunion", "online": true}, {"fecha": "2026-06-11", "comuna": "SALAMANCA", "tipo": "reunion", "online": false}, {"fecha": "2026-06-12", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-06-16", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-06-16", "comuna": "LOS VILOS", "tipo": "reunion", "online": false}, {"fecha": "2026-06-17", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-06-17", "comuna": "COQUIMBO", "tipo": "visita", "online": false}, {"fecha": "2026-06-18", "comuna": "LA HIGUERA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-06-18", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-06-24", "comuna": "ILLAPEL", "tipo": "reunion", "online": false}, {"fecha": "2026-06-26", "comuna": "LA HIGUERA", "tipo": "inauguracion", "online": false}, {"fecha": "2026-06-30", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-07-01", "comuna": "PAIHUANO", "tipo": "reunion", "online": false}, {"fecha": "2026-07-02", "comuna": "OVALLE", "tipo": "reunion", "online": false}, {"fecha": "2026-07-02", "comuna": "PAIHUANO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-07-06", "comuna": "LA HIGUERA", "tipo": "visita", "online": false}, {"fecha": "2026-07-07", "comuna": "LA SERENA", "tipo": "visita", "online": false}, {"fecha": "2026-07-09", "comuna": "OVALLE", "tipo": "visita", "online": false}, {"fecha": "2026-07-09", "comuna": "PUNITAQUI", "tipo": "visita", "online": false}, {"fecha": "2026-07-09", "comuna": "RÍO HURTADO", "tipo": "visita", "online": false}, {"fecha": "2026-07-10", "comuna": "VICUÑA", "tipo": "reunion", "online": true}, {"fecha": "2026-07-13", "comuna": "PUNITAQUI", "tipo": "reunion", "online": false}, {"fecha": "2026-07-14", "comuna": "LA SERENA", "tipo": "visita", "online": false}, {"fecha": "2026-07-28", "comuna": "COMBARBALÁ", "tipo": "reunion", "online": true}, {"fecha": "2026-07-28", "comuna": "COMBARBALÁ", "tipo": "visita", "online": false}, {"fecha": "2026-07-30", "comuna": "LA HIGUERA", "tipo": "visita", "online": false}, {"fecha": "2026-07-31", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-08-03", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-08-04", "comuna": "PAIHUANO", "tipo": "visita", "online": false}, {"fecha": "2026-08-04", "comuna": "VICUÑA", "tipo": "visita", "online": false}, {"fecha": "2026-08-05", "comuna": "MONTE PATRIA", "tipo": "visita", "online": false}, {"fecha": "2026-08-05", "comuna": "RÍO HURTADO", "tipo": "visita", "online": false}, {"fecha": "2026-08-06", "comuna": "LOS VILOS", "tipo": "visita", "online": false}, {"fecha": "2026-08-07", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-08-07", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-08-10", "comuna": "ANDACOLLO", "tipo": "reunion", "online": false}, {"fecha": "2026-08-13", "comuna": "OVALLE", "tipo": "reunion", "online": false}, {"fecha": "2026-08-14", "comuna": "CANELA", "tipo": "reunion", "online": false}, {"fecha": "2026-08-14", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-08-17", "comuna": "COMBARBALÁ", "tipo": "reunion", "online": true}, {"fecha": "2026-08-18", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-08-18", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-08-19", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-08-21", "comuna": "OVALLE", "tipo": "visita", "online": false}, {"fecha": "2026-08-22", "comuna": "OVALLE", "tipo": "ceremonia", "online": false}, {"fecha": "2026-08-24", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-08-25", "comuna": "PAIHUANO", "tipo": "reunion", "online": false}, {"fecha": "2026-08-26", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-08-26", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-08-26", "comuna": "LA SERENA", "tipo": "visita", "online": false}, {"fecha": "2026-08-27", "comuna": "LA HIGUERA", "tipo": "reunion", "online": false}, {"fecha": "2026-08-31", "comuna": "COQUIMBO", "tipo": "reunion", "online": true}, {"fecha": "2026-08-31", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-09-01", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-01", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-09-01", "comuna": "LA SERENA", "tipo": "reunion", "online": true}, {"fecha": "2026-09-03", "comuna": "COQUIMBO", "tipo": "visita", "online": false}, {"fecha": "2026-09-04", "comuna": "COQUIMBO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-08", "comuna": "LA SERENA", "tipo": "visita", "online": false}, {"fecha": "2026-09-09", "comuna": "CANELA", "tipo": "visita", "online": false}, {"fecha": "2026-09-09", "comuna": "COMBARBALÁ", "tipo": "visita", "online": false}, {"fecha": "2026-09-09", "comuna": "COQUIMBO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-10", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-09-10", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-11", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-09-14", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-09-14", "comuna": "PAIHUANO", "tipo": "reunion", "online": true}, {"fecha": "2026-09-14", "comuna": "RÍO HURTADO", "tipo": "reunion", "online": true}, {"fecha": "2026-09-15", "comuna": "MONTE PATRIA", "tipo": "reunion", "online": true}, {"fecha": "2026-09-15", "comuna": "OVALLE", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-16", "comuna": "COQUIMBO", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-17", "comuna": "COQUIMBO", "tipo": "inauguracion", "online": false}, {"fecha": "2026-09-17", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-18", "comuna": "VICUÑA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-24", "comuna": "OVALLE", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-25", "comuna": "COQUIMBO", "tipo": "inauguracion", "online": false}, {"fecha": "2026-09-27", "comuna": "VICUÑA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-29", "comuna": "LA SERENA", "tipo": "ceremonia", "online": false}, {"fecha": "2026-09-29", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-09-30", "comuna": "OVALLE", "tipo": "visita", "online": false}, {"fecha": "2026-10-02", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-10-05", "comuna": "LA SERENA", "tipo": "reunion", "online": false}, {"fecha": "2026-10-06", "comuna": "COQUIMBO", "tipo": "reunion", "online": false}, {"fecha": "2026-10-06", "comuna": "SALAMANCA", "tipo": "visita", "online": false}]};
+
+let VISITAS = VISITAS_SNAPSHOT;              // calendario (instantánea incluida; el archivo de Drive la reemplaza cuando exista)
+let VISITAS_MANUALES = { entradas: [] };     // registros manuales
+let despliegueSel = null;                    // comuna seleccionada (clic en el mapa o en la tabla)
+const despliegueFiltros = { tipos: new Set(Object.keys(TIPOS_VISITA)), modalidades: new Set(['presencial']) };
+
+async function leerJsonPublico(fileId) {
+  try {
+    if (fileId.startsWith('PEGA_AQUI')) return null;
+    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${DRIVE_API_KEY}&_ts=${Date.now()}`);
+    return r.ok ? await r.json() : null;
+  } catch (e) { return null; }
+}
+
+// ---------- Datos ----------
+function hoyISO() { const h = new Date(); return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}-${String(h.getDate()).padStart(2, '0')}`; }
+
+// Todas las entradas (calendario + manuales) dentro de la ventana de fechas; solo ya realizadas.
+function entradasDespliegue() {
+  const hoy = hoyISO();
+  const normComuna = c => (c === 'PAIGUANO' ? 'PAIHUANO' : c);   // el mapa escribe "PAIHUANO" y SUBDERE "PAIGUANO"
+  const todas = [...((VISITAS && VISITAS.visitas) || []).map(v => ({ ...v, origen: 'calendario' })),
+                 ...((VISITAS_MANUALES && VISITAS_MANUALES.entradas) || []).map(v => ({ ...v, origen: 'manual' }))];
+  return todas.map(v => ({ fecha: v.fecha, comuna: normComuna(v.comuna), tipo: v.tipo || 'reunion', online: !!v.online, origen: v.origen }))
+              .filter(v => v.fecha >= VISITAS_DESDE && v.fecha <= hoy);
+}
+const pasaFiltrosDespliegue = v => despliegueFiltros.tipos.has(v.tipo) && despliegueFiltros.modalidades.has(v.online ? 'online' : 'presencial');
+
+function datosDespliegue() {
+  const todas = entradasDespliegue();
+  const filtradas = todas.filter(pasaFiltrosDespliegue);
+  // Una visita por comuna y por día (aunque ese día haya varias reuniones/ceremonias)
+  const vistos = new Set();
+  const unicas = filtradas.filter(v => { const k = `${v.fecha}|${v.comuna}`; if (vistos.has(k)) return false; vistos.add(k); return true; });
+
+  const comunas = Object.keys(MAPA_COQUIMBO.comunas);
+  const porComuna = {};
+  comunas.forEach(c => porComuna[c] = { comuna: c, provincia: MAPA_COQUIMBO.comunas[c].provincia, n: 0, ultima: null, porMes: {} });
+  unicas.filter(v => v.comuna !== ASOCIACION_CLAVE && porComuna[v.comuna]).forEach(v => {
+    const c = porComuna[v.comuna]; c.n++;
+    if (!c.ultima || v.fecha > c.ultima) c.ultima = v.fecha;
+    const m = v.fecha.slice(0, 7); c.porMes[m] = (c.porMes[m] || 0) + 1;
+  });
+  const hoy = new Date();
+  const hoyDia = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+  const mesActual = hoyISO().slice(0, 7);
+  const meses = [];
+  for (let y = 2026, m = 3; `${y}-${String(m).padStart(2, '0')}` <= mesActual; m++) {
+    if (m > 12) { m = 1; y++; }
+    meses.push(`${y}-${String(m).padStart(2, '0')}`);
+    if (meses.length > 36) break;
+  }
+  const lista = Object.values(porComuna);
+  lista.forEach(c => { c.dias = c.ultima ? Math.max(0, Math.round((hoyDia - new Date(c.ultima + 'T00:00:00')) / 86400000)) : null; });
+  const total = lista.reduce((s, c) => s + c.n, 0);
+  const mesesTranscurridos = Math.max(1, (hoyDia - new Date(2026, 2, 1)) / 86400000 / 30.44);
+  const asociacion = unicas.filter(v => v.comuna === ASOCIACION_CLAVE);
+  return { lista, porComuna, meses, mesActual, total, max: Math.max(1, ...lista.map(c => c.n)),
+           promedioMensual: total / mesesTranscurridos, asociacion, todas, filtradas: filtradas.length };
+}
+
+const fmtFechaCorta = f => f ? f.split('-').reverse().join('-') : '—';
+const txtDias = n => n === 0 ? 'Hoy' : n === 1 ? '1 día' : `${n} días`;
+function colorMapa(n, max) {
+  if (!n) return { fondo: '#3b3029', texto: '#E3D6C4', halo: '#2F2620' };
+  const t = Math.min(1, n / max);
+  const a = [90, 70, 52], b = [242, 193, 78];
+  const rgb = a.map((v, i) => Math.round(v + (b[i] - v) * t));
+  return t > 0.55 ? { fondo: `rgb(${rgb})`, texto: '#2F2620', halo: 'rgba(245,240,232,0.55)' }
+                  : { fondo: `rgb(${rgb})`, texto: '#F5F0E8', halo: 'rgba(47,38,32,0.85)' };
+}
+
+function despliegueSeleccionar(comuna) { despliegueSel = despliegueSel === comuna ? null : comuna; renderDespliegue(); }
+function toggleFiltroDespliegue(grupo, valor) {
+  const set = despliegueFiltros[grupo];
+  if (set.has(valor)) set.delete(valor); else set.add(valor);
+  renderDespliegue();
+}
+
+// ---------- Dibujo ----------
+function renderFiltrosDespliegue(d) {
+  const cuenta = f => d.todas.filter(f).length;
+  document.getElementById('chips-tipo').innerHTML = Object.entries(TIPOS_VISITA).map(([k, nombre]) =>
+    `<span class="chip-filtro${despliegueFiltros.tipos.has(k) ? ' activo' : ''}" onclick="toggleFiltroDespliegue('tipos','${k}')">${nombre}<span class="n">${cuenta(v => v.tipo === k)}</span></span>`).join('');
+  document.getElementById('chips-modalidad').innerHTML = [['presencial', 'Presencial', v => !v.online], ['online', 'Online (reuniones por videollamada)', v => v.online]].map(([k, nombre, f]) =>
+    `<span class="chip-filtro${despliegueFiltros.modalidades.has(k) ? ' activo' : ''}" onclick="toggleFiltroDespliegue('modalidades','${k}')">${nombre}<span class="n">${cuenta(f)}</span></span>`).join('');
+  document.getElementById('despliegue-filtro-nota').textContent =
+    `Mostrando ${d.filtradas} de ${d.todas.length} registros (${d.total} visitas de comuna + ${d.asociacion.length} con la Asociación, contando una por comuna y día).`;
+}
+
+function renderDespliegue() {
+  const el = document.getElementById('despliegue-mapa');
+  if (!el) return;
+  const d = datosDespliegue();
+  renderFiltrosDespliegue(d);
+
+  document.getElementById('despliegue-cinta').innerHTML = (VISITAS && VISITAS.cinta) ? `<span class="cinta-ejemplo">${VISITAS.cinta}</span>` : '';
+  const gen = VISITAS && VISITAS.generado ? String(VISITAS.generado).slice(0, 10) : '';
+  document.getElementById('despliegue-actualizado').textContent = gen ? `Calendario actualizado al ${fmtFechaCorta(gen)}.` : '';
+
+  // ---- Indicadores ----
+  const visitadas = d.lista.filter(c => c.n > 0).length;
+  const sinVisita = d.lista.filter(c => c.n === 0).map(c => c.comuna);
+  const top = [...d.lista].sort((a, b) => b.n - a.n)[0];
+  document.getElementById('kpis-despliegue').innerHTML = `
+    <div class="kpi"><div class="value">${d.total.toLocaleString('es-CL')}</div><div class="label">Visitas desde marzo 2026</div></div>
+    <div class="kpi"><div class="value">${visitadas} de 15</div><div class="label">Comunas visitadas</div></div>
+    <div class="kpi kpi-monto"><div class="value">${top.n ? top.comuna : '—'}</div><div class="label">Más visitada${top.n ? ` · ${top.n} visitas` : ''}</div></div>
+    <div class="kpi" title="${sinVisita.join(', ')}"><div class="value" style="color:${sinVisita.length ? '#FF9C7A' : 'var(--accent)'}">${sinVisita.length}</div><div class="label">Comunas sin visitas${sinVisita.length ? `: ${sinVisita.join(', ')}` : ''}</div></div>
+    <div class="kpi"><div class="value">${d.promedioMensual.toLocaleString('es-CL', { maximumFractionDigits: 1 })}</div><div class="label">Visitas por mes (promedio)</div></div>
+  `;
+
+  // ---- Mapa (primero todas las comunas, después las etiquetas; las sin visitas / seleccionada quedan encima) ----
+  const trazos = [], trazosArriba = [], etiquetas = [];
+  Object.entries(MAPA_COQUIMBO.comunas).forEach(([nombre, g]) => {
+    const c = d.porComuna[nombre]; const col = colorMapa(c.n, d.max);
+    const clases = ['mapa-comuna', c.n === 0 ? 'cero' : '', despliegueSel === nombre ? 'sel' : ''].join(' ').trim();
+    const tip = `${nombre} — ${c.n} visita${c.n === 1 ? '' : 's'}${c.n ? ` (${(c.n / (d.total || 1) * 100).toFixed(1).replace('.', ',')}%) · última: ${fmtFechaCorta(c.ultima)}` : ' · sin visitas'}`;
+    (c.n === 0 || despliegueSel === nombre ? trazosArriba : trazos).push(`<path class="${clases}" d="${g.d}" style="fill:${col.fondo}" onclick="despliegueSeleccionar('${nombre}')"><title>${tip}</title></path>`);
+    const est = `fill:${col.texto};stroke:${col.halo};paint-order:stroke`;
+    const usable = g.w * 0.6, ancho = 4.3, palabras = nombre.split(' ');
+    let lineas = [nombre];
+    if (nombre.length * ancho > usable && palabras.length > 1) {
+      let mejor = null;
+      for (let i = 1; i < palabras.length; i++) {
+        const a = palabras.slice(0, i).join(' '), b = palabras.slice(i).join(' '), m = Math.max(a.length, b.length);
+        if (!mejor || m < mejor.m) mejor = { a, b, m };
+      }
+      lineas = [mejor.a, mejor.b];
+    }
+    const largo = Math.max(...lineas.map(l => l.length));
+    const fs = Math.max(5.2, Math.min(7.4, 7.4 * usable / (largo * ancho)));
+    const tspans = lineas.map((l, i) => `<tspan x="${g.cx}" dy="${i === 0 ? 0 : (fs + 0.8).toFixed(1)}">${l}</tspan>`).join('');
+    etiquetas.push(`<text class="mapa-num" x="${g.cx}" y="${g.cy + 2}" style="${est};stroke-width:2.6px">${c.n}</text>
+      <text class="mapa-nom" x="${g.cx}" y="${g.cy + 12}" style="${est};stroke-width:2px;font-size:${fs.toFixed(1)}px">${tspans}</text>`);
+  });
+  el.innerHTML = `<svg class="mapa-svg" viewBox="${MAPA_COQUIMBO.viewBox}" role="img" aria-label="Mapa de visitas por comuna">${trazos.join('')}${trazosArriba.join('')}${etiquetas.join('')}</svg>`;
+  document.getElementById('leyenda-max').textContent = d.max;
+
+  // ---- Gráfico de comportamiento mensual ----
+  const etqMeses = d.meses.map(m => MESES_CORTOS[+m.slice(5) - 1] + (m === d.mesActual ? '*' : ''));
+  let datasets, totalesMes;
+  const etiquetaDato = { anchor: 'center', align: 'center', color: '#2F2620', font: { size: 10, weight: '700' }, formatter: v => v > 0 ? v : '' };
+  if (despliegueSel) {
+    const serie = d.meses.map(m => (d.porComuna[despliegueSel] || { porMes: {} }).porMes[m] || 0);
+    totalesMes = serie;
+    datasets = [{ type: 'bar', label: despliegueSel, data: serie, backgroundColor: palette[0], borderRadius: 4, stack: 'v', yAxisID: 'y', datalabels: etiquetaDato }];
+  } else {
+    datasets = Object.keys(PROVINCIAS_COLOR).map(prov => ({
+      type: 'bar', label: prov, backgroundColor: PROVINCIAS_COLOR[prov], borderRadius: 3, stack: 'v', yAxisID: 'y',
+      data: d.meses.map(m => d.lista.filter(c => c.provincia === prov).reduce((s, c) => s + (c.porMes[m] || 0), 0)), datalabels: etiquetaDato,
+    }));
+    totalesMes = d.meses.map((m, i) => datasets.reduce((s, ds) => s + ds.data[i], 0));
+  }
+  let acum = 0;
+  const acumulado = totalesMes.map(v => acum += v);
+  datasets.push({ type: 'line', label: 'Acumulado', data: acumulado, yAxisID: 'y2', borderColor: '#F5F0E8', backgroundColor: '#F5F0E8',
+                  borderDash: [5, 4], borderWidth: 2, pointRadius: 3, tension: 0.25,
+                  datalabels: { align: 'top', anchor: 'end', color: '#F5F0E8', font: { size: 10, weight: '700' }, formatter: (v, ctx) => ctx.dataIndex === acumulado.length - 1 ? v : '' } });
+  document.getElementById('despliegue-chart-titulo').innerHTML = despliegueSel
+    ? `Comportamiento mensual — <b>${despliegueSel}</b> <button class="btn btn-ghost" style="padding:3px 12px;font-size:0.72rem;margin-left:8px" onclick="despliegueSeleccionar('${despliegueSel}')">✕ Ver todas</button>`
+    : 'Comportamiento mensual de visitas (por provincia) y acumulado';
+  makeChart('chartDespliegue', 'bar', etqMeses, datasets, {
+    layout: { padding: { top: 20 } },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, beginAtZero: true, grid: { color: '#4f3f33' }, title: { display: true, text: 'Visitas en el mes', color: '#BCAA95' }, ticks: { precision: 0 } },
+      y2: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'Acumulado', color: '#BCAA95' }, ticks: { precision: 0 } },
+    },
+    plugins: { legend: { display: true, position: 'bottom' } },
+  });
+
+  // ---- Asociación de Municipios Rurales ----
+  const aso = d.asociacion;
+  const asoPorMes = d.meses.map(m => aso.filter(v => v.fecha.slice(0, 7) === m).length);
+  const asoMax = Math.max(1, ...asoPorMes);
+  const asoUlt = aso.length ? aso.map(v => v.fecha).sort().slice(-1)[0] : null;
+  document.getElementById('panel-asociacion-cuerpo').innerHTML = `
+    <div style="display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap">
+      <div><div style="font-size:2.1rem;font-weight:700;color:var(--accent);line-height:1">${aso.length}</div><div style="font-size:0.78rem;color:var(--ink-dim);margin-top:4px">${aso.length === 1 ? 'reunión / visita' : 'reuniones / visitas'} desde marzo</div></div>
+      <div><div style="font-size:1.05rem;font-weight:700">${fmtFechaCorta(asoUlt)}</div><div style="font-size:0.78rem;color:var(--ink-dim);margin-top:4px">última</div></div>
+      <div style="flex:1;min-width:200px">
+        <div class="asoc-meses">${asoPorMes.map((n, i) => `<div style="height:${Math.max(4, n / asoMax * 100)}%" title="${etqMeses[i]}: ${n}"></div>`).join('')}</div>
+        <div class="asoc-etq">${etqMeses.map(e => `<span>${e}</span>`).join('')}</div>
+      </div>
+    </div>`;
+
+  // ---- Tabla por comuna ----
+  const filas = [...d.lista].sort((a, b) => b.n - a.n || a.comuna.localeCompare(b.comuna));
+  document.querySelector('#tbl-despliegue tbody').innerHTML = filas.map(c => {
+    const chip = c.n === 0 ? '<span class="chip-dias chip-alto">Sin visitas</span>'
+      : c.dias <= 30 ? `<span class="chip-dias chip-ok">${txtDias(c.dias)}</span>`
+      : c.dias <= 60 ? `<span class="chip-dias chip-medio">${txtDias(c.dias)}</span>`
+      : `<span class="chip-dias chip-alto">${txtDias(c.dias)}</span>`;
+    return `<tr class="fila-clic${despliegueSel === c.comuna ? ' fila-sel' : ''}" onclick="despliegueSeleccionar('${c.comuna}')">
+      <td>${c.comuna}</td><td>${c.provincia}</td>
+      <td class="num"><b>${c.n}</b><div class="barra-gr"><span style="width:${c.n / d.max * 100}%;background:${PROVINCIAS_COLOR[c.provincia]}"></span></div></td>
+      <td class="num">${d.total ? (c.n / d.total * 100).toFixed(1).replace('.', ',') + '%' : '—'}</td>
+      <td class="num">${fmtFechaCorta(c.ultima)}</td><td class="num">${chip}</td></tr>`;
+  }).join('');
+
+  renderIngresoManual();
+}
+
+// ========================================================================
+// Ingreso manual de visitas y reuniones (misma sesión de Google y mismos correos autorizados que "Datos adicionales")
+// ========================================================================
+function etiquetaComuna(c) { return c === ASOCIACION_CLAVE ? ASOCIACION_NOMBRE : c; }
+const manualesConfigurado = () => !VISITAS_MANUALES_FILE_ID.startsWith('PEGA_AQUI');
+
+// Las variables de sesión (oauthToken, usuarioActualEmail, googleTokenClient) se declaran más abajo en este archivo:
+// se leen dentro de try/catch para que esta sección pueda dibujarse al cargar la página sin romper el resto.
+function sesionActivaVisitas() { try { return !!(oauthToken && usuarioActualEmail); } catch (e) { return false; } }
+function iniciarSesionVisitas() {
+  let cliente = null;
+  try { cliente = googleTokenClient; } catch (e) { cliente = null; }
+  if (cliente) cliente.requestAccessToken();
+  else alert('El servicio de Google todavía está cargando. Intenta de nuevo en unos segundos.');
+}
+function alAutenticarVisitas() { renderIngresoManual(); cargarManualesParaEditar(); }
+function alRechazarVisitas(email) {
+  const login = document.getElementById('ingreso-login');
+  if (login) login.innerHTML = `<div class="aviso-ingreso"><b>Cuenta no autorizada</b><br>La cuenta <b>${email || 'desconocida'}</b> no tiene permiso para registrar visitas.
+    Si crees que deberías tener acceso, contacta a Carlos Pinto. <br><br><button class="btn btn-ghost" onclick="location.reload()">Intentar con otra cuenta</button></div>`;
+}
+
+let formularioVisitaListo = false;
+function renderIngresoManual() {
+  const login = document.getElementById('ingreso-login'), form = document.getElementById('ingreso-form');
+  if (!login || !form) return;
+  const autenticado = sesionActivaVisitas();
+  if (!autenticado) { form.style.display = 'none'; if (!login.querySelector('.aviso-ingreso')) login.style.display = 'block'; return; }
+  login.style.display = 'none'; form.style.display = 'block';
+  document.getElementById('ingreso-aviso-archivo').style.display = manualesConfigurado() ? 'none' : 'block';
+  if (!formularioVisitaListo) {
+    const comunas = Object.keys(MAPA_COQUIMBO.comunas).sort((a, b) => a.localeCompare(b, 'es'));
+    document.getElementById('v-comuna').innerHTML = '<option value="">Elegir…</option>' + comunas.map(c => `<option value="${c}">${c}</option>`).join('') + `<option value="${ASOCIACION_CLAVE}">${ASOCIACION_NOMBRE}</option>`;
+    document.getElementById('v-tipo').innerHTML = Object.entries(TIPO_UNO).map(([k, n]) => `<option value="${k}">${n}</option>`).join('');
+    document.getElementById('v-modalidad').innerHTML = '<option value="presencial">Presencial</option><option value="online">Online</option>';
+    const f = document.getElementById('v-fecha'); f.min = VISITAS_DESDE; f.max = hoyISO(); f.value = hoyISO();
+    formularioVisitaListo = true;
+  }
+  // Tabla de registros manuales (los más recientes primero)
+  const entradas = [...((VISITAS_MANUALES && VISITAS_MANUALES.entradas) || [])].sort((a, b) => (b.fecha + (b.ingresado_en || '')).localeCompare(a.fecha + (a.ingresado_en || '')));
+  const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  document.querySelector('#tbl-manuales tbody').innerHTML = entradas.length ? entradas.slice(0, 40).map(e => `<tr>
+      <td>${fmtFechaCorta(e.fecha)}</td><td>${esc(etiquetaComuna(e.comuna))}</td><td>${esc(TIPO_UNO[e.tipo] || e.tipo)}</td><td>${e.online ? 'Online' : 'Presencial'}</td>
+      <td>${esc(e.detalle) || '—'}</td><td style="font-size:0.74rem;color:var(--ink-dim)">${esc(e.ingresado_por)}</td>
+      <td><button class="btn-borrar" onclick="eliminarVisitaManual('${esc(e.id)}')">Eliminar</button></td></tr>`).join('')
+    : '<tr><td colspan="7" style="text-align:center;color:var(--ink-dim);padding:14px">Aún no hay registros manuales.</td></tr>';
+}
+
+function ajustarModalidadManual() {
+  // Solo una reunión puede ser online; visitas, ceremonias e inauguraciones son presenciales.
+  const tipo = document.getElementById('v-tipo').value, mod = document.getElementById('v-modalidad');
+  const soloReunion = tipo === 'reunion';
+  mod.querySelector('option[value="online"]').disabled = !soloReunion;
+  if (!soloReunion) mod.value = 'presencial';
+}
+function limpiarFormularioVisita() {
+  document.getElementById('v-fecha').value = hoyISO();
+  ['v-comuna', 'v-detalle'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('v-tipo').value = 'reunion'; document.getElementById('v-modalidad').value = 'presencial';
+  ajustarModalidadManual(); document.getElementById('v-estado').textContent = '';
+}
+const estadoManual = t => { const el = document.getElementById('v-estado'); if (el) el.textContent = t; };
+
+async function leerManualesDrive() {
+  const r = await driveFetch(`https://www.googleapis.com/drive/v3/files/${VISITAS_MANUALES_FILE_ID}?alt=media`);
+  const txt = await r.text();
+  let obj = {};
+  try { obj = txt ? JSON.parse(txt) : {}; } catch (e) { throw new Error('El archivo de registros manuales no tiene un formato válido.'); }
+  if (!Array.isArray(obj.entradas)) obj.entradas = [];
+  return obj;
+}
+async function escribirManualesDrive(obj) {
+  await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${VISITAS_MANUALES_FILE_ID}?uploadType=media`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(obj),
+  });
+}
+async function cargarManualesParaEditar() {
+  if (!manualesConfigurado()) return;
+  try { VISITAS_MANUALES = await leerManualesDrive(); renderDespliegue(); }
+  catch (e) { estadoManual('No se pudieron cargar los registros: ' + e.message); }
+}
+
+async function guardarVisitaManual() {
+  const fecha = document.getElementById('v-fecha').value, comuna = document.getElementById('v-comuna').value;
+  const tipo = document.getElementById('v-tipo').value, online = document.getElementById('v-modalidad').value === 'online';
+  const detalle = document.getElementById('v-detalle').value.trim().slice(0, 140);
+  if (!manualesConfigurado()) return estadoManual('Falta configurar el archivo de registros manuales.');
+  if (!fecha) return estadoManual('Indica la fecha.');
+  if (fecha < VISITAS_DESDE) return estadoManual('La fecha debe ser desde el 1 de marzo de 2026.');
+  if (fecha > hoyISO()) return estadoManual('Solo se registran actividades ya realizadas (la fecha no puede ser futura).');
+  if (!comuna) return estadoManual('Elige la comuna o institución.');
+  if (online && tipo !== 'reunion') return estadoManual('Solo una reunión puede ser online.');
+  const entrada = { id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), fecha, comuna, tipo, online, detalle,
+                    ingresado_por: (sesionActivaVisitas() && usuarioActualEmail) || 'desconocido', ingresado_en: new Date().toISOString() };
+  estadoManual('Guardando...');
+  try {
+    // Se vuelve a leer lo más reciente antes de escribir, para no pisar lo que otra persona haya registrado.
+    const actual = await leerManualesDrive();
+    actual.entradas.push(entrada);
+    await escribirManualesDrive(actual);
+    VISITAS_MANUALES = actual;
+    limpiarFormularioVisita();
+    estadoManual(`Guardado ✓ (${new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })})`);
+    renderDespliegue();
+  } catch (err) { estadoManual('Error al guardar: ' + err.message); }
+}
+
+async function eliminarVisitaManual(id) {
+  if (!confirm('¿Eliminar este registro manual?')) return;
+  estadoManual('Eliminando...');
+  try {
+    const actual = await leerManualesDrive();
+    actual.entradas = actual.entradas.filter(e => e.id !== id);
+    await escribirManualesDrive(actual);
+    VISITAS_MANUALES = actual;
+    estadoManual('Eliminado ✓'); renderDespliegue();
+  } catch (err) { estadoManual('Error al eliminar: ' + err.message); }
+}
+
+// Primero se dibuja con la instantánea del calendario; si ya están configurados los archivos de Drive, se reemplazan.
+renderDespliegue();
+leerJsonPublico(VISITAS_FILE_ID).then(v => { if (v && Array.isArray(v.visitas)) { VISITAS = v; renderDespliegue(); } });
+leerJsonPublico(VISITAS_MANUALES_FILE_ID).then(m => { if (m && Array.isArray(m.entradas)) { VISITAS_MANUALES = m; renderDespliegue(); } });
+
+
+// ========================================================================
 // DATOS ADICIONALES: login con Google + lectura/escritura en Drive
 // ========================================================================
 const OAUTH_CLIENT_ID = "263773563980-qri1cqlqnk4kirtqmv2en0nblmmlqm1u.apps.googleusercontent.com";
@@ -2026,6 +2518,7 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 let usuarioActualEmail = null;
+let googleTokenClient = null;   // el mismo inicio de sesión sirve para "Datos adicionales" y "Despliegue Territorial"
 
 function initGoogleSignIn() {
   if (!window.google || !google.accounts) { setTimeout(initGoogleSignIn, 300); return; }
@@ -2060,10 +2553,12 @@ function initGoogleSignIn() {
             <button class="btn btn-ghost" onclick="location.reload()">Intentar con otra cuenta</button>
           </div>`;
         oauthToken = null;
+        if (typeof alRechazarVisitas === 'function') alRechazarVisitas(email);
         return;
       }
 
       usuarioActualEmail = email;
+      if (typeof alAutenticarVisitas === 'function') alAutenticarVisitas();
       document.getElementById('signin-container').style.display = 'none';
       document.getElementById('extra-content').style.display = 'block';
       await cargarDatosExtraParaEditar();
@@ -2073,6 +2568,7 @@ function initGoogleSignIn() {
   btn.className = 'btn btn-primary';
   btn.textContent = 'Iniciar sesión con Google';
   btn.onclick = () => client.requestAccessToken();
+  googleTokenClient = client;
   document.getElementById('gsi-button').appendChild(btn);
 }
 initGoogleSignIn();
