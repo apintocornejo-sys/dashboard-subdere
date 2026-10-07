@@ -23,6 +23,12 @@ Uso (desde la carpeta del proyecto):
 Para otro evento o listado:
     python3 scripts/asignar_evento_listado.py "FET 2022" --lista mi_listado.txt
 
+Evento "Transferencia Gobierno Regional 2025 Arrastre" (atajo: tgr2025arrastre). Sus proyectos se indican por ID
+(scripts/listados/tgr2025_arrastre_ids.txt); los ID se aceptan en mayúsculas o minúsculas y con espacios de más:
+    python3 scripts/asignar_evento_listado.py tgr2025arrastre --simular
+    python3 scripts/asignar_evento_listado.py tgr2025arrastre
+    python3 scripts/asignar_evento_listado.py "Mi evento" --ids-archivo mis_ids.txt     # lista de ID en un archivo (uno por línea)
+
 Para uno o pocos proyectos, escribiendo el nombre directo (entre comillas):
     python3 scripts/asignar_evento_listado.py ficha --nombre "CATÁSTROFE - HABILITACIÓN ... COMUNA DE PUNITAQUI"
     (se puede repetir --nombre para varios proyectos)
@@ -65,13 +71,29 @@ EVENTOS_VALIDOS = [
     "FET 2021", "FET 2022", "FRC", "Transferencia Gobierno Regional 2024",
     "Transferencia Gobierno Regional 2025", "Transferencia Gobierno Regional 2026",
     "Transferencia Gobierno Regional 2026 AT", "SATE 2023", "SPD",
-    "Ficha Simplificada SUBDERE Catastrofe 2026",
+    "Ficha Simplificada SUBDERE Catastrofe 2026", "Transferencia Gobierno Regional 2025 Arrastre",
 ]
+INDEX_HTML = BASE_DIR / "docs" / "index.html"
+
+
+def eventos_del_dashboard() -> list:
+    """Eventos del desplegable de 'Datos adicionales', leídos de docs/index.html (basta con agregar el evento allí)."""
+    try:
+        bloque = re.search(r"const EVENTOS = \[(.*?)\];", INDEX_HTML.read_text(encoding="utf-8"), re.S).group(1)
+        return [e.replace('\\"', '"') for e in re.findall(r'"((?:[^"\\]|\\.)*)"', bloque)]
+    except Exception:
+        return []
+
+
+EVENTOS_VALIDOS = list(dict.fromkeys(EVENTOS_VALIDOS + eventos_del_dashboard()))
 # Atajos para no escribir el nombre completo
 ALIAS = {
     "ficha": "Ficha Simplificada SUBDERE Catastrofe 2026",
     "tgr2026": "Transferencia Gobierno Regional 2026",
+    "tgr2025arrastre": "Transferencia Gobierno Regional 2025 Arrastre",
 }
+# Eventos cuyos proyectos se indican por ID (archivo en scripts/listados/)
+LISTADOS_IDS = {"tgr2025arrastre": "tgr2025_arrastre_ids.txt"}
 
 COMUNAS = ["LA SERENA", "COQUIMBO", "ANDACOLLO", "LA HIGUERA", "PAIGUANO", "VICUNA", "OVALLE",
            "COMBARBALA", "MONTE PATRIA", "PUNITAQUI", "RIO HURTADO", "ILLAPEL", "CANELA",
@@ -86,6 +108,11 @@ def normalizar(texto: str) -> str:
     nfkd = unicodedata.normalize("NFKD", str(texto or ""))
     sin_tildes = "".join(c for c in nfkd if not unicodedata.combining(c))
     return re.sub(r"[^a-z0-9]+", " ", sin_tildes.lower()).strip()
+
+
+def normalizar_id(i) -> str:
+    """'1-c-2023- 3232' -> '1-C-2023-3232': mayúsculas y sin espacios, para comparar ID escritos a mano."""
+    return re.sub(r"\s+", "", str(i or "")).upper()
 
 
 def anio_del_evento(evento: str):
@@ -367,7 +394,17 @@ def main(argv=None):
     ap.add_argument("--buscar", nargs="+", metavar="PALABRA",
                     help="busca proyectos por palabras clave y los muestra (no cambia nada)")
     ap.add_argument("--ids", nargs="+", metavar="ID", help="asigna el evento a estos proyectos, por su ID")
+    ap.add_argument("--ids-archivo", metavar="ARCHIVO", help="archivo de texto con ID de proyecto (uno por línea)")
     args = ap.parse_args(argv)
+    if args.ids_archivo:
+        if not Path(args.ids_archivo).exists():
+            raise SystemExit(f"No encuentro el archivo de ID: {args.ids_archivo}")
+        args.ids = (args.ids or []) + leer_listado(args.ids_archivo)
+    if not args.ids and not args.nombre and not args.buscar and not args.lista and args.evento.lower() in LISTADOS_IDS:
+        archivo = LISTADOS_DIR / LISTADOS_IDS[args.evento.lower()]
+        if not archivo.exists():
+            raise SystemExit(f"No encuentro el listado de ID: {archivo}")
+        args.ids = leer_listado(archivo)
 
     evento = resolver_evento(args.evento)
     nombres, ruta_lista = [], None
@@ -410,13 +447,34 @@ def main(argv=None):
     # ---- Modo por ID: el listado son los proyectos indicados ----
     if args.ids:
         por_id = {p["id_proyecto"]: p for p in proyectos if p.get("id_proyecto")}
-        faltan = [i for i in args.ids if i not in por_id]
+        por_norm = {normalizar_id(k): k for k in por_id}
+        encontrados, faltan, corregidos = {}, [], []
+        for i in args.ids:
+            real = por_norm.get(normalizar_id(i))
+            if real:
+                encontrados[real] = i
+                if real != i.strip():
+                    corregidos.append((i, real))
+            else:
+                faltan.append(i)
+        if corregidos:
+            print("\nID escritos con otro formato (se interpretaron así):")
+            for escrito, real in corregidos:
+                print(f"  - '{escrito}'  ->  {real}")
         if faltan:
-            raise SystemExit("No encuentro estos ID en el listado de proyectos: " + ", ".join(faltan))
-        res = {"exactos": [{"nombre": i, "proyecto": por_id[i], "parecido": 1.0} for i in dict.fromkeys(args.ids)],
+            print(f"\n⚠ {len(faltan)} ID del listado NO están en el dashboard (no se tocarán):")
+            for i in faltan:
+                sug = get_close_matches(normalizar_id(i), list(por_norm), n=3, cutoff=0.8)
+                print(f"  - {i}" + (f"     ¿será {' / '.join(por_norm[x] for x in sug)}?" if sug else ""))
+            if not encontrados:
+                raise SystemExit("Ninguno de los ID está en el dashboard.")
+            if not args.simular and not preguntar(f"¿Continuar solo con los {len(encontrados)} ID encontrados?"):
+                print("Cancelado. No se hicieron cambios.")
+                return
+        res = {"exactos": [{"nombre": i, "proyecto": por_id[i], "parecido": 1.0} for i in encontrados],
                "aproximados": [], "sin_coincidencia": [], "ambiguos": []}
-        nombres = list(args.ids)
-        print(f"Proyectos indicados por ID: {len(nombres)}")
+        nombres = list(encontrados)
+        print(f"Proyectos indicados por ID: {len(nombres)} de {len(dict.fromkeys(args.ids))}")
     else:
         print(f"Listado: {len(nombres)} proyecto(s) ({ruta_lista.name}).")
         res = buscar(nombres, proyectos, anio_del_evento(evento))
