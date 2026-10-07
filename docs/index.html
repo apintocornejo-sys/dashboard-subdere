@@ -224,6 +224,50 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 #tbl-rf tr.rf-porvencer td:first-child { box-shadow:inset 3px 0 0 #D9A441; }
 .rf-mini td, .rf-mini th { font-size:0.78rem; }
 
+.rf-botones { display:flex; justify-content:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+/* ---------- Modo Reunión de Rendiciones ---------- */
+#rf-reunion { display:none; }
+body.modo-reunion-rend #rf-reunion { display:block; }
+body.modo-reunion-rend .sidebar, body.modo-reunion-rend .filters, body.modo-reunion-rend header { display:none !important; }
+body.modo-reunion-rend .main-content { width:100%; }
+body.modo-reunion-rend #view-rendiciones > :not(#rf-reunion) { display:none !important; }
+body.modo-reunion-rend #view-rendiciones { padding:62px 2vw 22px; max-width:none; margin:0 auto; }
+#btn-salir-rend { display:none; position:fixed; top:14px; right:16px; z-index:200; background:#C8643C; color:#fff; border:none; border-radius:8px; padding:12px 20px; font-size:1rem; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,0.45); }
+.rf-reu-grid { display:grid; grid-template-columns:repeat(12, 1fr); gap:16px; align-items:start; }
+.rf-reu-card { background:var(--panel); border:1px solid var(--border); border-radius:18px; padding:16px 20px; min-width:0; }
+.rf-reu-h { font-size:1.15rem; font-weight:700; color:var(--ink); margin-bottom:10px; }
+.rf-reu-total { grid-column:span 2; text-align:center; display:flex; flex-direction:column; justify-content:center; min-height:200px; }
+.rf-reu-titulo { font-size:1.4rem; font-weight:700; font-style:italic; color:#9E94E0; }
+.rf-reu-num { font-size:6.2rem; font-weight:700; line-height:1.05; color:#DAD5F7; }
+.rf-reu-comunas { grid-column:span 7; }
+.rf-reu-filtros { grid-column:span 3; }
+.rf-reu-filtros label { display:block; font-size:1.05rem; color:var(--ink-dim); margin:4px 0; }
+.rf-reu-filtros select { width:100%; font-size:1.2rem; padding:10px 12px; margin-bottom:14px; }
+.rf-reu-nota { font-size:0.9rem; color:var(--ink-dim); margin-top:6px; } .rf-reu-nota a { color:#B9B1F2; cursor:pointer; text-decoration:underline; margin-left:6px; }
+.rf-reu-estado { grid-column:span 12; }
+.rf-reu-col { display:flex; flex-direction:column; gap:16px; min-width:0; }
+.rf-reu-izq { grid-column:span 4; } .rf-reu-porrendir { grid-column:span 4; } .rf-reu-der { grid-column:span 4; }
+.rf-chart-box { position:relative; width:100%; }
+.rf-chart-box canvas { height:100% !important; }   /* vence a la regla global "canvas { height:300px !important }" */
+.rf-reu-nd { display:none; color:var(--ink-dim); font-size:1.05rem; padding:26px 8px; text-align:center; }
+.rf-reu-tabla { width:100%; border-collapse:collapse; font-size:1.05rem; table-layout:auto; }
+.rf-reu-tabla th { font-size:0.95rem; color:var(--ink-dim); text-align:left; padding:6px 8px; }
+.rf-reu-tabla td { padding:8px 9px; border-bottom:1px solid var(--border); overflow-wrap:anywhere; }
+.rf-reu-tabla td.num { white-space:nowrap; }
+.rf-reu-tabla td.num, .rf-reu-tabla th.num { text-align:right; font-variant-numeric:tabular-nums; }
+.rf-reu-tabla tfoot td { font-weight:700; border-bottom:none; border-top:2px solid var(--border); }
+@media (max-width:1100px) {
+  .rf-reu-total, .rf-reu-comunas, .rf-reu-filtros, .rf-reu-izq, .rf-reu-porrendir, .rf-reu-der { grid-column:span 12; }
+  .rf-reu-num { font-size:4rem; }
+  #btn-salir-rend { top:auto; bottom:16px; padding:10px 16px; font-size:0.85rem; }
+}
+
+.rf-ambar { color:#F2C14E; font-weight:600; }
+.rf-check { display:flex !important; align-items:center; gap:8px; font-size:0.84rem !important; text-transform:none !important; letter-spacing:0 !important; color:var(--ink) !important; padding:8px 4px; cursor:pointer; margin:0 !important; }
+.rf-alerta-caja.verde { background:#26301f; border:1px solid #8FA37E; } .rf-alerta-caja.verde .cifra { color:#B5CC9F; }
+.rf-reu-check { margin:-4px 0 12px; } .rf-reu-check label { display:flex !important; align-items:center; gap:10px; font-size:1.05rem; color:var(--ink) !important; cursor:pointer; }
+.rf-reu-check input { width:22px; height:22px; }
+
 
 .panel-contraste h2 { color:#F7D9C9; }
 .profesional-revision-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:8px; }
@@ -661,6 +705,28 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
             </select>
           </div>
           <div class="form-field">
+            <label>Estado Real</label>
+            <select id="f-estado-real">
+              <option value="">Seleccione...</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>% de avance físico</label>
+            <input type="number" id="f-avance-fisico" min="0" max="100" step="0.1" placeholder="0 a 100">
+          </div>
+          <div class="form-field">
+            <label>Fecha vencimiento boleta de garantía</label>
+            <input type="date" id="f-venc-garantia">
+          </div>
+          <div class="form-field">
+            <label>¿Contrato en plataforma?</label>
+            <select id="f-contrato-plat">
+              <option value="">Seleccione...</option>
+              <option value="SI">Sí</option>
+              <option value="NO">No</option>
+            </select>
+          </div>
+          <div class="form-field">
             <label>N° de revisiones</label>
             <input type="number" id="f-revisiones" min="0" step="1">
           </div>
@@ -918,6 +984,25 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
     </div>
 
     <div id="rf-contenido">
+      <div class="rf-botones">
+        <button class="btn btn-primary" onclick="rfDescargarPDF()" style="display:inline-flex;align-items:center;gap:8px">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#2F2620" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M14 2v6h6" stroke="#2F2620" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M8 13h8M8 17h5" stroke="#2F2620" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          Descargar informe PDF
+        </button>
+        <button class="btn btn-primary" onclick="rfDescargarXLS()" style="display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg, #617548, #4A5C33);color:#F5F0E8">
+          <svg width="21" height="21" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M14 2v6h6" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/>
+            <path d="M9 13l2.2 4L13.5 13M9 17l2.2-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Informe XLS
+        </button>
+        <button class="btn btn-modo-reunion" id="btn-modo-reunion-rend" onclick="rfToggleReunion()">🖥️ Modo Reunión</button>
+      </div>
       <div class="panel wide rf-filtros">
         <div class="rf-filtros-grid" id="rf-filtros-grid"></div>
         <div class="rf-filtros-pie">
@@ -930,19 +1015,21 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
       <div class="panel wide" id="rf-alertas"></div>
 
+      <div class="panel wide" id="rf-garantias"></div>
+
       <div class="panel wide rf-metrica-barra">
         <span class="filtro-titulo">Graficar</span>
         <div class="chips" id="rf-chips-metrica"></div>
       </div>
 
       <div class="grid">
-        <div class="panel"><h2 id="rf-t-programa">Por programa</h2><canvas id="chartRfPrograma" style="height:340px !important"></canvas></div>
-        <div class="panel"><h2 id="rf-t-provincia">Por provincia</h2><canvas id="chartRfProvincia" style="height:340px !important"></canvas></div>
-        <div class="panel"><h2 id="rf-t-comuna">Por comuna</h2><canvas id="chartRfComuna" style="height:420px !important"></canvas></div>
+        <div class="panel"><h2 id="rf-t-programa">Por programa</h2><div class="rf-chart-box" style="height:380px"><canvas id="chartRfPrograma"></canvas></div></div>
+        <div class="panel"><h2 id="rf-t-provincia">Por provincia</h2><div class="rf-chart-box" style="height:380px"><canvas id="chartRfProvincia"></canvas></div></div>
+        <div class="panel"><h2 id="rf-t-comuna">Por comuna</h2><div class="rf-chart-box" style="height:460px"><canvas id="chartRfComuna"></canvas></div></div>
         <div class="panel">
           <h2 id="rf-t-anio">Evolución por año</h2>
           <div class="chips" id="rf-chips-anio" style="margin-bottom:8px"></div>
-          <canvas id="chartRfAnio" style="height:340px !important"></canvas>
+          <div class="rf-chart-box" style="height:380px"><canvas id="chartRfAnio"></canvas></div>
         </div>
       </div>
 
@@ -963,6 +1050,32 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
           Saldo Contable = Monto Asignado − Monto Contratado · Saldo por Transferir = Monto Contratado − Total Transferido ·
           rojo = saldo negativo · borde rojo = plazo vencido con saldo por rendir · borde ocre = vence en 30 días ·
           (est.) = fecha de término estimada con el plazo de ejecución.
+        </div>
+      </div>
+    </div>
+
+    <div id="rf-reunion">
+      <button id="btn-salir-rend" onclick="rfToggleReunion()">✕ Salir del Modo Reunión</button>
+      <div class="rf-reu-grid">
+        <div class="rf-reu-card rf-reu-total"><div class="rf-reu-titulo">Total de Proyectos</div><div class="rf-reu-num" id="rf-reu-total">0</div></div>
+        <div class="rf-reu-card rf-reu-comunas"><div class="rf-reu-h">Proyectos por comuna</div><div class="rf-chart-box" style="height:310px"><canvas id="chartRfReuComuna"></canvas></div></div>
+        <div class="rf-reu-card rf-reu-filtros">
+          <label id="rf-reu-lbl-anio">Año de Aprobación</label><select id="rf-reu-anio" onchange="rfReuFiltro('anio', this.value)"></select>
+          <label>Comuna</label><select id="rf-reu-comuna" onchange="rfReuFiltro('comuna', this.value)"></select>
+          <div id="rf-reu-soloseg-wrap" class="rf-reu-check" style="display:none"><label><input type="checkbox" id="rf-reu-soloseg" onchange="rfSoloSeg(this.checked)"> Solo proyectos con seguimiento URS</label></div>
+          <div id="rf-reu-nota" class="rf-reu-nota"></div>
+        </div>
+        <div class="rf-reu-card rf-reu-estado"><div class="rf-reu-h" id="rf-reu-t-estado">Estado Real</div><div class="rf-chart-box" style="height:430px"><canvas id="chartRfReuEstado"></canvas></div></div>
+        <div class="rf-reu-col rf-reu-izq">
+          <div class="rf-reu-card"><div class="rf-reu-h">Proyectos por Provincia</div><div id="rf-reu-tab-prov"></div></div>
+          <div class="rf-reu-card"><div class="rf-reu-h">Proyectos por Programa</div><div id="rf-reu-tab-prog"></div></div>
+        </div>
+        <div class="rf-reu-card rf-reu-porrendir"><div class="rf-reu-h" id="rf-reu-t-porrendir">Por Rendir por comuna</div><div class="rf-reu-nd" id="rf-reu-nd-PorRendir"></div><div class="rf-chart-box"><canvas id="chartRfReuPorRendir"></canvas></div></div>
+        <div class="rf-reu-col rf-reu-der">
+          <div class="rf-reu-card"><div class="rf-reu-h">Plazo de ejecución</div><div class="rf-reu-nd" id="rf-reu-nd-Plazo"></div><div class="rf-chart-box"><canvas id="chartRfReuPlazo"></canvas></div><div class="rf-reu-nota" id="rf-reu-nota-plazo"></div></div>
+          <div class="rf-reu-card"><div class="rf-reu-h">Boletas de garantía</div><div class="rf-reu-nd" id="rf-reu-nd-Garantia"></div><div class="rf-chart-box"><canvas id="chartRfReuGarantia"></canvas></div></div>
+          <div class="rf-reu-card"><div class="rf-reu-h">¿Con contrato en plataforma?</div><div class="rf-reu-nd" id="rf-reu-nd-Contrato"></div><div class="rf-chart-box" style="height:300px"><canvas id="chartRfReuContrato"></canvas></div><div class="rf-reu-nota" id="rf-reu-nota-contrato"></div></div>
+          <div class="rf-reu-card"><div class="rf-reu-h">Proyectos clasificados según evento</div><div class="rf-reu-nd" id="rf-reu-nd-Evento"></div><div class="rf-chart-box"><canvas id="chartRfReuEvento"></canvas></div></div>
         </div>
       </div>
     </div>
@@ -1092,6 +1205,7 @@ Promise.all([
     document.getElementById('app').style.display = 'block';
     refreshFilterOptions();
     renderAll();
+    rfRefrescarExtra();
   })
   .catch(err => {
     document.getElementById('loading').className = 'error';
@@ -2576,9 +2690,9 @@ let RF_CARGADO = false;   // false mientras se leen los datos (evita mostrar "si
 const RF_PAG = 40;
 const RF = {
   filtros: { provincia: new Set(), comuna: new Set(), programa: new Set(), subprograma: new Set(), anioAprob: new Set(), anioPost: new Set(),
-             asigDesde: '', asigHasta: '', terDesde: '', terHasta: '' },
+             asigDesde: '', asigHasta: '', terDesde: '', terHasta: '', vencDesde: '', vencHasta: '', soloSeg: false },
   metrica: 'saldo_por_rendir', anioDe: 'aprobacion', busqueda: '', alerta: null,
-  orden: { k: 'saldo_por_rendir', dir: -1 }, pagina: 0, abierto: null, busquedaMs: {}, verMas: false, _ops: {},
+  orden: { k: 'saldo_por_rendir', dir: -1 }, pagina: 0, abierto: null, busquedaMs: {}, verMas: false, _ops: {}, reunion: false,
 };
 const RF_METRICAS = [['monto_asignado', 'Monto Asignado'], ['monto_contratado', 'Monto Contratado'], ['monto_vigente', 'Monto Vigente'],
                      ['saldo_contable', 'Saldo Contable'], ['saldo_por_transferir', 'Saldo por Transferir'], ['saldo_por_rendir', 'Saldo por Rendir']];
@@ -2589,6 +2703,9 @@ const RF_COLS = [
   { k: 'monto_asignado', t: 'Monto Asignado', num: true }, { k: 'monto_contratado', t: 'Monto Contratado', num: true }, { k: 'monto_vigente', t: 'Monto Vigente', num: true },
   { k: 'saldo_contable', t: 'Saldo Contable', num: true }, { k: 'saldo_por_transferir', t: 'Saldo por Transferir', num: true }, { k: 'saldo_por_rendir', t: 'Saldo por Rendir', num: true },
   { k: 'plazo_ejecucion', t: 'Plazo de ejecución', num: true, plazo: true },
+  // Datos del seguimiento URS (se cargan y editan en "Datos adicionales")
+  { k: 'estado_seg', t: 'Estado Real' }, { k: 'avance_fisico', t: '% Avance', num: true, pct: true },
+  { k: 'por_rendir_ejec', t: 'Por Rendir (% ejec.)', num: true }, { k: 'venc_garantia', t: 'Venc. Boleta Garantía', fecha: true },
 ];
 const RF_MS = [
   { id: 'provincia', t: 'Provincia', campo: 'provincia' }, { id: 'comuna', t: 'Comuna', campo: 'comuna' },
@@ -2618,6 +2735,10 @@ function rfDisp() {
     fecha_asignacion: t('fecha_asignacion'),
     fecha_termino: t('fecha_termino') || t('fecha_inicio') || t('fecha_asignacion'),
     anio_aprobacion: t('fecha_asignacion'),
+    // Datos que vienen de "Datos adicionales" (no del informe): existen si al menos un proyecto los tiene
+    garantia: ((RENDICIONES && RENDICIONES.proyectos) || []).some(p => p.venc_garantia),
+    seguimiento: ((RENDICIONES && RENDICIONES.proyectos) || []).some(p => p.estado_seg),
+    avance: ((RENDICIONES && RENDICIONES.proyectos) || []).some(p => p.avance_fisico !== undefined),
   };
 }
 
@@ -2635,7 +2756,8 @@ function rfFiltrados() {
   return ((RENDICIONES && RENDICIONES.proyectos) || []).filter(p =>
     enSet(F.provincia, p.provincia) && enSet(F.comuna, p.comuna) && enSet(F.programa, p.programa) && enSet(F.subprograma, p.subprograma) &&
     enSet(F.anioAprob, p.anio_aprobacion) && enSet(F.anioPost, p.anio_postulacion) &&
-    enRango(p.fecha_asignacion, F.asigDesde, F.asigHasta) && enRango(p.fecha_termino, F.terDesde, F.terHasta));
+    enRango(p.fecha_asignacion, F.asigDesde, F.asigHasta) && enRango(p.fecha_termino, F.terDesde, F.terHasta) &&
+    enRango(p.venc_garantia, F.vencDesde, F.vencHasta) && (!F.soloSeg || !!p.estado_seg));
 }
 
 // ---------- Filtros ----------
@@ -2669,7 +2791,9 @@ function rfRenderFiltros(disp) {
   const fechas = (titulo, k, ok) => `<div class="rf-campo doble"><label>${titulo}</label><div class="rf-fechas"${ok ? '' : ' title="El informe no trae esta fecha"'}>
       <input type="date" value="${RF.filtros[k + 'Desde']}" onchange="rfFechaFiltro('${k}Desde', this.value)"${ok ? '' : ' disabled'} aria-label="${titulo} desde">
       <input type="date" value="${RF.filtros[k + 'Hasta']}" onchange="rfFechaFiltro('${k}Hasta', this.value)"${ok ? '' : ' disabled'} aria-label="${titulo} hasta"></div></div>`;
-  document.getElementById('rf-filtros-grid').innerHTML = campos + fechas('Fecha Asignación (desde / hasta)', 'asig', disp.fecha_asignacion) + fechas('Fecha de Término (desde / hasta)', 'ter', disp.fecha_termino);
+  const seg = `<div class="rf-campo"><label>Seguimiento URS</label><label class="rf-check"${disp.seguimiento ? '' : ' title="Aún no hay Estado Real cargado en Datos adicionales"'}><input type="checkbox"${RF.filtros.soloSeg ? ' checked' : ''}${disp.seguimiento ? '' : ' disabled'} onchange="rfSoloSeg(this.checked)"> Solo proyectos con Estado Real</label></div>`;
+  document.getElementById('rf-filtros-grid').innerHTML = campos + fechas('Fecha Asignación (desde / hasta)', 'asig', disp.fecha_asignacion) + fechas('Fecha de Término (desde / hasta)', 'ter', disp.fecha_termino) +
+    fechas('Fecha Vencimiento Boleta de Garantía (desde / hasta)', 'venc', disp.garantia) + seg;
 }
 function rfMsAbrir(id, ev) {
   ev.stopPropagation(); RF.abierto = RF.abierto === id ? null : id;
@@ -2688,7 +2812,8 @@ function rfMsBuscar(id, texto) {
 function rfFechaFiltro(campo, valor) { RF.filtros[campo] = valor; RF.pagina = 0; renderRendiciones(); }
 function rfLimpiarFiltros() {
   Object.values(RF.filtros).forEach((v, i) => { if (v instanceof Set) v.clear(); });
-  ['asigDesde', 'asigHasta', 'terDesde', 'terHasta'].forEach(k => RF.filtros[k] = '');
+  ['asigDesde', 'asigHasta', 'terDesde', 'terHasta', 'vencDesde', 'vencHasta'].forEach(k => RF.filtros[k] = '');
+  RF.filtros.soloSeg = false;
   RF.busqueda = ''; RF.alerta = null; RF.busquedaMs = {}; RF.pagina = 0;
   const b = document.getElementById('rf-buscador'); if (b) b.value = '';
   renderRendiciones();
@@ -2715,7 +2840,8 @@ function rfRenderKpis(f, disp) {
     kpi('Monto Vigente', 'monto_vigente', '') +
     kpi('Saldo Contable', 'saldo_contable', 'Asignado − Contratado') +
     kpi('Saldo por Transferir', 'saldo_por_transferir', 'Contratado − Transferido') +
-    kpi('Saldo por Rendir', 'saldo_por_rendir', disp.saldo_por_rendir ? `${conSaldo.toLocaleString('es-CL')} proyectos con saldo` : '');
+    kpi('Saldo por Rendir', 'saldo_por_rendir', disp.saldo_por_rendir ? `${conSaldo.toLocaleString('es-CL')} proyectos con saldo` : '') +
+    (disp.avance ? `<div class="kpi kpi-monto"><div class="value">${fmtCLPn(suma('por_rendir_ejec'))}</div><div class="label">Por Rendir conforme a % de ejecución</div><div class="sub">${f.filter(p => p.avance_fisico !== undefined).length.toLocaleString('es-CL')} proyectos con % de avance</div></div>` : '');
 }
 
 // ---------- Alerta de plazos ----------
@@ -2759,21 +2885,53 @@ function rfRenderMetricas(disp) {
   document.getElementById('rf-chips-metrica').innerHTML = RF_METRICAS.map(([k, t]) =>
     `<span class="chip-filtro rf-chip${RF.metrica === k ? ' activo' : ''}${disp[k] ? '' : ' deshabilitado'}"${disp[k] ? ` onclick="RF.metrica='${k}'; renderRendiciones()"` : ' title="El informe no trae esta columna"'}>${t}</span>`).join('');
 }
-function rfBarras(id, etiquetas, valores, opts) {   // opts: {horizontal, filtro, extra}
-  const color = RF_COLOR[RF.metrica];
-  const canvas = document.getElementById(id);
-  if (opts.horizontal) canvas.style.setProperty('height', Math.max(240, etiquetas.length * 30 + 70) + 'px', 'important');
-  makeChart(id, 'bar', etiquetas, [{ label: RF_METRICAS.find(m => m[0] === RF.metrica)[1], data: valores, borderRadius: 4,
-      backgroundColor: valores.map(v => v < 0 ? '#C8643C' : color) }].concat(opts.extra || []), {
+const RF_FUENTE = { tick: 13, dato: 12, leyenda: 13 };          // pantalla normal
+const RF_FUENTE_REU = { tick: 17, dato: 17, leyenda: 17 };      // Modo Reunión (se lee desde lejos)
+const RF_TINTA = '#EFE6D6';
+
+function rfPartir(texto, max) {   // parte un nombre largo en líneas de a lo más "max" caracteres (corta en espacios)
+  const lineas = []; let actual = '';
+  String(texto).split(/\s+/).forEach(p => { if (actual && (actual + ' ' + p).length > max) { lineas.push(actual); actual = p; } else actual = (actual + ' ' + p).trim(); });
+  if (actual) lineas.push(actual);
+  return lineas.length > 3 ? [lineas[0], lineas[1], (lineas.slice(2).join(' ').slice(0, max - 1) + '…')] : lineas;
+}
+function rfBarras(id, etiquetas, valores, opts) {   // opts: {horizontal, filtro, extra, scales, leyenda, fuente, fmt, tooltipFmt, color, colores, partir, alto, derecha, rotar, truncar, nombre}
+  const F = opts.fuente || RF_FUENTE, fmt = opts.fmt || rfCompacto, tipFmt = opts.tooltipFmt || fmtCLPn;
+  const color = opts.color || RF_COLOR[RF.metrica];
+  const canvas = document.getElementById(id), caja = canvas.parentElement, partir = opts.partir || 26, rot = opts.rotar || 0;
+  // Nombres largos: se parten en líneas, o (si se rotan) se truncan; el nombre completo queda en el tooltip
+  const etqMostrar = etiquetas.map(e => {
+    if (opts.truncar) return String(e).length > opts.truncar ? String(e).slice(0, opts.truncar - 1) + '…' : String(e);
+    const l = rfPartir(e, partir); return l.length === 1 ? l[0] : l;
+  });
+  const lineas = Math.max(1, ...etqMostrar.map(e => Array.isArray(e) ? e.length : 1));
+  // La altura se da al CONTENEDOR del gráfico (Chart.js ajusta el canvas a su contenedor y reescribe el alto del canvas)
+  if (opts.horizontal) caja.style.height = Math.max(opts.alto || 280, etiquetas.length * (F.tick * 1.7 + lineas * F.tick * 1.15 + 6) + 60) + 'px';
+  else if (opts.alto) caja.style.height = opts.alto + 'px';
+  const ejeTexto = { color: RF_TINTA, font: { size: F.tick, weight: '500' } };
+  const escalasBase = opts.scales || {
+    x: opts.horizontal ? { grid: { color: '#4f3f33' }, ticks: Object.assign({ callback: v => fmt(v), maxRotation: 0, autoSkip: true, maxTicksLimit: 5 }, ejeTexto) }
+                       : { grid: { display: false }, ticks: Object.assign({ maxRotation: rot, minRotation: rot, autoSkip: false }, ejeTexto) },
+    y: opts.horizontal ? { grid: { display: false }, ticks: Object.assign({ autoSkip: false }, ejeTexto) }
+                       : { grid: { color: '#4f3f33' }, beginAtZero: true, ticks: Object.assign({ callback: v => fmt(v) }, ejeTexto) },
+  };
+  Object.values(escalasBase).forEach(sc => {   // la misma letra grande y clara en todos los ejes
+    sc.ticks = Object.assign({}, ejeTexto, sc.ticks || {}); sc.ticks.font = Object.assign({}, ejeTexto.font, (sc.ticks || {}).font);
+    if (sc.title) { sc.title.color = RF_TINTA; sc.title.font = { size: F.tick, weight: '600' }; }
+  });
+  makeChart(id, 'bar', etqMostrar, [{ label: opts.nombre || RF_METRICAS.find(m => m[0] === RF.metrica)[1], data: valores, borderRadius: 4, maxBarThickness: opts.horizontal ? 38 : 70,
+      backgroundColor: opts.colores || valores.map(v => v < 0 ? '#C8643C' : color) }].concat(opts.extra || []), {
     indexAxis: opts.horizontal ? 'y' : 'x',
-    layout: { padding: { right: opts.horizontal ? 60 : 0, top: 18 } },
+    layout: { padding: { right: opts.horizontal ? (opts.derecha || 100) : 12, top: 30, left: 4 } },
     onClick: opts.filtro ? (evt, els) => { if (els.length && etiquetas[els[0].index] !== 'Otros') rfFiltrarPor(opts.filtro, etiquetas[els[0].index]); } : undefined,
-    scales: opts.scales || {
-      x: opts.horizontal ? { grid: { color: '#4f3f33' }, ticks: { callback: v => rfCompacto(v), maxRotation: 0, autoSkip: true, maxTicksLimit: 5 } } : { grid: { display: false }, ticks: { callback: function (v) { const l = this.getLabelForValue(v); return String(l).length > 16 ? String(l).slice(0, 15) + '…' : l; } } },
-      y: opts.horizontal ? { grid: { display: false }, ticks: { callback: function (v) { const l = this.getLabelForValue(v); return String(l).length > 34 ? String(l).slice(0, 33) + '…' : l; } } } : { grid: { color: '#4f3f33' }, beginAtZero: true, ticks: { callback: v => rfCompacto(v) } },
+    scales: escalasBase,
+    plugins: {
+      legend: opts.leyenda ? { display: true, position: 'bottom', labels: { color: RF_TINTA, font: { size: F.leyenda }, padding: 16 } } : { display: false },
+      datalabels: { formatter: v => fmt(v), color: '#F5F0E8', backgroundColor: 'rgba(31,25,21,0.85)', borderRadius: 5, padding: { top: 2, bottom: 2, left: 6, right: 6 },
+                    font: { size: F.dato, weight: '700' }, anchor: 'end', align: 'end', clip: false },
+      tooltip: { titleFont: { size: F.tick + 1 }, bodyFont: { size: F.tick + 1 },
+                 callbacks: { title: items => items.length ? String(etiquetas[items[0].dataIndex]) : '', label: c => ' ' + tipFmt(c.parsed[opts.horizontal ? 'x' : 'y']) } },
     },
-    plugins: { legend: opts.leyenda ? { display: true, position: 'bottom' } : { display: false }, datalabels: { formatter: v => rfCompacto(v), color: '#F5F0E8', font: { size: 10, weight: '700' } },
-               tooltip: { callbacks: { label: c => ' ' + fmtCLPn(c.parsed[opts.horizontal ? 'x' : 'y']) } } },
   });
 }
 function rfAgrupar(f, campo) {
@@ -2810,9 +2968,9 @@ function rfRenderGraficos(f, disp) {
   rfBarras('chartRfAnio', anios.map(String), anios.map(a => porAnio.get(a)), {
     leyenda: true,
     extra: [{ type: 'line', label: 'N° de proyectos', data: anios.map(a => cant.get(a) || 0), yAxisID: 'y2', borderColor: '#F5F0E8', backgroundColor: '#F5F0E8', borderDash: [5, 4], borderWidth: 2, pointRadius: 3, tension: 0.25,
-              datalabels: { align: 'top', anchor: 'end', color: '#F5F0E8', font: { size: 10, weight: '700' }, formatter: v => v } }],
+              datalabels: { align: 'top', anchor: 'end', color: '#F5F0E8', backgroundColor: 'rgba(31,25,21,0.85)', borderRadius: 5, padding: { top: 2, bottom: 2, left: 6, right: 6 }, font: { size: RF_FUENTE.dato, weight: '700' }, formatter: v => v } }],
     scales: { x: { grid: { display: false } }, y: { grid: { color: '#4f3f33' }, beginAtZero: true, ticks: { callback: v => rfCompacto(v) } },
-              y2: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'N° proyectos', color: '#BCAA95' }, ticks: { precision: 0 } } },
+              y2: { position: 'right', beginAtZero: true, grid: { display: false }, title: { display: true, text: 'N° proyectos' }, ticks: { precision: 0 } } },
   });
 }
 
@@ -2824,9 +2982,9 @@ function rfSetAlerta(t) { RF.alerta = t; RF.pagina = 0; renderRendiciones(false)
 function rfRenderTabla(f, disp, hoy, lim) {
   const clase = p => rfEstadoPlazo(p, hoy, lim, disp);
   const nVenc = f.filter(p => clase(p) === 'vencido').length, nPorv = f.filter(p => clase(p) === 'porvencer').length;
-  document.getElementById('rf-chips-alerta').innerHTML = [[null, 'Todos', f.length], ['vencido', 'Plazo vencido', nVenc], ['porvencer', 'Vence en 30 días', nPorv]].map(([k, t, n]) =>
+  document.getElementById('rf-chips-alerta').innerHTML = [[null, 'Todos', f.length], ['vencido', 'Plazo vencido', nVenc], ['porvencer', 'Vence en 30 días', nPorv]].concat(disp.garantia ? (() => { const gg = rfClasificarGarantias(f); return [['g_venc', 'Garantía vencida', gg.venc.length], ['g_p30', 'Garantía vence en 30 días', gg.p30.length]]; })() : []).map(([k, t, n]) =>
     `<span class="chip-filtro rf-chip${RF.alerta === k ? ' activo' : ''}" onclick="rfSetAlerta(${k ? `'${k}'` : 'null'})">${t}<span class="n">${n.toLocaleString('es-CL')}</span></span>`).join('');
-  let filas = RF.alerta ? f.filter(p => clase(p) === RF.alerta) : f;
+  let filas = RF.alerta ? f.filter(p => rfCoincideAlerta(p, RF.alerta, clase)) : f;
   if (RF.busqueda.trim()) { const q = rfNorm(RF.busqueda.trim()); filas = filas.filter(p => rfNorm([p.id_proyecto, p.nombre, p.comuna, p.programa, p.subprograma].join(' ')).includes(q)); }
   const { k, dir } = RF.orden;
   filas = [...filas].sort((a, b) => {
@@ -2842,6 +3000,8 @@ function rfRenderTabla(f, disp, hoy, lim) {
       const v = p[c.k];
       if (c.k === 'nombre') return `<td class="nombre" title="${rfEsc(v || '')}">${rfEsc(v || '—')}</td>`;
       if (c.plazo) return `<td class="num">${v != null ? v + ' días' : '—'}</td>`;
+      if (c.fecha) { if (!v) return '<td>—</td>'; const act = rfGarantiaActiva(p); return `<td class="${act && v < hoy ? 'neg' : act && v <= lim ? 'rf-ambar' : ''}">${rfFecha(v)}</td>`; }
+      if (c.pct) return v == null ? '<td class="num">—</td>' : `<td class="num">${String(v).replace('.', ',')}%</td>`;
       if (c.num) return v == null ? '<td class="num">—</td>' : `<td class="num${v < 0 ? ' neg' : ''}">${fmtCLPn(v)}</td>`;
       return `<td>${rfEsc(v ?? '—')}</td>`;
     }).join('') + '</tr>';
@@ -2869,12 +3029,487 @@ function renderRendiciones(completo = true) {
   const disp = rfDisp(), f = rfFiltrados(), hoy = rfHoy(), lim = rfSumarDias(hoy, 30);
   const total = RENDICIONES.proyectos.length;
   document.getElementById('rf-resumen-filtros').textContent = `Mostrando ${f.length.toLocaleString('es-CL')} de ${total.toLocaleString('es-CL')} proyectos`;
-  if (completo) { rfRenderFiltros(disp); rfRenderKpis(f, disp); rfRenderAlertas(f, disp, hoy, lim); rfRenderMetricas(disp); rfRenderGraficos(f, disp); }
+  if (RF.reunion) { rfRenderReunion(f, disp); return; }
+  if (completo) { rfRenderFiltros(disp); rfRenderKpis(f, disp); rfRenderAlertas(f, disp, hoy, lim); rfRenderGarantias(f, disp); rfRenderMetricas(disp); rfRenderGraficos(f, disp); }
   rfRenderTabla(f, disp, hoy, lim);
 }
 
+
+
+
+// ========================================================================
+// SEGUIMIENTO URS: datos que se cargan y editan en "Datos adicionales" y se cruzan con el informe financiero
+// ========================================================================
+// Clasificación actual del Estado Real (la del tablero de seguimiento). El desplegable también ofrece cualquier otro valor
+// que ya exista cargado (por ejemplo, uno que traiga la importación de la planilla).
+const ESTADOS_REAL = [
+  '01.- Aprobado', '02.- En Preparación de Bases', '03.- En Licitación', '04.- Con Licitación Cerrada', '05.- En Evaluación de Ofertas',
+  '06.- Licitación Desierta', '07.- Adjudicado', '09.- En Proceso de Contrato', '10.- Contratado', '11.- En Rescilición de Contrato',
+  '12.- En Ejecución', '13.- Terminado sin Recepción', '14.- Terminado', 'Terminado con Modificaciones Pendientes', 'Proyecto Paralizado',
+];
+// "Por Rendir conforme a % de ejecución" = máx(0; base × % de avance − Total Rendido). La base se confirma al correr el importador
+// (muestra con TUS datos cuál columna de la planilla calza); aquí se usa el Monto Contratado del informe financiero.
+const RF_BASE_EJECUCION = 'monto_contratado';
+// Proyectos cuya boleta de garantía ya no requiere seguimiento
+const RF_CERRADOS = ['proyecto cerrado', 'proyecto dejado sin efecto', 'proyecto con termino anticipado'];
+
+function rfExtraDe(id) { try { return (datosExtra && datosExtra[id]) || {}; } catch (e) { return {}; } }   // datosExtra aún puede no existir al primer dibujo
+function rfEnriquecer() {   // trae a cada proyecto del informe sus datos de "Datos adicionales"
+  ((RENDICIONES && RENDICIONES.proyectos) || []).forEach(p => {
+    const ex = rfExtraDe(p.id_proyecto), av = ex.avance_fisico;
+    p.estado_seg = ex.estado_real || undefined;
+    p.avance_fisico = (av === '' || av === null || av === undefined || isNaN(Number(av))) ? undefined : Number(av);
+    p.venc_garantia = ex.fecha_venc_garantia || undefined;
+    p.contrato_seg = ex.contrato_plataforma || undefined;
+    p.evento_seg = ex.evento || undefined;
+    if (p.avance_fisico !== undefined) {
+      p.rendicion_ejec = Math.round(rfNum(p[RF_BASE_EJECUCION]) * p.avance_fisico / 100);
+      p.por_rendir_ejec = Math.max(0, p.rendicion_ejec - rfNum(p.total_rendido));
+    } else { p.rendicion_ejec = undefined; p.por_rendir_ejec = undefined; }
+  });
+}
+function rfRefrescarExtra() { rfEnriquecer(); renderRendiciones(); }
+function rfSoloSeg(on) { RF.filtros.soloSeg = !!on; RF.pagina = 0; renderRendiciones(); }
+function rfGarantiaActiva(p) { return !RF_CERRADOS.includes(rfNorm(p.estado_real || '')); }
+function rfClasificarGarantias(f) {
+  const hoy = rfHoy(), d30 = rfSumarDias(hoy, 30), d60 = rfSumarDias(hoy, 60), act = f.filter(p => p.venc_garantia && rfGarantiaActiva(p));
+  return { hoy, d30, d60, act,
+    venc: act.filter(p => p.venc_garantia < hoy).sort((a, b) => b.venc_garantia.localeCompare(a.venc_garantia)),
+    p30: act.filter(p => p.venc_garantia >= hoy && p.venc_garantia <= d30).sort((a, b) => a.venc_garantia.localeCompare(b.venc_garantia)),
+    p60: act.filter(p => p.venc_garantia > d30 && p.venc_garantia <= d60).sort((a, b) => a.venc_garantia.localeCompare(b.venc_garantia)),
+    sinFecha: f.filter(p => !p.venc_garantia && rfGarantiaActiva(p)).length };
+}
+function rfBucketsGarantia(f) {
+  const g = rfClasificarGarantias(f), d90 = rfSumarDias(g.hoy, 90), b = { 'Vencidas': g.venc.length, 'Vencen en 30 días': g.p30.length, 'En 31 a 60 días': g.p60.length, 'En 61 a 90 días': 0, 'Más de 90 días': 0, 'Sin fecha': g.sinFecha };
+  g.act.forEach(p => { if (p.venc_garantia > g.d60) { if (p.venc_garantia <= d90) b['En 61 a 90 días']++; else b['Más de 90 días']++; } });
+  return b;
+}
+function rfCoincideAlerta(p, tipo, clase) {
+  if (tipo === 'vencido' || tipo === 'porvencer') return clase(p) === tipo;
+  if (!p.venc_garantia || !rfGarantiaActiva(p)) return false;
+  const hoy = rfHoy();
+  return tipo === 'g_venc' ? p.venc_garantia < hoy : (p.venc_garantia >= hoy && p.venc_garantia <= rfSumarDias(hoy, 30));
+}
+function rfVerGarantia(tipo) { RF.alerta = tipo; RF.pagina = 0; renderRendiciones(); const t = document.getElementById('tbl-rf'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+function rfRenderGarantias(f, disp) {
+  const el = document.getElementById('rf-garantias'); if (!el) return;
+  if (!disp.garantia) { el.innerHTML = '<h2>🛡️ Boletas de garantía</h2><p style="color:var(--ink-dim);font-size:0.85rem;margin:6px 0 0">Aún no hay fechas de vencimiento. Se ingresan en <b>Datos adicionales</b> (campo "Fecha vencimiento boleta de garantía") o con la importación única de la planilla de seguimiento.</p>'; return; }
+  const g = rfClasificarGarantias(f), dias = p => rfDias(g.hoy, p.venc_garantia);
+  const fila = p => `<tr><td>${rfEsc(p.comuna || '—')}</td><td title="${rfEsc(p.nombre || '')}">${rfEsc((p.nombre || p.id_proyecto || '').slice(0, 70))}${(p.nombre || '').length > 70 ? '…' : ''}<div style="font-size:0.66rem;color:var(--ink-dim)">${rfEsc(p.id_proyecto || '')}${p.estado_seg ? ' · ' + rfEsc(p.estado_seg) : ''}</div></td>
+      <td class="num">${rfFecha(p.venc_garantia)}<div style="font-size:0.66rem;color:var(--ink-dim)">${dias(p) < 0 ? `hace ${-dias(p)} día${dias(p) === -1 ? '' : 's'}` : dias(p) === 0 ? 'hoy' : `en ${dias(p)} día${dias(p) === 1 ? '' : 's'}`}</div></td></tr>`;
+  const tabla = lista => lista.length ? `<div style="overflow-x:auto"><table class="rf-mini"><thead><tr><th>Comuna</th><th>Proyecto</th><th class="num">Vence</th></tr></thead><tbody>${lista.slice(0, 6).map(fila).join('')}</tbody></table></div>` : '';
+  const caja = (cls, n, txt, tipo) => `<div class="rf-alerta-caja ${cls}"><div class="cifra">${n.toLocaleString('es-CL')}</div><div class="txt">${txt}</div>${n && tipo ? `<button class="btn btn-ghost" style="margin-top:8px;padding:4px 12px;font-size:0.72rem" onclick="rfVerGarantia('${tipo}')">Ver en la tabla</button>` : ''}</div>`;
+  el.innerHTML = `<h2>🛡️ Boletas de garantía</h2>
+    <div class="rf-alerta-cab">${caja('roja', g.venc.length, '<b>Boletas vencidas</b>', 'g_venc')}${caja('ocre', g.p30.length, '<b>Vencen en los próximos 30 días</b>', 'g_p30')}${caja('verde', g.p60.length, '<b>Vencen entre 31 y 60 días</b>', null)}</div>
+    ${g.p30.length ? `<h3 style="margin:10px 0 4px;font-size:0.82rem;color:#F2C14E">Próximas a vencer (más cercanas primero)</h3>${tabla(g.p30)}` : ''}
+    ${g.venc.length ? `<h3 style="margin:12px 0 4px;font-size:0.82rem;color:#FF9C7A">Vencidas (más recientes primero)</h3>${tabla(g.venc)}` : ''}
+    <div style="font-size:0.7rem;color:var(--ink-dim);margin-top:8px">No considera proyectos cerrados, con término anticipado ni dejados sin efecto. ${g.sinFecha ? `${g.sinFecha.toLocaleString('es-CL')} proyectos vigentes aún sin fecha de boleta.` : ''}</div>`;
+}
+function rfEstadoRealDe(p) {   // Estado Real de Datos adicionales; si no hay, el del informe SOLO si esa columna se llama "Estado Real"
+  if (p.estado_seg) return p.estado_seg;
+  const h = (RENDICIONES && RENDICIONES.columnas_detectadas || {}).estado_real;
+  return (h && rfNorm(h) === 'estado real') ? p.estado_real : undefined;
+}
+function rfProyectoDesdeInforme(id) {   // para editar en "Datos adicionales" proyectos que están en el informe financiero pero no en el listado principal
+  const p = ((RENDICIONES && RENDICIONES.proyectos) || []).find(x => String(x.id_proyecto) === String(id));
+  return p ? { id_proyecto: p.id_proyecto, nombre_proyecto: p.nombre || '', comuna: p.comuna || '', estado: p.estado_real || '—', programa: p.programa || '', provincia: p.provincia || '', monto_subdere: p.monto_asignado || 0 } : null;
+}
+function rfProyectosSoloInforme(qq, rawData, max) {
+  const ya = new Set(rawData.map(d => String(d.id_proyecto)));
+  return ((RENDICIONES && RENDICIONES.proyectos) || []).filter(p => !ya.has(String(p.id_proyecto)) &&
+    (String(p.nombre || '').toLowerCase().includes(qq) || String(p.comuna || '').toLowerCase().includes(qq) || String(p.id_proyecto || '').toLowerCase().includes(qq)))
+    .slice(0, max).map(p => ({ id_proyecto: p.id_proyecto, nombre_proyecto: (p.nombre || '') + '  (solo informe financiero)', comuna: p.comuna }));
+}
+function rfOpcionesEstadoReal(actual) {   // desplegable: la clasificación actual + cualquier otro valor ya cargado
+  const extra = new Set(); try { Object.values(datosExtra || {}).forEach(x => { if (x && x.estado_real) extra.add(x.estado_real); }); } catch (e) {}
+  if (actual) extra.add(actual);
+  const lista = [...ESTADOS_REAL, ...[...extra].filter(e => !ESTADOS_REAL.includes(e)).sort((a, b) => a.localeCompare(b, 'es'))];
+  const num = e => { const m = /^\s*(\d{1,2})\s*[.\-)]/.exec(e); return m ? parseInt(m[1], 10) : null; };
+  return lista.sort((a, b) => { const x = num(a), y = num(b); return x !== null && y !== null ? x - y : x !== null ? -1 : y !== null ? 1 : lista.indexOf(a) - lista.indexOf(b); });
+}
+function rfLlenarEstadosReal(actual) {
+  const sel = document.getElementById('f-estado-real'); if (!sel) return;
+  sel.innerHTML = '<option value="">Seleccione...</option>' + rfOpcionesEstadoReal(actual).map(e => `<option value="${rfEsc(e)}">${rfEsc(e)}</option>`).join('');
+  sel.value = actual || '';
+}
+
+// ========================================================================
+// RENDICIONES — utilidades compartidas por el Modo Reunión, el PDF y el Excel
+// ========================================================================
+const RF_SIGLAS = [['mejoramiento urbano', 'PMU'], ['mejoramiento de barrios', 'PMB'], ['recuperacion de ciudades', 'FRC'],
+                   ['tenencia responsable', 'PTRAC'], ['revitalizacion de barrios', 'PRBIPE'], ['infraestructura patrimonial', 'PRBIPE']];
+function rfSigla(nombre) { const n = rfNorm(nombre); for (const [k, s] of RF_SIGLAS) if (n.includes(k)) return s; return nombre; }
+function rfTitulo(t) {   // 'RÍO HURTADO' -> 'Río Hurtado'
+  return String(t).toLowerCase().replace(/(^|[\s\-(])([a-záéíóúñü])/g, (m, a, b) => a + b.toUpperCase())
+    .replace(/\s(De|Del|La|Las|Los|Y|E)(?=\s)/g, m => m.toLowerCase());
+}
+function rfEstadoNum(txt) { const m = /^\s*(\d{1,2})\s*[.\-)]/.exec(String(txt || '')); return m ? parseInt(m[1], 10) : null; }
+let rfMapaCache = { n: -1, mapa: new Map() };
+function rfMapaProyectos() {   // id_proyecto -> proyecto del listado principal (trae el evento y el estado)
+  const base = (typeof RAW_DATA !== 'undefined' && Array.isArray(RAW_DATA)) ? RAW_DATA : [];
+  if (rfMapaCache.n !== base.length) rfMapaCache = { n: base.length, mapa: new Map(base.map(p => [p.id_proyecto, p])) };
+  return rfMapaCache.mapa;
+}
+function rfAgregar(f, clave) {   // suma de montos y cantidad por una clave (campo o función)
+  const m = new Map();
+  f.forEach(p => {
+    const k = typeof clave === 'function' ? clave(p) : p[clave];
+    if (k === undefined || k === null || k === '') return;
+    const a = m.get(k) || { key: k, n: 0, asignado: 0, contratado: 0, vigente: 0, saldoContable: 0, saldoTransferir: 0, saldoRendir: 0, ejec: 0 };
+    a.n++; a.asignado += rfNum(p.monto_asignado); a.contratado += rfNum(p.monto_contratado); a.vigente += rfNum(p.monto_vigente);
+    a.saldoContable += rfNum(p.saldo_contable); a.saldoTransferir += rfNum(p.saldo_por_transferir); a.saldoRendir += rfNum(p.saldo_por_rendir); a.ejec += rfNum(p.por_rendir_ejec);
+    m.set(k, a);
+  });
+  return [...m.values()];
+}
+function rfTotales(f) {
+  const t = { n: f.length, asignado: 0, contratado: 0, vigente: 0, saldoContable: 0, saldoTransferir: 0, saldoRendir: 0, ejec: 0 };
+  f.forEach(p => { t.asignado += rfNum(p.monto_asignado); t.contratado += rfNum(p.monto_contratado); t.vigente += rfNum(p.monto_vigente);
+    t.saldoContable += rfNum(p.saldo_contable); t.saldoTransferir += rfNum(p.saldo_por_transferir); t.saldoRendir += rfNum(p.saldo_por_rendir); t.ejec += rfNum(p.por_rendir_ejec); });
+  return t;
+}
+function rfClasificarPlazos(f, disp) {
+  const hoy = rfHoy(), lim = rfSumarDias(hoy, 30), venc = [], porv = [];
+  f.forEach(p => { const e = rfEstadoPlazo(p, hoy, lim, disp); if (e === 'vencido') venc.push(p); else if (e === 'porvencer') porv.push(p); });
+  venc.sort((a, b) => rfNum(b.saldo_por_rendir) - rfNum(a.saldo_por_rendir)); porv.sort((a, b) => a.fecha_termino.localeCompare(b.fecha_termino));
+  return { venc, porv, hoy };
+}
+function rfResumenFiltros() {
+  const F = RF.filtros, partes = [];
+  [['Provincia', 'provincia'], ['Comuna', 'comuna'], ['Programa', 'programa'], ['Subprograma', 'subprograma'], ['Año Aprobación', 'anioAprob'], ['Año Postulación', 'anioPost']]
+    .forEach(([t, k]) => { if (F[k].size) partes.push(`${t}: ${[...F[k]].join(', ')}`); });
+  const rango = (t, d, h) => { if (d || h) partes.push(`${t}: ${d ? 'desde ' + rfFecha(d) : ''}${d && h ? ' ' : ''}${h ? 'hasta ' + rfFecha(h) : ''}`); };
+  rango('Fecha Asignación', F.asigDesde, F.asigHasta); rango('Fecha de Término', F.terDesde, F.terHasta); rango('Venc. Boleta de Garantía', F.vencDesde, F.vencHasta);
+  if (F.soloSeg) partes.push('Solo seguimiento URS (con Estado Real)');
+  return partes.length ? partes.join(' · ') : 'Sin filtros aplicados (todos los proyectos)';
+}
+const rfOrdenProv = ['Elqui', 'Limarí', 'Choapa'];
+function rfOrdenarProvincias(arr) { return arr.sort((a, b) => (rfOrdenProv.indexOf(a.key) + 1 || 99) - (rfOrdenProv.indexOf(b.key) + 1 || 99)); }
+
+// ========================================================================
+// MODO REUNIÓN de Rendiciones (parámetros del tablero de referencia)
+// ========================================================================
+function rfToggleReunion() {
+  RF.reunion = !RF.reunion;
+  if (RF.reunion) { RF._prevSoloSeg = RF.filtros.soloSeg; if (rfDisp().seguimiento) RF.filtros.soloSeg = true; }   // el tablero muestra los proyectos con seguimiento URS
+  else if (RF._prevSoloSeg !== undefined) { RF.filtros.soloSeg = RF._prevSoloSeg; RF._prevSoloSeg = undefined; }
+  document.body.classList.toggle('modo-reunion-rend', RF.reunion);
+  document.getElementById('btn-salir-rend').style.display = RF.reunion ? 'block' : 'none';
+  if (RF.reunion && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {});
+  else if (!RF.reunion && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+  renderRendiciones();
+  window.scrollTo(0, 0);
+}
+document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && RF.reunion) rfToggleReunion(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && RF.reunion) rfToggleReunion(); });
+
+function rfReuFiltro(cual, valor) {
+  const aprob = rfDisp().anio_aprobacion, claveAnio = aprob ? 'anioAprob' : 'anioPost';
+  if (cual === 'anio') { RF.filtros[claveAnio].clear(); if (valor) RF.filtros[claveAnio].add(Number(valor)); }
+  else { RF.filtros.comuna.clear(); if (valor) RF.filtros.comuna.add(valor); }
+  rfLimpiarCascada(); renderRendiciones();
+}
+function rfReuDisponible(nombre, ok, texto) {   // muestra el gráfico o un aviso de "no disponible"
+  const c = document.getElementById('chartRfReu' + nombre), n = document.getElementById('rf-reu-nd-' + nombre);
+  if (c) c.parentElement.style.display = ok ? '' : 'none';
+  if (n) { n.style.display = ok ? 'none' : 'block'; if (!ok) n.textContent = texto || 'No disponible en el informe'; }
+}
+function rfReuTabla(filas, colNombre, disp, medida) {   // medida: 'ejec' (Por Rendir conforme a % de ejecución) o 'saldoRendir' (saldo del informe)
+  const hay = medida === 'ejec' || disp.saldo_por_rendir;
+  const maxN = Math.max(1, ...filas.map(r => r.n)), maxM = Math.max(1, ...filas.map(r => Math.abs(r[medida])));
+  const tot = filas.reduce((s, r) => ({ n: s.n + r.n, m: s.m + r[medida] }), { n: 0, m: 0 });
+  return `<table class="rf-reu-tabla"><thead><tr><th>${colNombre}</th><th class="num">N° proyectos</th><th class="num">Por rendir</th></tr></thead><tbody>` +
+    filas.map(r => `<tr><td title="${rfEsc(r.key)}">${rfEsc(r.etq || r.key)}</td>
+      <td class="num" style="background:rgba(111,163,181,${(0.12 + 0.55 * r.n / maxN).toFixed(2)})">${r.n.toLocaleString('es-CL')}</td>
+      <td class="num" style="${hay ? `background:rgba(95,179,167,${(0.1 + 0.5 * Math.abs(r[medida]) / maxM).toFixed(2)})` : ''}">${hay ? `<span title="${fmtCLPn(r[medida])}">${rfCompacto(r[medida])}</span>` : '—'}</td></tr>`).join('') +
+    `</tbody><tfoot><tr><td>Total general</td><td class="num">${tot.n.toLocaleString('es-CL')}</td><td class="num">${hay ? `<span title="${fmtCLPn(tot.m)}">${rfCompacto(tot.m)}</span>` : '—'}</td></tr></tfoot></table>`;
+}
+function rfRenderReunion(f, disp) {
+  const FU = RF_FUENTE_REU, todos = RENDICIONES.proyectos, mapa = rfMapaProyectos();
+  document.getElementById('rf-reu-total').textContent = f.length.toLocaleString('es-CL');
+
+  // Filtros rápidos (Año de Aprobación, Comuna) y "solo seguimiento URS"
+  const aprob = disp.anio_aprobacion, claveAnio = aprob ? 'anioAprob' : 'anioPost', campoAnio = aprob ? 'anio_aprobacion' : 'anio_postulacion';
+  document.getElementById('rf-reu-lbl-anio').textContent = aprob ? 'Año de Aprobación' : 'Año de Postulación';
+  const anios = [...new Set(todos.map(p => p[campoAnio]).filter(Boolean))].sort((a, b) => b - a);
+  const comunasTodas = [...new Set(todos.map(p => p.comuna).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+  const selA = document.getElementById('rf-reu-anio'), selC = document.getElementById('rf-reu-comuna');
+  selA.innerHTML = '<option value="">Todos</option>' + anios.map(a => `<option value="${a}"${RF.filtros[claveAnio].has(a) ? ' selected' : ''}>${a}</option>`).join('');
+  selC.innerHTML = '<option value="">Todas</option>' + comunasTodas.map(c => `<option value="${rfEsc(c)}"${RF.filtros.comuna.has(c) ? ' selected' : ''}>${rfEsc(rfTitulo(c))}</option>`).join('');
+  document.getElementById('rf-reu-soloseg-wrap').style.display = disp.seguimiento ? '' : 'none';
+  document.getElementById('rf-reu-soloseg').checked = !!RF.filtros.soloSeg;
+  const otros = rfResumenFiltros().split(' · ').filter(t => !/^(Comuna|Año (Aprobación|Postulación)|Solo seguimiento)/.test(t));
+  document.getElementById('rf-reu-nota').innerHTML = otros.length && otros[0] !== 'Sin filtros aplicados (todos los proyectos)'
+    ? `Otros filtros activos: ${rfEsc(otros.join(' · '))} <a onclick="rfLimpiarFiltros()">Quitar todos</a>` : '';
+
+  // 1) Proyectos por comuna (cantidad)
+  const porComuna = rfAgregar(f, 'comuna').sort((a, b) => b.n - a.n);
+  rfBarras('chartRfReuComuna', porComuna.map(c => rfTitulo(c.key)), porComuna.map(c => c.n),
+    { fuente: FU, fmt: v => v.toLocaleString('es-CL'), tooltipFmt: v => v + ' proyectos', color: '#6FA3B5', nombre: 'Proyectos', rotar: 40, truncar: 20 });
+
+  // 2) Estado Real: el de "Datos adicionales"; si aún no hay, la columna de estado del informe financiero; si no, el del listado de proyectos
+  const hayEstadoSeg = f.some(p => p.estado_seg), hayEstadoInf = f.some(p => p.estado_real);
+  const estados = rfAgregar(f, p => hayEstadoSeg ? (p.estado_seg || 'Sin estado') : hayEstadoInf ? (p.estado_real || 'Sin estado') : ((mapa.get(p.id_proyecto) || {}).estado || 'Sin estado'));
+  estados.sort((a, b) => { const x = rfEstadoNum(a.key), y = rfEstadoNum(b.key); return x === null && y === null ? b.n - a.n : x === null ? -1 : y === null ? 1 : y - x; });
+  const hdrEstado = String(((RENDICIONES.columnas_detectadas || {}).estado_real) || '');
+  document.getElementById('rf-reu-t-estado').textContent = hayEstadoSeg ? 'Estado Real' : !hayEstadoInf ? 'Estado del proyecto (según el listado de proyectos)'
+    : (rfNorm(hdrEstado) === 'estado real' ? 'Estado Real' : `Estado del proyecto (columna "${hdrEstado}" del informe financiero)`);
+  rfBarras('chartRfReuEstado', estados.map(e => e.key), estados.map(e => e.n),
+    { fuente: FU, fmt: v => v.toLocaleString('es-CL'), tooltipFmt: v => v + ' proyectos', color: '#6FA3B5', nombre: 'Proyectos', rotar: 40, truncar: 24 });
+
+  // 3) "Por rendir": conforme a % de ejecución si hay % de avance cargado; si no, el Saldo por Rendir del informe
+  const medida = disp.avance ? 'ejec' : 'saldoRendir', hayMedida = disp.avance || disp.saldo_por_rendir;
+  document.getElementById('rf-reu-tab-prov').innerHTML = rfReuTabla(rfOrdenarProvincias(rfAgregar(f, 'provincia')), 'Provincia', disp, medida);
+  document.getElementById('rf-reu-tab-prog').innerHTML = rfReuTabla(rfAgregar(f, 'programa').map(r => Object.assign(r, { etq: rfSigla(r.key) })).sort((a, b) => b.n - a.n), 'Programa', disp, medida);
+  const rend = rfAgregar(f, 'comuna').sort((a, b) => b[medida] - a[medida]);
+  document.getElementById('rf-reu-t-porrendir').textContent = disp.avance ? 'Por Rendir conforme a % de ejecución, por comuna' : 'Por Rendir por comuna (Saldo por Rendir del informe)';
+  rfReuDisponible('PorRendir', hayMedida, 'El informe no trae el Saldo por Rendir');
+  if (hayMedida) rfBarras('chartRfReuPorRendir', rend.map(c => rfTitulo(c.key)), rend.map(c => c[medida]),
+    { horizontal: true, fuente: FU, fmt: v => rfCompacto(v), tooltipFmt: v => fmtCLPn(v), color: RF_COLOR.saldo_por_rendir, nombre: 'Por rendir', partir: 18, derecha: 120 });
+
+  // 4) Plazo: Sin iniciar (estados 01 a 10 del Estado Real) / plazo vencido / plazo vigente (según la fecha de término del informe)
+  const hayNum = f.some(p => rfEstadoNum(rfEstadoRealDe(p)) !== null), hoy = rfHoy();
+  const cat = { 'Con Plazo Vencido': 0, 'Sin Iniciar': 0, 'Con Plazo Vigente': 0 };
+  f.forEach(p => { const n = rfEstadoNum(rfEstadoRealDe(p)); if (hayNum && n !== null && n <= 10) cat['Sin Iniciar']++; else if (p.fecha_termino) cat[p.fecha_termino < hoy ? 'Con Plazo Vencido' : 'Con Plazo Vigente']++; });
+  const plazoOk = disp.fecha_termino && (cat['Con Plazo Vencido'] + cat['Con Plazo Vigente'] + cat['Sin Iniciar']) > 0;
+  rfReuDisponible('Plazo', plazoOk, 'El informe no trae fechas de término');
+  const nombresPlazo = Object.keys(cat).filter(k => hayNum || k !== 'Sin Iniciar');
+  if (plazoOk) rfBarras('chartRfReuPlazo', nombresPlazo, nombresPlazo.map(k => cat[k]),
+    { horizontal: true, fuente: FU, fmt: v => v.toLocaleString('es-CL'), tooltipFmt: v => v + ' proyectos', nombre: 'Proyectos', partir: 16, alto: 230, derecha: 80,
+      colores: nombresPlazo.map(k => k === 'Con Plazo Vencido' ? '#C8643C' : k === 'Sin Iniciar' ? '#D8C3A5' : '#8FA37E') });
+  document.getElementById('rf-reu-nota-plazo').textContent = hayNum ? '' : "'Sin Iniciar' requiere el Estado Real numerado (01 a 14): se carga en Datos adicionales.";
+
+  // 5) ¿Con contrato en plataforma? De más a menos directo: Datos adicionales > columna del informe > Contratos Registrados > Monto Contratado
+  const hayCS = f.some(p => p.contrato_seg), hayCP = f.some(p => p.contrato_plataforma), hayCR = f.some(p => p.contratos_registrados !== undefined && p.contratos_registrados !== null);
+  const conContrato = p => hayCS ? p.contrato_seg === 'SI' : hayCP ? p.contrato_plataforma === 'SI' : hayCR ? rfNum(p.contratos_registrados) > 0 : rfNum(p.monto_contratado) > 0;
+  const si = f.filter(conContrato).length, no = f.length - si;
+  const contOk = hayCS || hayCP || hayCR || disp.monto_contratado;
+  rfReuDisponible('Contrato', contOk, 'El informe no trae contratos ni Monto Contratado');
+  if (contOk) makeChart('chartRfReuContrato', 'doughnut', ['SI', 'NO'], [{ data: [si, no], backgroundColor: ['#5FB3A7', '#D9A441'], borderColor: '#2F2620', borderWidth: 2 }], {
+    cutout: 0,
+    plugins: { legend: { position: 'bottom', labels: { color: RF_TINTA, font: { size: FU.leyenda }, padding: 16 } },
+               datalabels: { formatter: v => v ? v : '', color: '#1f1915', font: { size: FU.dato + 4, weight: '800' }, backgroundColor: 'rgba(245,240,232,0.92)', borderRadius: 6, padding: 4 } } });
+  document.getElementById('rf-reu-nota-contrato').textContent = hayCS ? '' : hayCP ? '' : hayCR ? 'SI = con "Contratos Registrados" mayor a cero (según el informe financiero).' : 'SI = con Monto Contratado mayor a cero.';
+
+  // 6) Boletas de garantía (fecha de vencimiento ingresada en Datos adicionales)
+  rfReuDisponible('Garantia', disp.garantia, 'Aún no hay fechas de vencimiento (se cargan en Datos adicionales)');
+  if (disp.garantia) {
+    const b = rfBucketsGarantia(f), nombresG = Object.keys(b), colG = { 'Vencidas': '#C8643C', 'Vencen en 30 días': '#F2C14E', 'En 31 a 60 días': '#D9A441', 'En 61 a 90 días': '#8FA37E', 'Más de 90 días': '#6FA3B5', 'Sin fecha': '#BCAA95' };
+    rfBarras('chartRfReuGarantia', nombresG, nombresG.map(k => b[k]), { horizontal: true, fuente: FU, fmt: v => v.toLocaleString('es-CL'), tooltipFmt: v => v + ' proyectos', nombre: 'Proyectos', partir: 16, alto: 300, derecha: 80, colores: nombresG.map(k => colG[k]) });
+  }
+
+  // 7) Proyectos clasificados según evento (el de Datos adicionales; si falta, el del listado de proyectos)
+  const ev = rfAgregar(f, p => p.evento_seg || (mapa.get(p.id_proyecto) || {}).evento || 'Sin evento').sort((a, b) => (a.key === 'Sin evento') - (b.key === 'Sin evento') || b.n - a.n).slice(0, 14);
+  const evOk = mapa.size > 0 || f.some(p => p.evento_seg);
+  rfReuDisponible('Evento', evOk, 'Cargando el listado de proyectos…');
+  if (evOk) rfBarras('chartRfReuEvento', ev.map(x => x.key), ev.map(x => x.n),
+    { horizontal: true, fuente: FU, fmt: v => v.toLocaleString('es-CL'), tooltipFmt: v => v + ' proyectos', color: '#D9A441', nombre: 'Proyectos', partir: 20, derecha: 80 });
+}
+
+// ========================================================================
+// DESCARGAS: informe PDF e informe Excel (con los filtros aplicados)
+// ========================================================================
+function rfDescargarPDF() {
+  if (!(RENDICIONES && RENDICIONES.proyectos && RENDICIONES.proyectos.length)) { alert('Aún no hay datos de Rendiciones.'); return; }
+  const { jsPDF } = window.jspdf, logo = new Image();
+  logo.onload = () => rfPDFSeguro(jsPDF, logo.naturalWidth, logo.naturalHeight);
+  logo.onerror = () => rfPDFSeguro(jsPDF, null, null);
+  logo.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
+}
+function rfPDFSeguro(jsPDF, w, h) {
+  try { rfGenerarPDF(jsPDF, w, h); } catch (err) { console.error('Error generando el PDF de Rendiciones:', err); alert('No se pudo generar el PDF: ' + err.message); }
+}
+function rfGenerarPDF(jsPDF, logoW, logoH) {
+  const f = rfFiltrados(), disp = rfDisp(), T = rfTotales(f), pl = rfClasificarPlazos(f, disp);
+  const nombreMetrica = RF_METRICAS.find(m => m[0] === RF.metrica)[1];
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  doc.setFont('helvetica', 'normal');
+  const mx = 14, pageW = 279.4, pageH = 215.9, cw = pageW - mx * 2;
+  const azul = { fillColor: [35, 49, 108], textColor: [255, 255, 255] }, rojo = { textColor: [190, 40, 60], fontStyle: 'bold' };
+  const titulo = (txt, y) => { doc.setFontSize(10); doc.setTextColor(35, 49, 108); doc.setFont(undefined, 'bold'); doc.text(txt, mx, y); doc.setFont(undefined, 'normal'); };
+  let textoX = mx;
+  if (logoW && logoH) { const ah = 15, an = ah * (logoW / logoH); doc.addImage(`data:image/jpeg;base64,${LOGO_BASE64}`, 'JPEG', mx, 8, an, ah); textoX = mx + an + 6; }
+  doc.setFont(undefined, 'bold'); doc.setFontSize(14); doc.setTextColor(35, 49, 108); doc.text('SUBDERE en Línea', textoX, 13);
+  doc.setFontSize(11); doc.setTextColor(70, 80, 120); doc.text('Rendiciones — Situación financiera de los proyectos', textoX, 19.5);
+  doc.setFont(undefined, 'normal'); doc.setFontSize(8.5); doc.setTextColor(110, 110, 110);
+  const act = RENDICIONES.fecha_actualizacion ? ` · Informe de SUBDERE en Línea del ${rfFecha(RENDICIONES.fecha_actualizacion)}${RENDICIONES.hora_actualizacion ? ' ' + RENDICIONES.hora_actualizacion : ''}` : '';
+  doc.text(`Generado el ${new Date().toLocaleDateString('es-CL')}${act}`, textoX, 25);
+  let y = 30;
+  doc.setFontSize(8);
+  const lineasF = doc.splitTextToSize(`Filtros aplicados: ${rfResumenFiltros()}`, cw - 8).slice(0, 2), hF = 6 + lineasF.length * 4;
+  doc.setFillColor(24, 34, 74); doc.setDrawColor(70, 90, 160); doc.roundedRect(mx, y, cw, hF, 1.5, 1.5, 'FD');
+  doc.setTextColor(210, 216, 240); doc.text(lineasF, mx + 4, y + 5); y += hF + 5;
+
+  const nd = txt => txt;   // montos que el informe no trae se muestran como "—"
+  const kpis = [
+    { l: 'Proyectos', v: T.n.toLocaleString('es-CL'), c: [120, 130, 150] },
+    { l: 'Monto Asignado', v: disp.monto_asignado ? fmtCLPn(T.asignado) : '—', c: [217, 164, 65] },
+    { l: 'Monto Contratado', v: disp.monto_contratado ? fmtCLPn(T.contratado) : '—', c: [111, 163, 181] },
+    { l: 'Monto Vigente', v: disp.monto_vigente ? fmtCLPn(T.vigente) : '—', c: [143, 163, 126] },
+    { l: 'Saldo Contable (Asignado - Contratado)', v: disp.saldo_contable ? fmtCLPn(T.saldoContable) : '—', c: [176, 138, 106] },
+    { l: 'Saldo por Transferir (Contratado - Transferido)', v: disp.saldo_por_transferir ? fmtCLPn(T.saldoTransferir) : '—', c: [176, 122, 161] },
+    { l: 'Saldo por Rendir', v: disp.saldo_por_rendir ? fmtCLPn(T.saldoRendir) : '—', c: [118, 106, 205] },
+    { l: disp.fecha_termino ? 'Plazo vencido con saldo / vence en 30 días' : 'Plazos de ejecución', v: disp.fecha_termino ? `${pl.venc.length} / ${pl.porv.length}` : 'sin fechas', c: [200, 100, 60] },
+  ];
+  const gap = 6, kw = (cw - gap * 3) / 4, kh = 20;
+  kpis.forEach((k, i) => {
+    const kx = mx + (i % 4) * (kw + gap), ky = y + Math.floor(i / 4) * (kh + gap);
+    doc.setFillColor(245, 246, 249); doc.setDrawColor(225, 227, 232); doc.roundedRect(kx, ky, kw, kh, 1.5, 1.5, 'FD');
+    doc.setFillColor(k.c[0], k.c[1], k.c[2]); doc.roundedRect(kx, ky, 2.2, kh, 1, 1, 'F');
+    doc.setFontSize(12.5); doc.setTextColor(k.c[0], k.c[1], k.c[2]); doc.setFont(undefined, 'bold'); doc.text(k.v, kx + 6, ky + 10.5, { maxWidth: kw - 8 });
+    doc.setFont(undefined, 'normal'); doc.setFontSize(7.2); doc.setTextColor(90, 90, 95); doc.text(k.l, kx + 6, ky + 16, { maxWidth: kw - 8 });
+  });
+  y += 2 * kh + gap + 8;
+
+  const colsAgg = ['N°', 'Asignado ($)', 'Contratado ($)', 'Vigente ($)', 'Saldo Contable ($)', 'Saldo por Transferir ($)', 'Saldo por Rendir ($)'];
+  const filaAgg = (r, nombre) => [nombre ?? r.key, r.n.toLocaleString('es-CL'), fmtCLPn(r.asignado), fmtCLPn(r.contratado), fmtCLPn(r.vigente),
+    { content: fmtCLPn(r.saldoContable), styles: r.saldoContable < 0 ? rojo : {} }, { content: fmtCLPn(r.saldoTransferir), styles: r.saldoTransferir < 0 ? rojo : {} },
+    { content: fmtCLPn(r.saldoRendir), styles: r.saldoRendir < 0 ? rojo : {} }];
+  const tablaAgg = (inicioY, nombreCol, filas, conTotal) => doc.autoTable({
+    startY: inicioY, margin: { left: mx, right: mx }, head: [[nombreCol, ...colsAgg]], body: filas.map(r => filaAgg(r)),
+    foot: conTotal ? [filaAgg(Object.assign({ key: 'TOTAL' }, T)).map(c => (typeof c === 'object' ? c.content : c))] : undefined,
+    styles: { fontSize: 8, cellPadding: 1.5, halign: 'right' }, columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } }, headStyles: azul,
+    footStyles: { fillColor: [226, 230, 244], textColor: [20, 20, 20], fontStyle: 'bold' }, didParseCell: d => { if (d.column.index === 0) d.cell.styles.halign = 'left'; },
+  });
+  titulo('Resumen por provincia', y); tablaAgg(y + 3, 'Provincia', rfOrdenarProvincias(rfAgregar(f, 'provincia')), true);
+
+  // Gráficos (con letra grande y fondo blanco para impresión)
+  doc.addPage();
+  agregarImagenChart(doc, 'chartRfPrograma', mx, 14, 124, 175, `Por programa — ${nombreMetrica}`);
+  agregarImagenChart(doc, 'chartRfProvincia', mx + 134, 14, 117, 80, `Por provincia — ${nombreMetrica}`);
+  agregarImagenChart(doc, 'chartRfAnio', mx + 134, 104, 117, 85, `Evolución anual — ${nombreMetrica}`);
+  doc.addPage();
+  agregarImagenChart(doc, 'chartRfComuna', mx, 14, 150, 185, `Por comuna — ${nombreMetrica}`);
+
+  // Tablas
+  doc.addPage(); titulo('Resumen por programa', 14); tablaAgg(17, 'Programa', rfAgregar(f, 'programa').sort((a, b) => b.saldoRendir - a.saldoRendir || b.asignado - a.asignado), false);
+  let y2 = doc.lastAutoTable.finalY + 10; if (y2 > pageH - 50) { doc.addPage(); y2 = 14; }
+  titulo('Resumen por comuna', y2); tablaAgg(y2 + 3, 'Comuna', rfAgregar(f, 'comuna').sort((a, b) => b.saldoRendir - a.saldoRendir || b.asignado - a.asignado), false);
+
+  // Alertas de plazo
+  if (disp.fecha_termino && (pl.venc.length || pl.porv.length)) {
+    doc.addPage(); titulo(`Plazos de ejecución — ${pl.venc.length} con plazo vencido y saldo por rendir · ${pl.porv.length} vencen en los próximos 30 días`, 14);
+    let ya = 17;
+    [['Plazo vencido (mayor saldo por rendir primero)', pl.venc, [190, 40, 60]], ['Vence en los próximos 30 días', pl.porv, [217, 164, 65]]].forEach(([t, lista, col]) => {
+      if (!lista.length) return;
+      if (ya > pageH - 40) { doc.addPage(); ya = 14; }
+      doc.setFontSize(9); doc.setTextColor(col[0], col[1], col[2]); doc.setFont(undefined, 'bold'); doc.text(`${t} (${lista.length}${lista.length > 80 ? ', primeros 80' : ''})`, mx, ya + 3); doc.setFont(undefined, 'normal');
+      doc.autoTable({ startY: ya + 5, margin: { left: mx, right: mx }, head: [['Comuna', 'Id. Proyecto', 'Nombre', 'Término', 'Saldo por Rendir ($)']],
+        body: lista.slice(0, 80).map(p => [p.comuna ?? '', p.id_proyecto ?? '', p.nombre ?? '', rfFecha(p.fecha_termino) + (p.termino_estimado ? ' (est.)' : ''), p.saldo_por_rendir != null ? fmtCLPn(p.saldo_por_rendir) : '—']),
+        styles: { fontSize: 7, cellPadding: 1.2 }, columnStyles: { 2: { cellWidth: cw * 0.45 }, 4: { halign: 'right' } }, headStyles: azul, rowPageBreak: 'avoid' });
+      ya = doc.lastAutoTable.finalY + 8;
+    });
+  }
+
+  // Boletas de garantía
+  if (disp.garantia) {
+    const g = rfClasificarGarantias(f);
+    if (g.venc.length || g.p30.length || g.p60.length) {
+      doc.addPage(); titulo(`Boletas de garantía — ${g.venc.length} vencidas · ${g.p30.length} vencen en 30 días · ${g.p60.length} entre 31 y 60 días (sin proyectos cerrados ni dejados sin efecto)`, 14);
+      let yg = 17;
+      [['Boleta vencida (más reciente primero)', g.venc, [190, 40, 60]], ['Vence en los próximos 30 días', g.p30, [217, 164, 65]], ['Vence entre 31 y 60 días', g.p60, [143, 163, 126]]].forEach(([t, lista, col]) => {
+        if (!lista.length) return;
+        if (yg > pageH - 40) { doc.addPage(); yg = 14; }
+        doc.setFontSize(9); doc.setTextColor(col[0], col[1], col[2]); doc.setFont(undefined, 'bold'); doc.text(`${t} (${lista.length}${lista.length > 60 ? ', primeros 60' : ''})`, mx, yg + 3); doc.setFont(undefined, 'normal');
+        doc.autoTable({ startY: yg + 5, margin: { left: mx, right: mx }, head: [['Comuna', 'Id. Proyecto', 'Nombre', 'Estado Real', 'Vence']],
+          body: lista.slice(0, 60).map(p => [p.comuna ?? '', p.id_proyecto ?? '', p.nombre ?? '', p.estado_seg ?? '—', rfFecha(p.venc_garantia)]),
+          styles: { fontSize: 7, cellPadding: 1.2 }, columnStyles: { 2: { cellWidth: cw * 0.45 } }, headStyles: azul, rowPageBreak: 'avoid' });
+        yg = doc.lastAutoTable.finalY + 8;
+      });
+    }
+  }
+
+  // Detalle de proyectos (las 13 columnas)
+  doc.addPage(); titulo(`Detalle de proyectos (${f.length.toLocaleString('es-CL')})`, 14);
+  const detalle = [...f].sort((a, b) => String(a.comuna).localeCompare(String(b.comuna), 'es') || rfNum(b.saldo_por_rendir) - rfNum(a.saldo_por_rendir));
+  const m = v => v == null ? '—' : fmtCLPn(v);
+  doc.autoTable({
+    startY: 17, margin: { left: mx, right: mx },
+    head: [['Provincia', 'Comuna', 'Programa', 'Subprograma', 'Id. Proyecto', 'Nombre', 'Monto Asignado', 'Monto Contratado', 'Monto Vigente', 'Saldo Contable', 'Saldo por Transferir', 'Saldo por Rendir', 'Plazo']],
+    body: detalle.map(p => [p.provincia ?? '', p.comuna ?? '', p.programa ?? '', p.subprograma ?? '', p.id_proyecto ?? '', p.nombre ?? '', m(p.monto_asignado), m(p.monto_contratado), m(p.monto_vigente),
+      { content: m(p.saldo_contable), styles: (p.saldo_contable || 0) < 0 ? rojo : {} }, { content: m(p.saldo_por_transferir), styles: (p.saldo_por_transferir || 0) < 0 ? rojo : {} },
+      { content: m(p.saldo_por_rendir), styles: (p.saldo_por_rendir || 0) < 0 ? rojo : {} }, p.plazo_ejecucion != null ? p.plazo_ejecucion + ' d' : '—']),
+    styles: { fontSize: 5.8, cellPadding: 0.9 }, headStyles: Object.assign({ fontSize: 5.8 }, azul),
+    columnStyles: { 5: { cellWidth: 46 }, 6: { halign: 'right' }, 7: { halign: 'right' }, 8: { halign: 'right' }, 9: { halign: 'right' }, 10: { halign: 'right' }, 11: { halign: 'right' }, 12: { halign: 'right' } },
+    rowPageBreak: 'avoid',
+  });
+
+  // Pie de página con numeración
+  const n = doc.getNumberOfPages();
+  for (let i = 1; i <= n; i++) { doc.setPage(i); doc.setFontSize(7.5); doc.setTextColor(120, 120, 120); doc.text(`SUBDERE en Línea — Rendiciones · Página ${i} de ${n}`, pageW / 2, pageH - 6, { align: 'center' }); }
+  doc.save(`informe_rendiciones_${new Date().toISOString().slice(0, 10)}.pdf`);
+}
+
+function rfDescargarXLS() {
+  if (!(RENDICIONES && RENDICIONES.proyectos && RENDICIONES.proyectos.length)) { alert('Aún no hay datos de Rendiciones.'); return; }
+  const f = rfFiltrados(), disp = rfDisp(), T = rfTotales(f), pl = rfClasificarPlazos(f, disp), gar = rfClasificarGarantias(f);
+  const FMT = '$#,##0;-$#,##0', wb = XLSX.utils.book_new(), v = x => x == null ? '' : x;
+
+  const wsR = XLSX.utils.aoa_to_sheet([
+    ['SUBDERE en Línea — Rendiciones: situación financiera de los proyectos'],
+    [`Generado el ${new Date().toLocaleDateString('es-CL')}` + (RENDICIONES.fecha_actualizacion ? ` · Informe de SUBDERE en Línea del ${rfFecha(RENDICIONES.fecha_actualizacion)}` : '')],
+    [], ['Filtros aplicados', rfResumenFiltros()], [], ['Indicador', 'Valor'],
+    ['Proyectos', T.n],
+    ['Monto Asignado', disp.monto_asignado ? T.asignado : 'No viene en el informe'],
+    ['Monto Contratado', disp.monto_contratado ? T.contratado : 'No viene en el informe'],
+    ['Monto Vigente', disp.monto_vigente ? T.vigente : 'No viene en el informe'],
+    ['Saldo Contable (Asignado − Contratado)', disp.saldo_contable ? T.saldoContable : 'No viene en el informe'],
+    ['Saldo por Transferir (Contratado − Transferido)', disp.saldo_por_transferir ? T.saldoTransferir : 'No viene en el informe'],
+    ['Saldo por Rendir', disp.saldo_por_rendir ? T.saldoRendir : 'No viene en el informe'],
+    ['Proyectos con plazo vencido y saldo por rendir', disp.fecha_termino ? pl.venc.length : 'No hay fechas de término'],
+    ['Proyectos que vencen en los próximos 30 días', disp.fecha_termino ? pl.porv.length : 'No hay fechas de término'],
+    ['Por Rendir conforme a % de ejecución', disp.avance ? T.ejec : 'Sin % de avance cargado'],
+    ['Boletas de garantía vencidas', disp.garantia ? gar.venc.length : 'Sin fechas de vencimiento'],
+    ['Boletas de garantía que vencen en 30 días', disp.garantia ? gar.p30.length : 'Sin fechas de vencimiento'],
+  ]);
+  wsR['!cols'] = [{ wch: 50 }, { wch: 46 }]; formatearColumnaXLS(wsR, 1, FMT, 7, 12); formatearColumnaXLS(wsR, 1, FMT, 15, 15);
+  XLSX.utils.book_append_sheet(wb, wsR, 'Resumen');
+
+  const cab = ['N° proyectos', 'Monto Asignado ($)', 'Monto Contratado ($)', 'Monto Vigente ($)', 'Saldo Contable ($)', 'Saldo por Transferir ($)', 'Saldo por Rendir ($)'];
+  const hojaAgg = (nombreHoja, nombreCol, filas) => {
+    const ws = XLSX.utils.aoa_to_sheet([[nombreCol, ...cab], ...filas.map(r => [r.key, r.n, r.asignado, r.contratado, r.vigente, r.saldoContable, r.saldoTransferir, r.saldoRendir]),
+      ['TOTAL', T.n, T.asignado, T.contratado, T.vigente, T.saldoContable, T.saldoTransferir, T.saldoRendir]]);
+    ws['!cols'] = [{ wch: 44 }, { wch: 13 }, ...Array(6).fill({ wch: 20 })];
+    for (let c = 2; c <= 7; c++) formatearColumnaXLS(ws, c, FMT, 1, filas.length + 1);
+    XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
+  };
+  hojaAgg('Por Provincia', 'Provincia', rfOrdenarProvincias(rfAgregar(f, 'provincia')));
+  hojaAgg('Por Programa', 'Programa', rfAgregar(f, 'programa').sort((a, b) => b.saldoRendir - a.saldoRendir));
+  hojaAgg('Por Comuna', 'Comuna', rfAgregar(f, 'comuna').sort((a, b) => b.saldoRendir - a.saldoRendir));
+  const campoAnio = disp.anio_aprobacion ? 'anio_aprobacion' : 'anio_postulacion';
+  hojaAgg(disp.anio_aprobacion ? 'Por Año Aprobación' : 'Por Año Postulación', disp.anio_aprobacion ? 'Año de aprobación' : 'Año de postulación', rfAgregar(f, campoAnio).sort((a, b) => a.key - b.key));
+
+  if (disp.fecha_termino) {
+    const filasPl = [...pl.venc.map(p => ['Plazo vencido', p]), ...pl.porv.map(p => ['Vence en 30 días', p])];
+    const wsP = XLSX.utils.aoa_to_sheet([['Alerta', 'Comuna', 'Id. Proyecto', 'Nombre', 'Fecha de término', 'Término estimado', 'Saldo por Rendir ($)'],
+      ...filasPl.map(([a, p]) => [a, v(p.comuna), v(p.id_proyecto), v(p.nombre), v(p.fecha_termino), p.termino_estimado ? 'Sí' : 'No', v(p.saldo_por_rendir)])]);
+    wsP['!cols'] = [{ wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 60 }, { wch: 16 }, { wch: 16 }, { wch: 20 }]; formatearColumnaXLS(wsP, 6, FMT, 1, filasPl.length);
+    XLSX.utils.book_append_sheet(wb, wsP, 'Alertas de Plazo');
+  }
+
+  const detalle = [...f].sort((a, b) => String(a.comuna).localeCompare(String(b.comuna), 'es') || rfNum(b.saldo_por_rendir) - rfNum(a.saldo_por_rendir));
+  const wsD = XLSX.utils.aoa_to_sheet([
+    ['Provincia', 'Comuna', 'Programa', 'Subprograma', 'Id. Proyecto', 'Nombre', 'Monto Asignado', 'Monto Contratado', 'Monto Vigente', 'Saldo Contable', 'Saldo por Transferir', 'Saldo por Rendir', 'Plazo de ejecución (días)', 'Estado Real', '% Avance físico', 'Rendición conforme a % ejecución', 'Por Rendir conforme a % ejecución', 'Fecha vencimiento boleta de garantía'],
+    ...detalle.map(p => [v(p.provincia), v(p.comuna), v(p.programa), v(p.subprograma), v(p.id_proyecto), v(p.nombre), v(p.monto_asignado), v(p.monto_contratado), v(p.monto_vigente),
+      v(p.saldo_contable), v(p.saldo_por_transferir), v(p.saldo_por_rendir), v(p.plazo_ejecucion), v(p.estado_seg), v(p.avance_fisico), v(p.rendicion_ejec), v(p.por_rendir_ejec), v(p.venc_garantia)]),
+  ]);
+  wsD['!cols'] = [{ wch: 10 }, { wch: 16 }, { wch: 36 }, { wch: 28 }, { wch: 16 }, { wch: 60 }, ...Array(6).fill({ wch: 18 }), { wch: 14 }, { wch: 34 }, { wch: 12 }, { wch: 22 }, { wch: 22 }, { wch: 22 }];
+  for (let c = 6; c <= 11; c++) formatearColumnaXLS(wsD, c, FMT, 1, detalle.length);
+  for (let c = 15; c <= 16; c++) formatearColumnaXLS(wsD, c, FMT, 1, detalle.length);
+  XLSX.utils.book_append_sheet(wb, wsD, 'Proyectos');
+  if (disp.garantia) {   // hoja de boletas de garantía: todas las que tienen fecha, con su situación
+    const conFecha = f.filter(p => p.venc_garantia).sort((a, b) => a.venc_garantia.localeCompare(b.venc_garantia));
+    const situacion = p => !rfGarantiaActiva(p) ? 'Proyecto cerrado / sin efecto' : p.venc_garantia < gar.hoy ? 'Vencida' : p.venc_garantia <= gar.d30 ? 'Vence en 30 días' : p.venc_garantia <= gar.d60 ? 'Vence en 31 a 60 días' : 'Vigente (más de 60 días)';
+    const wsG = XLSX.utils.aoa_to_sheet([['Situación', 'Comuna', 'Id. Proyecto', 'Nombre', 'Estado Real', 'Estado (informe financiero)', 'Fecha vencimiento boleta', 'Días para vencer', 'Saldo por Rendir ($)'],
+      ...conFecha.map(p => [situacion(p), v(p.comuna), v(p.id_proyecto), v(p.nombre), v(p.estado_seg), v(p.estado_real), p.venc_garantia, rfDias(gar.hoy, p.venc_garantia), v(p.saldo_por_rendir)])]);
+    wsG['!cols'] = [{ wch: 28 }, { wch: 16 }, { wch: 16 }, { wch: 60 }, { wch: 30 }, { wch: 28 }, { wch: 18 }, { wch: 14 }, { wch: 20 }]; formatearColumnaXLS(wsG, 8, FMT, 1, conFecha.length);
+    XLSX.utils.book_append_sheet(wb, wsG, 'Boletas de Garantía');
+  }
+  XLSX.writeFile(wb, `informe_rendiciones_${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
 renderRendiciones();
-leerJsonPublico(RENDICIONES_FILE_ID).then(d => { if (d && Array.isArray(d.proyectos)) RENDICIONES = d; RF_CARGADO = true; renderRendiciones(); });
+leerJsonPublico(RENDICIONES_FILE_ID).then(d => { if (d && Array.isArray(d.proyectos)) RENDICIONES = d; RF_CARGADO = true; rfEnriquecer(); renderRendiciones(); });
 
 
 // ========================================================================
@@ -3027,6 +3662,7 @@ async function cargarDatosExtraParaEditar() {
   }
   const contentRes = await driveFetch(`https://www.googleapis.com/drive/v3/files/${DATOS_EXTRA_FILE_ID}?alt=media`);
   datosExtra = await contentRes.json();
+  rfRefrescarExtra();
 }
 
 async function guardarEnDrive() {
@@ -3046,7 +3682,7 @@ function buscarProyectoExtra(q) {
     String(d.nombre_proyecto||'').toLowerCase().includes(qq) ||
     String(d.comuna||'').toLowerCase().includes(qq) ||
     String(d.id_proyecto||'').toLowerCase().includes(qq)
-  ).slice(0, 25);
+  ).slice(0, 25).concat(rfProyectosSoloInforme(qq, RAW_DATA, 10));
   results.innerHTML = matches.map(d => `<div class="picker-item" onclick='seleccionarProyectoExtra(${JSON.stringify(d.id_proyecto)})'>
     <div>${d.nombre_proyecto ?? ''}</div>
     <div class="pid">${d.id_proyecto} · ${d.comuna ?? ''}</div>
@@ -3055,7 +3691,7 @@ function buscarProyectoExtra(q) {
 }
 
 function seleccionarProyectoExtra(idProyecto) {
-  proyectoSeleccionado = RAW_DATA.find(d => String(d.id_proyecto) === String(idProyecto));
+  proyectoSeleccionado = RAW_DATA.find(d => String(d.id_proyecto) === String(idProyecto)) || rfProyectoDesdeInforme(idProyecto);
   if (!proyectoSeleccionado) return;
   document.getElementById('picker-results').classList.remove('open');
   document.getElementById('proyecto-search').value = '';
@@ -3069,6 +3705,10 @@ function seleccionarProyectoExtra(idProyecto) {
 
   document.getElementById('f-evento').value = existing.evento || '';
   document.getElementById('f-profesional').value = existing.profesional || '';
+  rfLlenarEstadosReal(existing.estado_real || '');
+  document.getElementById('f-avance-fisico').value = existing.avance_fisico ?? '';
+  document.getElementById('f-venc-garantia').value = existing.fecha_venc_garantia || '';
+  document.getElementById('f-contrato-plat').value = existing.contrato_plataforma || '';
   document.getElementById('f-revisiones').value = existing.revisiones ?? '';
   document.getElementById('f-fecha-transferencia').value = existing.fecha_transferencia || '';
   document.getElementById('f-contacto-nombre').value = existing.contacto_nombre || '';
@@ -3086,7 +3726,11 @@ document.addEventListener('click', (e) => {
 async function guardarDatosExtra() {
   if (!proyectoSeleccionado) return;
   const id = proyectoSeleccionado.id_proyecto;
-  datosExtra[id] = {
+  datosExtra[id] = Object.assign({}, datosExtra[id] || {}, {   // conserva lo que el formulario no muestra (por ejemplo, la marca de importación)
+    estado_real: document.getElementById('f-estado-real').value,
+    avance_fisico: document.getElementById('f-avance-fisico').value === '' ? '' : Number(document.getElementById('f-avance-fisico').value),
+    fecha_venc_garantia: document.getElementById('f-venc-garantia').value,
+    contrato_plataforma: document.getElementById('f-contrato-plat').value,
     evento: document.getElementById('f-evento').value,
     profesional: document.getElementById('f-profesional').value,
     revisiones: document.getElementById('f-revisiones').value,
@@ -3098,12 +3742,13 @@ async function guardarDatosExtra() {
     observaciones: document.getElementById('f-observaciones').value,
     actualizado: new Date().toLocaleString('es-CL'),
     ultima_edicion_por: usuarioActualEmail || 'desconocido',
-  };
+  });
   const statusEl = document.getElementById('save-status');
   statusEl.textContent = 'Guardando...';
   try {
     await guardarEnDrive();
     statusEl.textContent = `Guardado ✓ (${datosExtra[id].actualizado})`;
+    rfRefrescarExtra();
   } catch (err) {
     statusEl.textContent = 'Error al guardar: ' + err.message;
   }
@@ -3116,8 +3761,8 @@ function limpiarFormularioExtra() {
   document.getElementById('picker-results').innerHTML = '';
   document.getElementById('extra-form-wrap').style.display = 'none';
   document.getElementById('selected-project-banner').innerHTML = '';
-  ['f-evento','f-profesional'].forEach(id => document.getElementById(id).value = '');
-  ['f-revisiones','f-fecha-transferencia','f-contacto-nombre','f-contacto-telefono','f-contacto-correo','f-descripcion','f-observaciones']
+  ['f-evento','f-profesional','f-estado-real','f-contrato-plat'].forEach(id => document.getElementById(id).value = '');
+  ['f-avance-fisico','f-venc-garantia','f-revisiones','f-fecha-transferencia','f-contacto-nombre','f-contacto-telefono','f-contacto-correo','f-descripcion','f-observaciones']
     .forEach(id => document.getElementById(id).value = '');
   document.getElementById('save-status').textContent = '';
 }
@@ -3153,6 +3798,10 @@ function construirMinutaHTML(proyecto, extra) {
       <h2>Información adicional</h2>
       ${row('Evento', extra.evento)}
       ${row('Profesional a cargo', extra.profesional)}
+      ${row('Estado Real', extra.estado_real)}
+      ${row('% de avance físico', extra.avance_fisico !== undefined && extra.avance_fisico !== '' ? extra.avance_fisico + '%' : undefined)}
+      ${row('Fecha vencimiento boleta de garantía', extra.fecha_venc_garantia)}
+      ${row('¿Contrato en plataforma?', extra.contrato_plataforma)}
       ${row('N° de revisiones', extra.revisiones)}
       ${row('Fecha de transferencia de recursos', extra.fecha_transferencia)}
       ${row('Descripción del proyecto', extra.descripcion)}
@@ -3381,6 +4030,58 @@ function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
   });
 }
 
+// Imagen de un gráfico para el PDF: en pantalla usa letra clara sobre fondo oscuro, que en una hoja blanca no se lee.
+// Se aplica un "tema de impresión" (letra oscura y más grande, fondo blanco, nítido) SOLO mientras se captura.
+// Chart.js regenera sus objetos de escala en cada update(), así que no se restaura "valor por valor": se guarda una copia
+// de las opciones antes de tocarlas y se repone completa al terminar.
+function imagenChartImpresion(chart, anchoMm) {
+  if (!chart.width || !chart.height) return { data: chart.toBase64Image('image/png', 1.0), w: chart.canvas.width, h: chart.canvas.height, tipo: 'PNG' };
+  const clonar = v => {
+    if (Array.isArray(v)) return v.map(clonar);
+    if (v && typeof v === 'object') { const p = Object.getPrototypeOf(v); if (p === Object.prototype || p === null) { const r = {}; Object.keys(v).forEach(k => { r[k] = clonar(v[k]); }); return r; } }
+    return v;
+  };
+  const o = chart.config.options || (chart.config.options = {});
+  const respaldo = { scales: clonar(o.scales), plugins: clonar(o.plugins), tieneDpr: 'devicePixelRatio' in o, dpr: o.devicePixelRatio, tieneAnim: 'animation' in o, anim: o.animation };
+  const dsCambios = [];   // las etiquetas propias de cada dataset (ds.datalabels) son objetos estables: se restauran uno a uno
+  const fijarDs = (obj, clave, valor) => { const tenia = Object.prototype.hasOwnProperty.call(obj, clave), antes = obj[clave]; obj[clave] = valor; dsCambios.push(() => { if (tenia) obj[clave] = antes; else delete obj[clave]; }); };
+  const aseg = (obj, clave) => { if (obj[clave] === undefined || obj[clave] === null) obj[clave] = {}; return obj[clave]; };
+  const letra = (obj, tam, peso) => { const f = (obj.font && typeof obj.font === 'object') ? obj.font : {}; obj.font = Object.assign({}, f, { size: tam, weight: peso || f.weight || '500' }); };
+  const TINTA = '#1f2430', REJILLA = '#d6d9df';
+  chart.stop();   // si el gráfico se acaba de dibujar, se termina su animación para que el cambio de estilo se pinte de inmediato
+  const escalas = aseg(o, 'scales');
+  Object.keys(chart.scales || {}).forEach(id => {
+    const sc = aseg(escalas, id), t = aseg(sc, 'ticks'); t.color = TINTA; letra(t, 14); t.autoSkip = false;
+    const g = aseg(sc, 'grid'); if (g.display !== false) g.color = REJILLA;
+    if (sc.title && sc.title.display) { sc.title.color = TINTA; letra(sc.title, 14, '600'); }
+  });
+  const pl = aseg(o, 'plugins');
+  const lb = aseg(aseg(pl, 'legend'), 'labels'); lb.color = TINTA; letra(lb, 14);
+  const dl = aseg(pl, 'datalabels'); dl.color = TINTA; dl.backgroundColor = null; letra(dl, 13, '700');
+  (chart.data.datasets || []).forEach(ds => {
+    if (ds.type === 'line' || (chart.config.type === 'line' && !ds.type)) { fijarDs(ds, 'borderColor', '#3d4455'); fijarDs(ds, 'backgroundColor', '#3d4455'); }   // las líneas claras no se ven sobre blanco
+    if (ds.datalabels && typeof ds.datalabels === 'object') {
+    const f = (ds.datalabels.font && typeof ds.datalabels.font === 'object') ? ds.datalabels.font : {};
+    fijarDs(ds.datalabels, 'color', TINTA); fijarDs(ds.datalabels, 'backgroundColor', null); fijarDs(ds.datalabels, 'font', Object.assign({}, f, { size: 13, weight: '700' })); }
+  });
+  const w0 = chart.width, h0 = chart.height, wPx = Math.min(1100, Math.max(520, Math.round((anchoMm || 120) * 5.2)));
+  o.devicePixelRatio = 2; o.animation = false;
+  try {
+    chart.resize(wPx, Math.round(h0 * wPx / w0)); chart.update('none');
+    const c = chart.canvas, lienzo = document.createElement('canvas'); lienzo.width = c.width; lienzo.height = c.height;
+    const ctx = lienzo.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, lienzo.width, lienzo.height); ctx.drawImage(c, 0, 0);
+    return { data: lienzo.toDataURL('image/jpeg', 0.93), w: lienzo.width, h: lienzo.height, tipo: 'JPEG' };
+  } finally {
+    dsCambios.reverse().forEach(fn => fn());
+    const o2 = chart.config.options;
+    if (respaldo.scales === undefined) delete o2.scales; else o2.scales = respaldo.scales;
+    if (respaldo.plugins === undefined) delete o2.plugins; else o2.plugins = respaldo.plugins;
+    if (respaldo.tieneDpr) o2.devicePixelRatio = respaldo.dpr; else delete o2.devicePixelRatio;
+    if (respaldo.tieneAnim) o2.animation = respaldo.anim; else delete o2.animation;
+    chart.resize(); chart.update('none');
+  }
+}
+
 function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
   const chart = charts[chartId];
   doc.setFontSize(9);
@@ -3391,12 +4092,12 @@ function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
     doc.setFontSize(8); doc.text('(sin datos)', x + 2, y + maxH / 2);
     return;
   }
-  const data = chart.toBase64Image('image/png', 1.0);
-  const pxW = chart.canvas.width, pxH = chart.canvas.height;
+  const img = imagenChartImpresion(chart, maxW);
+  const pxW = img.w, pxH = img.h;
   let w = maxW, h = (pxH / pxW) * w;
   if (h > maxH) { h = maxH; w = (pxW / pxH) * h; }
   const offsetX = x + (maxW - w) / 2;
-  doc.addImage(data, 'PNG', offsetX, y + 2, w, h);
+  doc.addImage(img.data, img.tipo || 'JPEG', offsetX, y + 2, w, h);
 }
 
 function generarInformeResumenConLogo(jsPDF, logoW, logoH) {

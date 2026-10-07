@@ -9,3 +9,5 @@ __pycache__/
 data_raw/Resumen_Financiero_*
 para_subir_a_drive/rendiciones.json
 debug/
+# Planilla de seguimiento (trae contactos): no subir a GitHub
+data_raw/planilla_seguimiento_*

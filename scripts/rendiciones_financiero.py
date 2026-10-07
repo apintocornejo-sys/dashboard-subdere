@@ -54,6 +54,17 @@ ALIAS = {
     "fecha_asignacion": ["fecha asignacion", "fecha de asignacion", "fecha aprobacion", "fecha de aprobacion", "fecha resolucion", "fecha convenio"],
     "fecha_inicio": ["fecha inicio", "fecha de inicio", "fecha inicio ejecucion", "fecha inicio obra"],
     "fecha_termino": ["fecha termino", "fecha de termino", "fecha termino proyecto", "fecha termino ejecucion", "fecha termino contrato"],
+    # Opcionales (los usa el Modo Reunión si el informe las trae)
+    "estado_real": ["estado real", "estado ejecucion", "estado proyecto", "estado"],
+    "contrato_plataforma": ["con contrato en plataforma", "contrato en plataforma", "contrato plataforma"],
+    # Columnas del Resumen Financiero real de SUBDERE en Línea que sirven para replicar el tablero
+    "contratos_registrados": ["contratos registrados"],
+    "contratos_ejecucion": ["contratos en ejecucion"],
+    "avance_financiero": ["avance financiero"],
+    "total_reintegros": ["total reintegros"],
+    "modalidad_ejecucion": ["modalidad ejecucion"],
+    "transf_anios_anteriores": ["transf anos anteriores"],
+    "transf_anio_actual": ["transf ano actual"],
 }
 OBLIGATORIAS = ["id_proyecto", "comuna", "programa", "monto_asignado"]
 CAMPOS_MONTO = ["monto_asignado", "monto_contratado", "monto_vigente", "total_transferido", "total_rendido", "saldo_por_rendir"]
@@ -92,6 +103,20 @@ def a_monto(v):
         return None
     n = int(digitos)
     return -n if negativo else n
+
+
+def a_porcentaje(v):
+    """'85,3%' / '85.3' / '100 %' -> número tal como viene (85.3, 100.0); vacío -> None."""
+    s = _celda(v).replace("%", "").strip()
+    if not s or norm(s) in ("no aplica", "n a", "na"):
+        return None
+    if re.search(r"\d\.\d{3}(?!\d)", s) and "," in s:      # 1.234,5
+        s = s.replace(".", "")
+    s = s.replace(",", ".")
+    try:
+        return float(re.sub(r"[^\d.\-]", "", s))
+    except ValueError:
+        return None
 
 
 def a_fecha(v):
@@ -259,6 +284,13 @@ def procesar_tabla(encabezados, filas, nombres=None, ahora: datetime = None) -> 
             if base:
                 rec["fecha_termino"] = (datetime.strptime(base, "%Y-%m-%d") + timedelta(days=rec["plazo_ejecucion"])).strftime("%Y-%m-%d")
                 rec["termino_estimado"] = True
+        for campo in ("total_reintegros", "transf_anios_anteriores", "transf_anio_actual", "contratos_registrados", "contratos_ejecucion"):
+            rec[campo] = a_monto(g(fila, campo))
+        rec["avance_financiero"] = a_porcentaje(g(fila, "avance_financiero"))
+        rec["modalidad_ejecucion"] = g(fila, "modalidad_ejecucion").strip() or None
+        rec["estado_real"] = g(fila, "estado_real").strip() or None
+        cp = norm(g(fila, "contrato_plataforma"))
+        rec["contrato_plataforma"] = "SI" if cp in ("si", "s", "1", "true", "yes") else "NO" if cp in ("no", "n", "0", "false") else None
         rec["anio_aprobacion"] = int(rec["fecha_asignacion"][:4]) if rec["fecha_asignacion"] else None
         rec["anio_postulacion"] = int(rec["fecha_postulacion"][:4]) if rec["fecha_postulacion"] else None
 
@@ -280,6 +312,8 @@ def procesar_tabla(encabezados, filas, nombres=None, ahora: datetime = None) -> 
             advertencias.append(f"El informe no trae la columna '{texto}': sus montos y saldos asociados quedan vacíos.")
     if "saldo_por_rendir" not in mapa and "total_rendido" not in mapa:
         advertencias.append("El informe no trae 'Saldo por Rendir' ni 'Total Rendido': el Saldo por Rendir queda vacío.")
+    if "estado_real" not in mapa:
+        advertencias.append("El informe no trae 'Estado Real': en el Modo Reunión, el gráfico de estados usa el estado del listado de proyectos y 'Sin Iniciar' no se puede calcular.")
     if "fecha_asignacion" not in mapa:
         advertencias.append("El informe no trae 'Fecha de Asignación': el filtro por esa fecha y el 'Año de Aprobación' quedan vacíos.")
     if "fecha_termino" not in mapa:
