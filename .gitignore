@@ -11,3 +11,10 @@ para_subir_a_drive/rendiciones.json
 debug/
 # Planilla de seguimiento (trae contactos): no subir a GitHub
 data_raw/planilla_seguimiento_*
+# Datos y credenciales: nunca van a GitHub
+para_subir_a_drive/
+data_raw/
+/subdere_datos_extra.json
+*.xls
+*.xlsx
+*.csv
