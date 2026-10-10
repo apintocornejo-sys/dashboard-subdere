@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://accounts.google.com; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>SUBDERE Coquimbo — Dashboard de Proyectos</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -1129,7 +1130,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 // "Configurar la lectura desde Google Drive").
 // ========================================================================
 const DRIVE_FILE_ID = "1ZRi0TAbjIozOnZ00cbH9O68sX4Ejlds8";
-const DRIVE_API_KEY = "AIzaSyCVf_tVnaPxqp5MBPclSDz58mW2qt2uTlo";
+const DRIVE_API_KEY = "";   // retirada: el acceso es solo con sesión de Google (ACCESO_PROTEGIDO)
 // El parámetro _ts cambia en cada carga de página, así el navegador nunca
 // reutiliza una respuesta guardada en caché de una semana anterior.
 const DRIVE_URL = `https://www.googleapis.com/drive/v3/files/${DRIVE_FILE_ID}?alt=media&key=${DRIVE_API_KEY}&_ts=${Date.now()}`;
@@ -1352,6 +1353,24 @@ async function cargarHistorialEstadosPublico() {
   }
 }
 
+// Aviso si los datos no se han actualizado (el agente corre lunes a viernes; tolera fin de semana largo)
+function avisoDatosViejos(fecha) {
+  try {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(fecha || ''));
+    const prev = document.getElementById('aviso-datos-viejos'); if (prev) prev.remove();
+    const badge = document.getElementById('badge-actualizado');
+    if (!m) return;
+    const dias = Math.floor((Date.now() - new Date(+m[1], +m[2] - 1, +m[3]).getTime()) / 86400000);
+    if (dias <= 3) { if (badge) badge.style.borderColor = ''; return; }
+    if (badge) badge.style.borderColor = '#c0392b';
+    const d = document.createElement('div');
+    d.id = 'aviso-datos-viejos'; d.setAttribute('role', 'alert');
+    d.style.cssText = 'background:#fdecea;color:#7b1e14;border:1px solid #c0392b;border-radius:8px;margin:10px 16px;padding:10px 14px;font-size:0.85rem';
+    d.textContent = `⚠️ Los datos tienen ${dias} días sin actualizarse (última actualización: ${fecha}). Es posible que la actualización automática esté fallando; avisa al administrador.`;
+    const h = document.querySelector('header'); if (h && h.parentNode) h.parentNode.insertBefore(d, h.nextSibling);
+  } catch (e) { /* aviso opcional */ }
+}
+
 async function iniciarDashboard() {
   const [payload, extraPublico, historialPublico] = await Promise.all([
     driveJson(DRIVE_FILE_ID),
@@ -1367,6 +1386,7 @@ async function iniciarDashboard() {
   filtered = RAW_DATA;
   const horaTexto = payload.hora_actualizacion ? ` ${payload.hora_actualizacion}` : '';
   document.getElementById('badge-actualizado-texto').textContent = `Actualizado: ${payload.fecha_actualizacion}${horaTexto}`;
+  avisoDatosViejos(payload.fecha_actualizacion);
   document.getElementById('header-sub').textContent =
     `Módulo: Presentación de Proyectos · ${payload.total_proyectos} proyectos · fuente: Google Drive`;
   document.getElementById('loading').style.display = 'none';
@@ -1637,13 +1657,13 @@ function tablaDetalleIndicador(lista) {
       <thead><tr><th>Estado</th><th>Días</th><th></th><th>Profesional a Cargo</th><th>ID</th><th>Proyecto</th><th>Comuna</th></tr></thead>
       <tbody>
         ${ordenada.map(p => `<tr>
-          <td>${p.estado ?? ''}</td>
+          <td>${accesoEsc(p.estado)}</td>
           <td class="num">${p.dias_en_estado ?? ''}</td>
           <td>${circuloUrgencia(p.dias_en_estado)}</td>
-          <td>${p.profesional && p.profesional.trim() !== '' ? p.profesional : 'Sin asignar'}</td>
-          <td>${p.id_proyecto ?? ''}</td>
-          <td>${p.nombre_proyecto ?? ''}</td>
-          <td>${p.comuna ?? ''}</td>
+          <td>${accesoEsc(p.profesional && p.profesional.trim() !== '' ? p.profesional : 'Sin asignar')}</td>
+          <td>${accesoEsc(p.id_proyecto)}</td>
+          <td>${accesoEsc(p.nombre_proyecto)}</td>
+          <td>${accesoEsc(p.comuna)}</td>
         </tr>`).join('')}
       </tbody>
     </table>`;
@@ -1712,9 +1732,9 @@ function renderProfesionalRevision() {
 
   el.innerHTML = filas.map(([nombre, n]) => {
     return `
-    <div class="profesional-card${nombre === 'Sin asignar' ? ' sin-asignar' : ''}${profesionalExpandido === nombre ? ' expandido' : ''}" onclick="toggleProfesionalDetalle('${nombre.replace(/'/g,"\\'")}')">
+    <div class="profesional-card${nombre === 'Sin asignar' ? ' sin-asignar' : ''}${profesionalExpandido === nombre ? ' expandido' : ''}" onclick="toggleProfesionalDetalle(${accesoEsc(JSON.stringify(nombre))})">
       <div class="num">${numeroReloj(n)}</div>
-      <div class="name">${nombre}</div>
+      <div class="name">${accesoEsc(nombre)}</div>
     </div>
   `;
   }).join('');
@@ -1728,7 +1748,7 @@ function renderProfesionalRevision() {
         <table class="profesional-detalle-tabla">
           <thead><tr><th>Días</th><th></th><th>ID</th><th>Proyecto</th><th>Comuna</th><th>Programa</th></tr></thead>
           <tbody>
-            ${lista.map(p => `<tr><td class="num">${p.dias_en_estado ?? ''}</td><td>${circuloUrgencia(p.dias_en_estado)}</td><td>${p.id_proyecto ?? ''}</td><td>${p.nombre_proyecto ?? ''}</td><td>${p.comuna ?? ''}</td><td>${p.programa ?? ''}</td></tr>`).join('')}
+            ${lista.map(p => `<tr><td class="num">${p.dias_en_estado ?? ''}</td><td>${circuloUrgencia(p.dias_en_estado)}</td><td>${accesoEsc(p.id_proyecto)}</td><td>${accesoEsc(p.nombre_proyecto)}</td><td>${accesoEsc(p.comuna)}</td><td>${accesoEsc(p.programa)}</td></tr>`).join('')}
           </tbody>
         </table>
       </div>`;
@@ -1940,7 +1960,7 @@ function renderProgramas() {
     plugins: { datalabels: { formatter: (v) => `${(100*v/totalMonto).toFixed(1)}%` } },
   });
   document.querySelector('#tbl-programa tbody').innerHTML = rows.map(r => `<tr>
-    <td>${r.key}</td>
+    <td>${accesoEsc(r.key)}</td>
     <td class="num">${r.n.toLocaleString('es-CL')}</td>
     <td class="num">${fmtCLP(r.monto)}</td>
     <td class="num">${(100*r.monto/totalMonto).toFixed(1)}%</td>
@@ -1986,14 +2006,14 @@ function renderTabla() {
   const start = tablaPage*PAGE_SIZE;
   const page = rows.slice(start, start+PAGE_SIZE);
   document.querySelector('#tbl-proyectos tbody').innerHTML = page.map(d => `<tr>
-    <td>${d.id_proyecto ?? ''}</td>
-    <td>${d.nombre_proyecto ?? ''}</td>
-    <td>${d.comuna ?? ''}</td>
-    <td>${d.programa ?? ''}</td>
-    <td>${d.estado ?? ''}</td>
+    <td>${accesoEsc(d.id_proyecto)}</td>
+    <td>${accesoEsc(d.nombre_proyecto)}</td>
+    <td>${accesoEsc(d.comuna)}</td>
+    <td>${accesoEsc(d.programa)}</td>
+    <td>${accesoEsc(d.estado)}</td>
     <td class="num">${d.dias_en_estado ?? ''}</td>
     <td>${d.evento ?? ''}</td>
-    <td>${d.profesional ?? ''}</td>
+    <td>${accesoEsc(d.profesional)}</td>
     <td>${d.anio_aprobacion ?? ''}</td>
     <td>${d.anio_postulacion ?? ''}</td>
     <td class="num">${fmtCLP(d.monto_subdere||0)}</td>
@@ -2096,10 +2116,10 @@ function renderTrazabilidad() {
     .sort((a, b) => sumaTotal(b.dias) - sumaTotal(a.dias))
     .map(({ d, dias }) => {
       return `<tr>
-        <td>${d.id_proyecto ?? ''}</td>
-        <td>${d.nombre_proyecto ?? ''}</td>
-        <td>${d.comuna ?? ''}</td>
-        <td>${d.estado ?? ''}</td>
+        <td>${accesoEsc(d.id_proyecto)}</td>
+        <td>${accesoEsc(d.nombre_proyecto)}</td>
+        <td>${accesoEsc(d.comuna)}</td>
+        <td>${accesoEsc(d.estado)}</td>
         <td class="num">${dias['Municipio'] || '—'}</td>
         <td class="num">${dias['Unidad Regional'] || '—'}</td>
         <td class="num">${dias['Nivel Central'] || '—'}</td>
@@ -2210,8 +2230,8 @@ function renderGR2026() {
 
   // ---- Tabla comparativa por comuna ----
   const filaHtml = f => `
-    <tr class="fila-clic" onclick="irATablaGR2026('${f.comuna}')" title="Ver los proyectos de ${f.comuna}">
-      <td>${f.comuna}</td>
+    <tr class="fila-clic" onclick="irATablaGR2026(${accesoEsc(JSON.stringify(f.comuna))})" title="Ver los proyectos de ${accesoEsc(f.comuna)}">
+      <td>${accesoEsc(f.comuna)}</td>
       <td class="num">${fmtCLP(f.asignado)}</td>
       <td class="num">${fmtCLP(f.postulado)}</td>
       <td class="num" style="${f.saldo < 0 ? 'color:#FF9C7A' : ''}">${fmtCLPn(f.saldo)}</td>
@@ -2710,8 +2730,8 @@ function renderDespliegue() {
       : c.dias <= 30 ? `<span class="chip-dias chip-ok">${txtDias(c.dias)}</span>`
       : c.dias <= 60 ? `<span class="chip-dias chip-medio">${txtDias(c.dias)}</span>`
       : `<span class="chip-dias chip-alto">${txtDias(c.dias)}</span>`;
-    return `<tr class="fila-clic${despliegueSel === c.comuna ? ' fila-sel' : ''}" onclick="despliegueSeleccionar('${c.comuna}')">
-      <td>${c.comuna}</td><td>${c.provincia}</td>
+    return `<tr class="fila-clic${despliegueSel === c.comuna ? ' fila-sel' : ''}" onclick="despliegueSeleccionar(${accesoEsc(JSON.stringify(c.comuna))})">
+      <td>${accesoEsc(c.comuna)}</td><td>${accesoEsc(c.provincia)}</td>
       <td class="num"><b>${c.n}</b><div class="barra-gr"><span style="width:${c.n / d.max * 100}%;background:${PROVINCIAS_COLOR[c.provincia]}"></span></div></td>
       <td class="num">${d.total ? (c.n / d.total * 100).toFixed(1).replace('.', ',') + '%' : '—'}</td>
       <td class="num">${fmtFechaCorta(c.ultima)}</td><td class="num">${chip}</td></tr>`;
@@ -2738,7 +2758,7 @@ function iniciarSesionVisitas() {
 function alAutenticarVisitas() { renderIngresoManual(); cargarManualesParaEditar(); }
 function alRechazarVisitas(email) {
   const login = document.getElementById('ingreso-login');
-  if (login) login.innerHTML = `<div class="aviso-ingreso"><b>Cuenta no autorizada</b><br>La cuenta <b>${email || 'desconocida'}</b> no tiene permiso para registrar visitas.
+  if (login) login.innerHTML = `<div class="aviso-ingreso"><b>Cuenta no autorizada</b><br>La cuenta <b>${accesoEsc(email || 'desconocida')}</b> no tiene permiso para registrar visitas.
     Si crees que deberías tener acceso, contacta a Carlos Pinto. <br><br><button class="btn btn-ghost" onclick="location.reload()">Intentar con otra cuenta</button></div>`;
 }
 
@@ -3786,7 +3806,7 @@ function initGoogleSignIn() {
         document.getElementById('signin-container').innerHTML =
           `<div style="color:#F7D9C9;background:#3d231c;border:1px solid #C8643C;border-radius:8px;padding:14px 16px;max-width:420px">
             <b>Cuenta no autorizada</b><br>
-            La cuenta <b>${email || 'desconocida'}</b> no tiene permiso para editar Datos adicionales.
+            La cuenta <b>${accesoEsc(email || 'desconocida')}</b> no tiene permiso para editar Datos adicionales.
             Si crees que deberías tener acceso, contacta a Carlos Pinto para que agregue tu correo a la lista.
             <br><br>
             <button class="btn btn-ghost" onclick="location.reload()">Intentar con otra cuenta</button>
@@ -3851,9 +3871,9 @@ function buscarProyectoExtra(q) {
     String(d.comuna||'').toLowerCase().includes(qq) ||
     String(d.id_proyecto||'').toLowerCase().includes(qq)
   ).slice(0, 25).concat(rfProyectosSoloInforme(qq, RAW_DATA, 10));
-  results.innerHTML = matches.map(d => `<div class="picker-item" onclick='seleccionarProyectoExtra(${JSON.stringify(d.id_proyecto)})'>
-    <div>${d.nombre_proyecto ?? ''}</div>
-    <div class="pid">${d.id_proyecto} · ${d.comuna ?? ''}</div>
+  results.innerHTML = matches.map(d => `<div class="picker-item" onclick="seleccionarProyectoExtra(${accesoEsc(JSON.stringify(d.id_proyecto))})">
+    <div>${accesoEsc(d.nombre_proyecto)}</div>
+    <div class="pid">${d.id_proyecto} · ${accesoEsc(d.comuna)}</div>
   </div>`).join('') || '<div class="picker-item">Sin resultados</div>';
   results.classList.add('open');
 }
@@ -3951,7 +3971,7 @@ function construirMinutaHTML(proyecto, extra) {
       <h2>Datos del proyecto (SUBDERE en Línea)</h2>
       ${row('ID Proyecto', proyecto.id_proyecto)}
       ${row('Nombre', proyecto.nombre_proyecto)}
-      ${row('Comuna / Provincia', `${proyecto.comuna ?? ''} / ${proyecto.provincia ?? ''}`)}
+      ${row('Comuna / Provincia', `${accesoEsc(proyecto.comuna)} / ${accesoEsc(proyecto.provincia)}`)}
       ${row('Programa', proyecto.programa)}
       ${row('Subprograma', proyecto.subprograma)}
       ${row('Tipo de acción', proyecto.tipo_accion)}
