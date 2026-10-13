@@ -59,7 +59,9 @@ def main(argv=None):
     except ValueError as e:
         sys.exit(str(e))
     if nuevo != html:
-        respaldo = INDEX_HTML.with_name(f"index.html.bak_evento_{datetime.now().strftime('%Y%m%d_%H%M%S')}")
+        RESPALDOS = BASE_DIR / "data_raw"   # fuera de docs/ y de git: los respaldos antiguos pueden traer datos sensibles
+        RESPALDOS.mkdir(exist_ok=True)
+        respaldo = RESPALDOS / f"index.html.bak_evento_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         shutil.copy2(INDEX_HTML, respaldo)
         INDEX_HTML.write_text(nuevo, encoding="utf-8")
         print(f"Respaldo: {respaldo.name}")

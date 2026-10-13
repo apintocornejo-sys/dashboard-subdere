@@ -18,3 +18,10 @@ data_raw/
 *.xls
 *.xlsx
 *.csv
+# Respaldos del dashboard (pueden traer claves antiguas): nunca a GitHub
+docs/*.bak*
+*.bak_*
+
+# Cualquier variante de token o credencial
+token*.json
+client_secret*.json

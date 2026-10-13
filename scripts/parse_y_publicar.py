@@ -13,6 +13,13 @@ import json
 import hashlib
 from pathlib import Path
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+
+def ahora_chile():
+    """Hora actual de Chile (America/Santiago), sin zona. En GitHub Actions el reloj del equipo está en UTC."""
+    return datetime.now(ZoneInfo("America/Santiago")).replace(tzinfo=None)
+
 
 import pandas as pd
 
@@ -136,7 +143,7 @@ def main():
     df = parse_file(src)
 
     # Respaldo del archivo original (referencia histórica / trazabilidad)
-    ahora = datetime.now()
+    ahora = ahora_chile()
     today = ahora.strftime("%Y-%m-%d")
     hora = ahora.strftime("%H:%M")
     backup_path = RAW_BACKUP_DIR / f"Listado_Proyectos_{today}.xls"

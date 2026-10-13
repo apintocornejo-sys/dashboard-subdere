@@ -25,6 +25,7 @@ import json
 import argparse
 import unicodedata
 import datetime as dt
+from zoneinfo import ZoneInfo
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -210,7 +211,7 @@ def cargar_ajustes() -> list:
 
 
 def procesar(eventos: list, hoy: dt.date = None, ajustes: list = None) -> dict:
-    hoy = hoy or dt.date.today()
+    hoy = hoy or dt.datetime.now(ZoneInfo("America/Santiago")).date()
     ajustes = cargar_ajustes() if ajustes is None else ajustes
     clasificados = [clasificar(e, ajustes) for e in eventos if DESDE <= e["ini"] <= hoy]
     validos = [r for r in clasificados if r["nivel"] == "valido" and r["tipo"] != "otro"]
@@ -218,7 +219,7 @@ def procesar(eventos: list, hoy: dt.date = None, ajustes: list = None) -> dict:
     unicos = sorted({(r["fecha"].isoformat(), r["comuna"], r["tipo"], bool(r["online"])) for r in validos})
     salida = {
         "desde": DESDE.isoformat(),
-        "generado": dt.datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "generado": dt.datetime.now(ZoneInfo("America/Santiago")).strftime("%Y-%m-%d %H:%M"),
         "visitas": [dict(fecha=f, comuna=c, tipo=t, online=o) for f, c, t, o in unicos],
     }
     return {"salida": salida, "clasificados": clasificados}

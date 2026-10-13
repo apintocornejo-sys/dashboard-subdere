@@ -26,6 +26,13 @@ import argparse
 import unicodedata
 from pathlib import Path
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+
+
+def ahora_chile():
+    """Hora actual de Chile (America/Santiago), sin zona. En GitHub Actions el reloj del equipo está en UTC."""
+    return datetime.now(ZoneInfo("America/Santiago")).replace(tzinfo=None)
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 RAW_BACKUP_DIR = BASE_DIR / "data_raw"
@@ -233,7 +240,7 @@ def cargar_nombres(base_dir: Path = BASE_DIR) -> dict:
 
 
 def procesar_tabla(encabezados, filas, nombres=None, ahora: datetime = None) -> dict:
-    ahora = ahora or datetime.now()
+    ahora = ahora or ahora_chile()
     nombres = nombres or {}
     mapa, no_encontradas = mapear_columnas(encabezados)
     advertencias = []
@@ -499,7 +506,7 @@ def descargar_en_sesion(page, log, base_dir: Path = BASE_DIR) -> Path:
     except Exception as e:
         falla("No pude exportar el Excel del Resumen Financiero.", f"Detalle: {e}.")
     RAW_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
-    dest = RAW_BACKUP_DIR / f"Resumen_Financiero_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xls"
+    dest = RAW_BACKUP_DIR / f"Resumen_Financiero_{ahora_chile().strftime('%Y%m%d_%H%M%S')}.xls"
     info.value.save_as(dest)
     ULTIMO_EXCEL = dest
     log(f"Rendiciones: Excel descargado: {dest}")

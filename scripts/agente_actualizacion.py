@@ -41,6 +41,13 @@ import argparse
 import subprocess
 from pathlib import Path
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+
+def ahora_chile():
+    """Hora actual de Chile (America/Santiago), sin zona. En GitHub Actions el reloj del equipo está en UTC."""
+    return datetime.now(ZoneInfo("America/Santiago")).replace(tzinfo=None)
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 RAW_BACKUP_DIR = BASE_DIR / "data_raw"
@@ -85,7 +92,7 @@ def obtener_credenciales_drive():
 
 
 def log(msg):
-    ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    ts = ahora_chile().strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{ts}] {msg}"
     print(line)
     with open(LOG_FILE, "a", encoding="utf-8") as f:
@@ -226,7 +233,7 @@ def descargar_excel_subdere() -> Path:
             frame.click("text=Exportar Excel")
         download = download_info.value
 
-        fecha = datetime.now().strftime("%Y%m%d_%H%M%S")
+        fecha = ahora_chile().strftime("%Y%m%d_%H%M%S")
         dest = RAW_BACKUP_DIR / f"Listado_Proyectos_{fecha}.xls"
         download.save_as(dest)
         log(f"Excel descargado: {dest}")
@@ -256,7 +263,7 @@ def procesar_excel(ruta_excel: Path) -> Path:
     DRIVE_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     RAW_BACKUP_DIR.mkdir(parents=True, exist_ok=True)
 
-    ahora = datetime.now()
+    ahora = ahora_chile()
     today = ahora.strftime("%Y-%m-%d")
     hora = ahora.strftime("%H:%M")
     if ruta_excel.parent != RAW_BACKUP_DIR:
@@ -372,7 +379,7 @@ def actualizar_historial_estados(ruta_json: Path):
     contenido = service.files().get_media(fileId=HISTORIAL_ESTADOS_FILE_ID).execute()
     historial = json.loads(contenido.decode("utf-8")) if contenido else {}
 
-    hoy = datetime.now().strftime("%Y-%m-%d")
+    hoy = ahora_chile().strftime("%Y-%m-%d")
     cambios = 0
 
     for p in proyectos:
@@ -411,7 +418,7 @@ def publicar_en_github():
         log("No hay cambios nuevos que subir a GitHub.")
         return
 
-    fecha = datetime.now().strftime("%Y-%m-%d")
+    fecha = ahora_chile().strftime("%Y-%m-%d")
     subprocess.run(["git", "add", "-A"], cwd=BASE_DIR, check=True)
     subprocess.run(["git", "commit", "-m", f"Actualización automática {fecha}"], cwd=BASE_DIR, check=True)
     subprocess.run(["git", "push"], cwd=BASE_DIR, check=True)
