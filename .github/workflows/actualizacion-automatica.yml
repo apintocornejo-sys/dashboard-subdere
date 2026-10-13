@@ -17,6 +17,10 @@ on:
     - cron: '0 11,16,20 * * 1-5'
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+  issues: write
+
 concurrency:
   group: actualizacion-subdere
   cancel-in-progress: false
@@ -74,3 +78,11 @@ jobs:
           name: debug-subdere
           path: debug/
           retention-days: 5
+
+      - name: Avisar con un issue de GitHub si el agente falló
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --title "⚠️ Falló la actualización automática ($(date +%F))" \
+            --body "El agente terminó con error. Revisa el log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. Causa frecuente: token de Google vencido (renovar el secreto GOOGLE_TOKEN_JSON) o cambio en SUBDERE en Línea." || true
