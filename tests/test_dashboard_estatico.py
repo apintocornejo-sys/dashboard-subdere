@@ -49,3 +49,23 @@ def test_texto_dinamico_va_escapado():
         for m in re.finditer(r"\$\{\s*[A-Za-z_]\w*\.(?:%s)\s*(?:\?\?\s*'[^']*')?\s*\}" % campos, linea):
             crudos.append((n, m.group(0)))
     assert not crudos, f"Interpolaciones sin escapar (usa accesoEsc): {crudos[:10]}"
+
+
+def test_pestanas_accesibles_por_teclado():
+    assert "setAttribute('role', 'tablist')" in HTML
+    assert "setAttribute('role', 'tab')" in HTML
+    assert "'aria-selected'" in HTML and "ArrowRight" in HTML
+
+
+def test_graficos_con_texto_alternativo_y_foco_visible():
+    assert "setAttribute('role', 'img')" in HTML and "aria-label" in HTML
+    assert ":focus-visible" in HTML
+
+
+def test_csp_permite_hoja_de_fuentes():
+    # la hoja de la fuente de respaldo se pide con fetch: sin esto aparece un error de CSP en la consola
+    assert "connect-src 'self' https://cdn.jsdelivr.net" in HTML
+
+
+def test_canvas_no_ensancha_la_pagina_en_celular():
+    assert re.search(r"canvas\s*\{\s*max-width:100%", HTML)

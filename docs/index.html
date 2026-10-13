@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://accounts.google.com; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://accounts.google.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://accounts.google.com; font-src 'self' data: https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; connect-src 'self' https://cdn.jsdelivr.net https://www.googleapis.com https://accounts.google.com https://oauth2.googleapis.com; frame-src https://accounts.google.com; object-src 'none'; base-uri 'self'; form-action 'none'">
 <title>SUBDERE Coquimbo — Dashboard de Proyectos</title>
 <script integrity="sha384-9nhczxUqK87bcKHh20fSQcTGD4qq5GhayNYSYWqwBkINBhOfQLg/P5HG5lF1urn4" crossorigin="anonymous" src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script integrity="sha384-y49Zu59jZHJL/PLKgZPv3k2WI9c0Yp3pWB76V8OBVCb0QBKS8l4Ff3YslzHVX76Y" crossorigin="anonymous" src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
@@ -90,12 +90,12 @@ select { background:var(--panel); color:var(--ink); border:1px solid var(--borde
 .tab { padding:11px 18px 11px 15px; font-size:0.85rem; color:var(--ink-dim); cursor:pointer; border-left:3px solid transparent; font-weight:500; transition:background-color .15s,color .15s; }
 .tab:hover { color:var(--ink); background:var(--panel-2); }
 .tab[data-view="resumen"].active { border-left-color:#D9A441; color:#D9A441; background:var(--panel-2); }
-.tab[data-view="provincias"].active { border-left-color:#C8643C; color:#C8643C; background:var(--panel-2); }
+.tab[data-view="provincias"].active { border-left-color:#C8643C; color:#E8896A; background:var(--panel-2); }
 .tab[data-view="programas"].active { border-left-color:#8FA37E; color:#8FA37E; background:var(--panel-2); }
 .tab[data-view="evolucion"].active { border-left-color:#6FA3B5; color:#6FA3B5; background:var(--panel-2); }
-.tab[data-view="tabla"].active { border-left-color:#B07AA1; color:#B07AA1; background:var(--panel-2); }
+.tab[data-view="tabla"].active { border-left-color:#B07AA1; color:#D1A3C6; background:var(--panel-2); }
 .tab[data-view="datos-extra"].active { border-left-color:#D8C3A5; color:#D8C3A5; background:var(--panel-2); }
-.tab[data-view="trazabilidad"].active { border-left-color:#E0607E; color:#E0607E; background:var(--panel-2); }
+.tab[data-view="trazabilidad"].active { border-left-color:#E0607E; color:#F28BA3; background:var(--panel-2); }
 .tab[data-view="gr2026"].active { border-left-color:#5FB3A7; color:#5FB3A7; background:var(--panel-2); }
 .tab[data-view="despliegue"].active { border-left-color:#C6CF5E; color:#C6CF5E; background:var(--panel-2); }
 .tab[data-view="rendiciones"].active { border-left-color:#9E94E0; color:#9E94E0; background:var(--panel-2); }
@@ -501,6 +501,9 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
 
   .btn { padding:10px 14px; font-size:0.8rem; }
 }
+
+canvas { max-width:100%; }   /* un canvas sin gráfico (sin datos para el filtro) no debe ensanchar la página en el celular */
+.tab:focus-visible, [role="region"]:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid #D9A441; outline-offset:2px; }
 </style>
 </head>
 <body>
@@ -693,6 +696,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
         <button onclick="pagerNext()">Siguiente ›</button>
       </div>
     </div>
+<div style="overflow-x:auto">
     <table id="tbl-proyectos">
       <thead><tr>
         <th onclick="sortTabla('id_proyecto')">ID</th>
@@ -710,6 +714,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
       </tr></thead>
       <tbody></tbody>
     </table>
+    </div>
   </div>
 
   <div class="view" id="view-datos-extra">
@@ -1401,12 +1406,52 @@ async function iniciarDashboard() {
 }
 
 // ---------- Tabs ----------
-document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
-  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+function activarTab(t, enfocar) {
+  document.querySelectorAll('.tab').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); x.tabIndex = -1; });
   document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
+  t.classList.add('active'); t.setAttribute('aria-selected', 'true'); t.tabIndex = 0;
   document.getElementById('view-' + t.dataset.view).classList.add('active');
-}));
+  if (enfocar) t.focus();
+  // los gráficos dibujados mientras la pestaña estaba oculta toman un tamaño erróneo: se recalculan al mostrarla
+  try { Object.values(charts).forEach(c => { try { c.resize(); } catch (e) {} }); } catch (e) {}
+}
+(function tabsAccesibles() {
+  const tabs = [...document.querySelectorAll('.tab')];
+  const nav = document.querySelector('nav.sidebar');
+  if (nav) { nav.setAttribute('role', 'tablist'); nav.setAttribute('aria-label', 'Secciones del dashboard'); nav.setAttribute('aria-orientation', window.innerWidth <= 768 ? 'horizontal' : 'vertical'); }
+  tabs.forEach((t, i) => {
+    t.setAttribute('role', 'tab');
+    const v = document.getElementById('view-' + t.dataset.view);
+    if (v) { v.setAttribute('role', 'tabpanel'); t.id = t.id || 'tab-' + t.dataset.view; v.setAttribute('aria-labelledby', t.id); }
+    t.setAttribute('aria-selected', t.classList.contains('active') ? 'true' : 'false');
+    t.tabIndex = t.classList.contains('active') ? 0 : -1;
+    t.addEventListener('click', () => activarTab(t, false));
+    t.addEventListener('keydown', e => {
+      const sig = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (sig) { e.preventDefault(); activarTab(tabs[(i + sig + tabs.length) % tabs.length], true); }
+      else if (e.key === 'Home') { e.preventDefault(); activarTab(tabs[0], true); }
+      else if (e.key === 'End') { e.preventDefault(); activarTab(tabs[tabs.length - 1], true); }
+      else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activarTab(t, false); }
+    });
+  });
+})();
+// Gráficos: texto alternativo y regiones con scroll accesibles por teclado
+function mejorarAccesibilidad() {
+  document.querySelectorAll('canvas').forEach(c => {
+    if (c.getAttribute('role')) return;
+    const panel = c.closest('.panel, .rf-panel, .rf-chart-box');
+    const titulo = panel && panel.querySelector('h2, h3, .rf-titulo');
+    c.setAttribute('role', 'img');
+    c.setAttribute('aria-label', 'Gráfico: ' + (titulo ? titulo.textContent.trim() : (c.id || 'datos')));
+  });
+  document.querySelectorAll('div[style*="overflow-x:auto"], .tabla-compacta, #tabla-trazabilidad-wrap, .profesional-detalle-panel').forEach(d => {
+    if (d.hasAttribute('tabindex')) return;
+    d.tabIndex = 0; d.setAttribute('role', 'region');
+    if (!d.getAttribute('aria-label')) d.setAttribute('aria-label', 'Tabla con desplazamiento horizontal');
+  });
+}
+mejorarAccesibilidad();
+new MutationObserver(() => { clearTimeout(window.__a11yT); window.__a11yT = setTimeout(mejorarAccesibilidad, 400); }).observe(document.body, { childList: true, subtree: true });
 
 // ---------- Filtros (selección múltiple) ----------
 function unique(arr, key) {
