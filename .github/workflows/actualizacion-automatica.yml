@@ -7,14 +7,13 @@ name: Actualización automática SUBDERE
 #      desde cualquier lugar) — botón "Run workflow"
 on:
   schedule:
-    # Los horarios de "cron" de GitHub siempre son en UTC, NO en hora de Chile.
-    # 08:00 / 13:00 / 17:00 de Chile (horario de verano, UTC-3) = 11:00 / 16:00 / 20:00 UTC.
-    # ⚠️ Cuando Chile cambie a horario de invierno (UTC-4), estos horarios se
-    # atrasan 1 hora en la práctica — hay que sumar 1 a cada número de aquí
-    # abajo (12,17,21) para que sigan siendo las 08:00/13:00/17:00 reales.
-    # Por ahora corre de lunes a viernes; para incluir fines de semana,
-    # cambiar "1-5" por "*".
-    - cron: '0 11,16,20 * * 1-5'
+    # Los horarios de "cron" de GitHub son siempre en UTC.
+    # Se programa en AMBOS husos de Chile (verano UTC-3 e invierno UTC-4) y el
+    # trabajo "hora" deja pasar solo las ejecuciones que caen a las 08:00,
+    # 13:00 o 17:00 reales de Chile (America/Santiago). Así no hay que tocar
+    # nada cuando cambia la hora. Las otras ejecuciones se omiten en segundos.
+    # Corre de lunes a viernes; para incluir fines de semana, cambiar "1-5" por "*".
+    - cron: '0 11,12,16,17,20,21 * * 1-5'
   workflow_dispatch: {}
 
 permissions:
@@ -26,7 +25,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  hora:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      correr: ${{ steps.chk.outputs.correr }}
+    steps:
+      - id: chk
+        name: Verificar que sea hora de ejecución en Chile
+        run: |
+          H=$(TZ=America/Santiago date +%H)
+          echo "Hora actual en Chile: $H h"
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "correr=true" >> "$GITHUB_OUTPUT"   # lanzamiento manual: siempre
+          else
+            case "$H" in
+              08|13|17) echo "correr=true" >> "$GITHUB_OUTPUT" ;;
+              *)        echo "correr=false" >> "$GITHUB_OUTPUT"; echo "Fuera de horario, se omite." ;;
+            esac
+          fi
+
   actualizar:
+    needs: hora
+    if: needs.hora.outputs.correr == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
