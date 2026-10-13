@@ -1,0 +1,30 @@
+"""Crea .github/workflows/tests.yml: corre las pruebas en GitHub en cada push y pull request.
+Uso (desde la raíz del repo):  python3 scripts/instalar_ci.py"""
+from pathlib import Path
+destino = Path(".github/workflows/tests.yml")
+destino.parent.mkdir(parents=True, exist_ok=True)
+destino.write_text("""name: Pruebas
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q tests
+""", encoding="utf-8")
+print("Creado", destino)

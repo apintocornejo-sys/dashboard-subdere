@@ -1,0 +1,4 @@
+pytest
+pandas
+lxml
+html5lib

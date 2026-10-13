@@ -3877,7 +3877,7 @@ function buscarProyectoExtra(q) {
   ).slice(0, 25).concat(rfProyectosSoloInforme(qq, RAW_DATA, 10));
   results.innerHTML = matches.map(d => `<div class="picker-item" onclick="seleccionarProyectoExtra(${accesoEsc(JSON.stringify(d.id_proyecto))})">
     <div>${accesoEsc(d.nombre_proyecto)}</div>
-    <div class="pid">${d.id_proyecto} · ${accesoEsc(d.comuna)}</div>
+    <div class="pid">${accesoEsc(d.id_proyecto)} · ${accesoEsc(d.comuna)}</div>
   </div>`).join('') || '<div class="picker-item">Sin resultados</div>';
   results.classList.add('open');
 }
@@ -3890,10 +3890,10 @@ function seleccionarProyectoExtra(idProyecto) {
   document.getElementById('extra-form-wrap').style.display = 'block';
   const existing = datosExtra[idProyecto] || {};
   const infoEdicion = existing.ultima_edicion_por
-    ? ` <span style="color:var(--ink-dim);font-size:0.82rem">· Última edición por: ${existing.ultima_edicion_por}${existing.actualizado ? ' (' + existing.actualizado + ')' : ''}</span>`
+    ? ` <span style="color:var(--ink-dim);font-size:0.82rem">· Última edición por: ${accesoEsc(existing.ultima_edicion_por)}${existing.actualizado ? ' (' + accesoEsc(existing.actualizado) + ')' : ''}</span>`
     : '';
   document.getElementById('selected-project-banner').innerHTML =
-    `<b>${proyectoSeleccionado.nombre_proyecto}</b> — ${proyectoSeleccionado.id_proyecto} · ${proyectoSeleccionado.comuna} · ${proyectoSeleccionado.estado}${infoEdicion}`;
+    `<b>${accesoEsc(proyectoSeleccionado.nombre_proyecto)}</b> — ${accesoEsc(proyectoSeleccionado.id_proyecto)} · ${accesoEsc(proyectoSeleccionado.comuna)} · ${accesoEsc(proyectoSeleccionado.estado)}${infoEdicion}`;
 
   document.getElementById('f-evento').value = existing.evento || '';
   document.getElementById('f-profesional').value = existing.profesional || '';
