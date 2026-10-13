@@ -3857,12 +3857,20 @@ async function cargarDatosExtraParaEditar() {
   rfRefrescarExtra();
 }
 
-async function guardarEnDrive() {
+async function guardarEnDrive(objeto) {
   await driveFetch(`https://www.googleapis.com/upload/drive/v3/files/${DATOS_EXTRA_FILE_ID}?uploadType=media`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datosExtra),
+    body: JSON.stringify(objeto || datosExtra),
   });
+}
+
+// Lee la versión más reciente del archivo directamente desde Drive (sin caché)
+async function leerDatosExtraRemotos() {
+  const r = await driveFetch(`https://www.googleapis.com/drive/v3/files/${DATOS_EXTRA_FILE_ID}?alt=media&_ts=${Date.now()}`, { cache: 'no-store' });
+  const j = await r.json();
+  if (!j || typeof j !== 'object' || Array.isArray(j)) throw new Error('El archivo de Datos adicionales tiene un formato inesperado.');
+  return j;
 }
 
 // ---------- Buscador de proyectos ----------
@@ -3889,6 +3897,7 @@ function seleccionarProyectoExtra(idProyecto) {
   document.getElementById('proyecto-search').value = '';
   document.getElementById('extra-form-wrap').style.display = 'block';
   const existing = datosExtra[idProyecto] || {};
+  snapshotExtra = JSON.stringify(existing);   // para detectar si otra persona lo cambia mientras editas
   const infoEdicion = existing.ultima_edicion_por
     ? ` <span style="color:var(--ink-dim);font-size:0.82rem">· Última edición por: ${accesoEsc(existing.ultima_edicion_por)}${existing.actualizado ? ' (' + accesoEsc(existing.actualizado) + ')' : ''}</span>`
     : '';
@@ -3915,34 +3924,65 @@ document.addEventListener('click', (e) => {
   if (!e.target.closest('.picker-wrap')) document.getElementById('picker-results')?.classList.remove('open');
 });
 
+let snapshotExtra = '{}';
+const CAMPOS_EXTRA_SEGUIMIENTO = ['estado_real','avance_fisico','fecha_venc_garantia','contrato_plataforma','evento','profesional','revisiones','fecha_transferencia','contacto_nombre','contacto_telefono','contacto_correo','descripcion','observaciones'];
 async function guardarDatosExtra() {
   if (!proyectoSeleccionado) return;
   const id = proyectoSeleccionado.id_proyecto;
-  datosExtra[id] = Object.assign({}, datosExtra[id] || {}, {   // conserva lo que el formulario no muestra (por ejemplo, la marca de importación)
-    estado_real: document.getElementById('f-estado-real').value,
-    avance_fisico: document.getElementById('f-avance-fisico').value === '' ? '' : Number(document.getElementById('f-avance-fisico').value),
-    fecha_venc_garantia: document.getElementById('f-venc-garantia').value,
-    contrato_plataforma: document.getElementById('f-contrato-plat').value,
-    evento: document.getElementById('f-evento').value,
-    profesional: document.getElementById('f-profesional').value,
-    revisiones: document.getElementById('f-revisiones').value,
-    fecha_transferencia: document.getElementById('f-fecha-transferencia').value,
-    contacto_nombre: document.getElementById('f-contacto-nombre').value,
-    contacto_telefono: document.getElementById('f-contacto-telefono').value,
-    contacto_correo: document.getElementById('f-contacto-correo').value,
-    descripcion: document.getElementById('f-descripcion').value,
-    observaciones: document.getElementById('f-observaciones').value,
-    actualizado: new Date().toLocaleString('es-CL'),
-    ultima_edicion_por: usuarioActualEmail || 'desconocido',
-  });
   const statusEl = document.getElementById('save-status');
-  statusEl.textContent = 'Guardando...';
+  const val = k => document.getElementById(k).value;
+  const campos = {
+    estado_real: val('f-estado-real'),
+    avance_fisico: val('f-avance-fisico') === '' ? '' : Number(val('f-avance-fisico')),
+    fecha_venc_garantia: val('f-venc-garantia'),
+    contrato_plataforma: val('f-contrato-plat'),
+    evento: val('f-evento'),
+    profesional: val('f-profesional'),
+    revisiones: val('f-revisiones'),
+    fecha_transferencia: val('f-fecha-transferencia'),
+    contacto_nombre: val('f-contacto-nombre'),
+    contacto_telefono: val('f-contacto-telefono'),
+    contacto_correo: val('f-contacto-correo'),
+    descripcion: val('f-descripcion'),
+    observaciones: val('f-observaciones'),
+  };
+  statusEl.textContent = 'Revisando cambios de otras personas...';
   try {
-    await guardarEnDrive();
-    statusEl.textContent = `Guardado ✓ (${datosExtra[id].actualizado})`;
+    // 1) Trae lo último de Drive: así no se pisan los cambios de otros proyectos ni de otros editores
+    const remoto = await leerDatosExtraRemotos();
+    const actualRemoto = remoto[id] || {};
+    // 2) Si este proyecto cambió desde que lo abriste, pregunta antes de sobrescribir
+    if (JSON.stringify(actualRemoto) !== snapshotExtra) {
+      const quien = actualRemoto.ultima_edicion_por || 'otra persona';
+      const cuando = actualRemoto.actualizado ? ` (${actualRemoto.actualizado})` : '';
+      if (!confirm(`Este proyecto fue modificado por ${quien}${cuando} mientras lo editabas.\n\nAceptar = sobrescribir con tus cambios.\nCancelar = cargar la versión nueva en el formulario y revisar.`)) {
+        datosExtra = remoto;
+        seleccionarProyectoExtra(id);
+        statusEl.textContent = 'Se cargó la versión más reciente. Revisa y vuelve a guardar si corresponde.';
+        return;
+      }
+    }
+    // 3) Historial de cambios (últimos 20): qué campos cambiaron, quién y cuándo
+    const cambios = {};
+    CAMPOS_EXTRA_SEGUIMIENTO.forEach(k => { if (String(actualRemoto[k] ?? '') !== String(campos[k] ?? '')) cambios[k] = actualRemoto[k] ?? ''; });
+    const ahora = new Date();
+    const historial = Array.isArray(actualRemoto.historial_cambios) ? actualRemoto.historial_cambios.slice(-19) : [];
+    if (Object.keys(cambios).length) historial.push({ en: ahora.toISOString(), por: usuarioActualEmail || 'desconocido', antes: cambios });
+    const registro = Object.assign({}, actualRemoto, campos, {   // conserva lo que el formulario no muestra (p. ej. la marca de importación)
+      actualizado: ahora.toLocaleString('es-CL'),
+      ultima_edicion_por: usuarioActualEmail || 'desconocido',
+      historial_cambios: historial,
+    });
+    // 4) Escribe el archivo remoto con SOLO este proyecto reemplazado
+    const nuevo = Object.assign({}, remoto, { [id]: registro });
+    statusEl.textContent = 'Guardando...';
+    await guardarEnDrive(nuevo);
+    datosExtra = nuevo;
+    snapshotExtra = JSON.stringify(registro);
+    statusEl.textContent = `Guardado ✓ (${registro.actualizado})`;
     rfRefrescarExtra();
   } catch (err) {
-    statusEl.textContent = 'Error al guardar: ' + err.message;
+    statusEl.textContent = 'Error al guardar (no se cambió nada): ' + err.message;
   }
 }
 
