@@ -1184,6 +1184,7 @@ function accesoMostrar(estado, d = {}) {
     verificando: `${logo}<h1 class="gate-titulo">Verificando tu acceso…</h1><div class="gate-sub">Un momento, por favor</div><div class="gate-giro"></div>`,
     sin_acceso: `${logo}<h1 class="gate-titulo">Sin acceso</h1><div class="gate-sub" style="margin-bottom:22px">Esta cuenta aún no está autorizada</div>
       ${error(`La cuenta <b>${accesoEsc(d.email || 'desconocida')}</b> no tiene permiso para ver este dashboard.`)}
+      ${d.tecnico ? `<div class="gate-nota" style="margin-bottom:12px;font-size:0.7rem;opacity:0.7">Detalle técnico: ${accesoEsc(d.tecnico)}</div>` : ''}
       <a class="gate-btn gate-btn-lleno" href="${accesoMailto(d.email)}">Solicitar acceso</a>
       <button class="gate-btn" onclick="accesoLogin(true)">Usar otra cuenta</button>
       <div class="gate-sep"></div><div class="gate-nota">La solicitud se envía por correo a quien administra el acceso. Cuando te autoricen, vuelve a ingresar con esta misma cuenta.</div>`,
@@ -1221,7 +1222,7 @@ async function accesoCallback(resp) {
   emailActual = await accesoObtenerEmail();
   try { await iniciarDashboard(); }
   catch (e) {
-    if (e && (e.status === 403 || e.status === 404)) accesoMostrar('sin_acceso', { email: emailActual });
+    if (e && (e.status === 403 || e.status === 404)) accesoMostrar('sin_acceso', { email: emailActual, tecnico: e.detalleDrive || ('HTTP ' + e.status) });
     else accesoMostrar('error', { detalle: (e && e.message) || String(e) });
     return;
   }
@@ -1264,7 +1265,10 @@ async function driveJson(fileId) {   // lee un JSON de Drive: con la sesión del
   if (!r.ok) {
     const e = new Error(ACCESO_PROTEGIDO ? `No se pudo leer el archivo desde Drive (HTTP ${r.status}).`
       : `No se pudo leer el archivo desde Drive (HTTP ${r.status}). Revisa que el archivo esté compartido como "Cualquiera con el enlace" y que la API Key sea correcta.`);
-    e.status = r.status; throw e;
+    e.status = r.status;
+    try { const j = await r.clone().json(); e.detalleDrive = `archivo ${fileId.slice(0, 8)}… · HTTP ${r.status} · ${(j.error && (j.error.status || j.error.message)) || ''}${j.error && j.error.errors && j.error.errors[0] ? ' / ' + j.error.errors[0].reason : ''}`; }
+    catch (x) { e.detalleDrive = `archivo ${fileId.slice(0, 8)}… · HTTP ${r.status}`; }
+    throw e;
   }
   return r.json();
 }
