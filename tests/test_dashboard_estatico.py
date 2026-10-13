@@ -80,3 +80,12 @@ def test_listas_de_configuracion_estan_en_un_solo_bloque():
         posiciones = [m.start() for m in re.finditer(rf"^const {nombre}\b", HTML, re.M)]
         assert len(posiciones) == 1, f"{nombre} debe definirse una sola vez"
         assert ini < posiciones[0] < fin, f"{nombre} debe estar dentro del bloque de configuración"
+
+
+def test_descargas_comparten_el_mismo_asistente():
+    """Los 4 PDF cargan el logo y manejan errores con una sola función; los 4 Excel se guardan con guardarXLS."""
+    assert HTML.count("function generarPDFConLogoSeguro(") == 1
+    assert HTML.count("generarPDFConLogoSeguro(") == 5          # definición + 4 informes
+    assert HTML.count("function guardarXLS(") == 1
+    assert HTML.count("guardarXLS(wb, ") == 5          # definición + 4 informes
+    assert HTML.count("XLSX.writeFile(") == 1                    # solo dentro de guardarXLS

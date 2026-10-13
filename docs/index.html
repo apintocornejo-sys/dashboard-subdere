@@ -2401,21 +2401,26 @@ function irATablaGR2026(comuna) {
 }
 
 // ---------- Descarga: informe PDF ----------
-function descargarInformeGR2026PDF() {
-  const { jsPDF } = window.jspdf;
-  const logoImg = new Image();
-  logoImg.onload = () => generarInformeGR2026Seguro(jsPDF, logoImg.naturalWidth, logoImg.naturalHeight);
-  logoImg.onerror = () => generarInformeGR2026Seguro(jsPDF, null, null);
-  logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
+// ---------- Utilidades comunes de descarga (PDF y Excel) ----------
+// Carga el logo y llama a generar(jsPDF, anchoLogo, altoLogo); si algo falla, avisa en vez de quedarse en silencio.
+function generarPDFConLogoSeguro(generar, contexto, extraError) {
+  const { jsPDF } = window.jspdf, logo = new Image();
+  const ejecutar = (w, h) => {
+    try { generar(jsPDF, w, h); }
+    catch (err) {
+      console.error('Error generando el PDF (' + contexto + '):', err);
+      alert('No se pudo generar el PDF: ' + err.message + (extraError || ''));
+    }
+  };
+  logo.onload = () => ejecutar(logo.naturalWidth, logo.naturalHeight);
+  logo.onerror = () => ejecutar(null, null);   // continúa sin logo si falla la carga
+  logo.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
 }
+const fechaArchivo = () => new Date().toISOString().slice(0, 10);
+function guardarXLS(wb, prefijo) { XLSX.writeFile(wb, `${prefijo}_${fechaArchivo()}.xlsx`); }
 
-function generarInformeGR2026Seguro(jsPDF, logoW, logoH) {
-  try {
-    generarInformeGR2026ConLogo(jsPDF, logoW, logoH);
-  } catch (err) {
-    console.error('Error generando el informe PDF (GR 2026):', err);
-    alert('No se pudo generar el PDF: ' + err.message);
-  }
+function descargarInformeGR2026PDF() {
+  generarPDFConLogoSeguro(generarInformeGR2026ConLogo, 'GR 2026');
 }
 
 function generarInformeGR2026ConLogo(jsPDF, logoW, logoH) {
@@ -2643,7 +2648,7 @@ function descargarInformeGR2026XLS() {
   formatearColumnaXLS(wsDetalle, 6, FMT_MONTO, 1, detalle.length);
   XLSX.utils.book_append_sheet(wb, wsDetalle, 'Proyectos');
 
-  XLSX.writeFile(wb, `informe_transferencia_gr2026_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  guardarXLS(wb, 'informe_transferencia_gr2026');
 }
 
 const VISITAS_FILE_ID = "1BdiweDix_xw7ZmRSzFAaQj8P7UgyQaYn";                     // actualización automática del calendario (siguiente paso)
@@ -3591,13 +3596,7 @@ function rfRenderReunion(f, disp) {
 // ========================================================================
 function rfDescargarPDF() {
   if (!(RENDICIONES && RENDICIONES.proyectos && RENDICIONES.proyectos.length)) { alert('Aún no hay datos de Rendiciones.'); return; }
-  const { jsPDF } = window.jspdf, logo = new Image();
-  logo.onload = () => rfPDFSeguro(jsPDF, logo.naturalWidth, logo.naturalHeight);
-  logo.onerror = () => rfPDFSeguro(jsPDF, null, null);
-  logo.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
-}
-function rfPDFSeguro(jsPDF, w, h) {
-  try { rfGenerarPDF(jsPDF, w, h); } catch (err) { console.error('Error generando el PDF de Rendiciones:', err); alert('No se pudo generar el PDF: ' + err.message); }
+  generarPDFConLogoSeguro(rfGenerarPDF, 'Rendiciones');
 }
 function rfGenerarPDF(jsPDF, logoW, logoH) {
   const f = rfFiltrados(), disp = rfDisp(), T = rfTotales(f), pl = rfClasificarPlazos(f, disp);
@@ -3785,7 +3784,7 @@ function rfDescargarXLS() {
     wsG['!cols'] = [{ wch: 28 }, { wch: 16 }, { wch: 16 }, { wch: 60 }, { wch: 30 }, { wch: 28 }, { wch: 18 }, { wch: 14 }, { wch: 20 }]; formatearColumnaXLS(wsG, 8, FMT, 1, conFecha.length);
     XLSX.utils.book_append_sheet(wb, wsG, 'Boletas de Garantía');
   }
-  XLSX.writeFile(wb, `informe_rendiciones_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  guardarXLS(wb, 'informe_rendiciones');
 }
 
 renderRendiciones();
@@ -4255,24 +4254,12 @@ function descargarInformeResumenXLS() {
   hojaListadoEvento('Ficha Simplificada SUBDERE Catastrofe 2026', 'Ficha Simplificada Catastrofe');
   hojaListadoEvento('Transferencia Gobierno Regional 2026', 'Transferencia GR 2026');
 
-  XLSX.writeFile(wb, `informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.xlsx`);
+  guardarXLS(wb, 'informe_resumen_subdere');
 }
 
 function descargarInformeResumenPDF() {
-  const { jsPDF } = window.jspdf;
-  const logoImg = new Image();
-  logoImg.onload = () => generarInformeResumenSeguro(jsPDF, logoImg.naturalWidth, logoImg.naturalHeight);
-  logoImg.onerror = () => generarInformeResumenSeguro(jsPDF, null, null);
-  logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
-}
-
-function generarInformeResumenSeguro(jsPDF, logoW, logoH) {
-  try {
-    generarInformeResumenConLogo(jsPDF, logoW, logoH);
-  } catch (err) {
-    console.error('Error generando el informe PDF:', err);
-    alert('No se pudo generar el PDF: ' + err.message + '\n\nRevisa la Consola del navegador (F12) para más detalle, o avísame el mensaje de error.');
-  }
+  generarPDFConLogoSeguro(generarInformeResumenConLogo, 'Resumen',
+    '\n\nRevisa la Consola del navegador (F12) para más detalle, o avísame el mensaje de error.');
 }
 
 function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
@@ -4762,25 +4749,14 @@ function descargarResumenXLS() {
   ];
   XLSX.utils.book_append_sheet(wb, wsProyectos, 'Proyectos');
 
-  XLSX.writeFile(wb, `resumen_proyectos_subdere_${new Date().toISOString().slice(0,10)}.xlsx`);
+  guardarXLS(wb, 'resumen_proyectos_subdere');
 }
 
 function descargarResumenPDF() {
-  const { jsPDF } = window.jspdf;
-
-  // Usamos exactamente el mismo conjunto de filas que se ve en la tabla en
-  // pantalla (respeta los filtros generales Y el buscador de esta pestaña),
+  // Mismo conjunto de filas que se ve en la tabla en pantalla (respeta los filtros generales Y el buscador de esta pestaña),
   // para que el resumen y el listado del PDF siempre coincidan.
   const filasDatos = filteredTablaRows();
-
-  const logoImg = new Image();
-  logoImg.onload = function () {
-    generarPDFConLogo(jsPDF, filasDatos, logoImg.naturalWidth, logoImg.naturalHeight);
-  };
-  logoImg.onerror = function () {
-    generarPDFConLogo(jsPDF, filasDatos, null, null); // continúa sin logo si falla la carga
-  };
-  logoImg.src = `data:image/jpeg;base64,${LOGO_BASE64}`;
+  generarPDFConLogoSeguro((jsPDF, w, h) => generarPDFConLogo(jsPDF, filasDatos, w, h), 'Tabla dinámica');
 }
 
 function generarPDFConLogo(jsPDF, filasDatos, logoW, logoH) {
