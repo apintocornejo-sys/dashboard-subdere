@@ -69,3 +69,14 @@ def test_csp_permite_hoja_de_fuentes():
 
 def test_canvas_no_ensancha_la_pagina_en_celular():
     assert re.search(r"canvas\s*\{\s*max-width:100%", HTML)
+
+
+def test_listas_de_configuracion_estan_en_un_solo_bloque():
+    """Profesionales, eventos, estados y comunas se editan solo en el bloque CONFIGURACIÓN DEL DASHBOARD."""
+    ini = HTML.index("CONFIGURACIÓN DEL DASHBOARD")
+    fin = HTML.index("fin de la configuración")
+    for nombre in ("PROFESIONALES", "TODAS_LAS_COMUNAS", "ABREVIACIONES_ESTADO", "EVENTOS", "ESTADOS_REAL",
+                   "RF_CERRADOS", "LUGAR_POR_ESTADO", "LUGARES"):
+        posiciones = [m.start() for m in re.finditer(rf"^const {nombre}\b", HTML, re.M)]
+        assert len(posiciones) == 1, f"{nombre} debe definirse una sola vez"
+        assert ini < posiciones[0] < fin, f"{nombre} debe estar dentro del bloque de configuración"
