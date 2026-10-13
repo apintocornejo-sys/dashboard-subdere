@@ -54,11 +54,12 @@ jobs:
 
       - name: Reconstruir credenciales desde los secretos de GitHub
         env:
-          GOOGLE_CLIENT_SECRET_JSON: ${{ secrets.GOOGLE_CLIENT_SECRET_JSON }}
-          GOOGLE_TOKEN_JSON: ${{ secrets.GOOGLE_TOKEN_JSON }}
+          GOOGLE_CLIENT_SECRET_B64: ${{ secrets.GOOGLE_CLIENT_SECRET_B64 }}
+          GOOGLE_TOKEN_B64: ${{ secrets.GOOGLE_TOKEN_B64 }}
         run: |
-          echo "$GOOGLE_CLIENT_SECRET_JSON" > client_secret.json
-          echo "$GOOGLE_TOKEN_JSON" > token.json
+          echo "$GOOGLE_CLIENT_SECRET_B64" | base64 -d > client_secret.json
+          echo "$GOOGLE_TOKEN_B64" | base64 -d > token.json
+          python3 -c "import json; json.load(open('client_secret.json')); json.load(open('token.json')); print('JSON válido ✓')"
 
       - name: Configurar identidad de git (para el commit automático)
         run: |
@@ -85,4 +86,4 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh issue create --title "⚠️ Falló la actualización automática ($(date +%F))" \
-            --body "El agente terminó con error. Revisa el log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. Causa frecuente: token de Google vencido (renovar el secreto GOOGLE_TOKEN_JSON) o cambio en SUBDERE en Línea." || true
+            --body "El agente terminó con error. Revisa el log: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}. Causa frecuente: token de Google vencido (renovar el secreto GOOGLE_TOKEN_B64) o cambio en SUBDERE en Línea." || true
