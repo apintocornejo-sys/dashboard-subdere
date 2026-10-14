@@ -89,3 +89,10 @@ def test_descargas_comparten_el_mismo_asistente():
     assert HTML.count("function guardarXLS(") == 1
     assert HTML.count("guardarXLS(wb, ") == 5          # definición + 4 informes
     assert HTML.count("XLSX.writeFile(") == 1                    # solo dentro de guardarXLS
+
+
+def test_filtro_evento_tiene_opcion_sin_evento():
+    html = (Path(__file__).resolve().parent.parent / "docs" / "index.html").read_text(encoding="utf-8")
+    assert "const SIN_EVENTO = 'Sin evento';" in html
+    assert "[...eventosConProyectos, SIN_EVENTO]" in html
+    assert "f.evento.has(d.evento && String(d.evento).trim() ? d.evento : SIN_EVENTO)" in html

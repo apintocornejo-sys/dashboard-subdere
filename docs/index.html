@@ -1581,6 +1581,9 @@ const FILTER_LABELS = {
   'f-provincia': 'Todas', 'f-comuna': 'Todas', 'f-programa': 'Todos',
   'f-estado': 'Todos', 'f-evento-filtro': 'Todos', 'f-anio': 'Todos', 'f-anio-postulacion': 'Todos',
 };
+// Opción del filtro "Evento" para los proyectos que no tienen ningún evento asociado.
+// (Se llama "Sin evento" y no "Ninguno" porque el panel ya tiene el botón "Ninguno" = desmarcar todo.)
+const SIN_EVENTO = 'Sin evento';
 const multiselectState = {}; // { [id]: Set(valores seleccionados) }
 Object.keys(FILTER_LABELS).forEach(id => multiselectState[id] = new Set());
 
@@ -1657,7 +1660,9 @@ function refreshFilterOptions() {
   populateMultiselect('f-comuna', unique(base, 'comuna'));
   populateMultiselect('f-programa', unique(RAW_DATA, 'programa'));
   populateMultiselect('f-estado', unique(RAW_DATA, 'estado'));
-  populateMultiselect('f-evento-filtro', unique(RAW_DATA, 'evento'));
+  const eventosConProyectos = unique(RAW_DATA.filter(d => d.evento && String(d.evento).trim()), 'evento');
+  const haySinEvento = RAW_DATA.some(d => !d.evento || String(d.evento).trim() === '');
+  populateMultiselect('f-evento-filtro', haySinEvento ? [...eventosConProyectos, SIN_EVENTO] : eventosConProyectos);
   populateMultiselect('f-anio', unique(RAW_DATA, 'anio_aprobacion').map(String));
   populateMultiselect('f-anio-postulacion', unique(RAW_DATA, 'anio_postulacion').map(String));
 }
@@ -1677,7 +1682,7 @@ function applyFilters() {
     (!f.comuna.size || f.comuna.has(d.comuna)) &&
     (!f.programa.size || f.programa.has(d.programa)) &&
     (!f.estado.size || f.estado.has(d.estado)) &&
-    (!f.evento.size || f.evento.has(d.evento)) &&
+    (!f.evento.size || f.evento.has(d.evento && String(d.evento).trim() ? d.evento : SIN_EVENTO)) &&
     (!f.anio.size || f.anio.has(String(d.anio_aprobacion))) &&
     (!f.anioPostulacion.size || f.anioPostulacion.has(String(d.anio_postulacion)))
   );
