@@ -651,7 +651,7 @@ canvas { max-width:100%; }   /* un canvas sin gráfico (sin datos para el filtro
         </div>
         <div id="tabla-tradicional-2026" class="tabla-compacta" style="overflow-x:auto"></div>
       </div>
-      <div class="panel"><h2>Distribución por evento</h2><canvas id="chartEvento" style="height:340px !important"></canvas></div>
+      <div class="panel"><h2 id="titulo-chart-evento">Distribución por evento</h2><canvas id="chartEvento" style="height:340px !important"></canvas></div>
       <div class="panel wide">
         <h2>Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica</h2>
         <canvas id="chartComunaEstadosClave" style="height:420px !important"></canvas>
@@ -1246,6 +1246,8 @@ const TIPO_UNO = { reunion: 'Reunión', ceremonia: 'Ceremonia', inauguracion: 'I
 // ========================================================================
 const RF_SIGLAS = [['mejoramiento urbano', 'PMU'], ['mejoramiento de barrios', 'PMB'], ['recuperacion de ciudades', 'FRC'],
                    ['tenencia responsable', 'PTRAC'], ['revitalizacion de barrios', 'PRBIPE'], ['infraestructura patrimonial', 'PRBIPE']];
+// Gráfico "Distribución por evento" del Resumen: solo proyectos con este Año de Aprobación.
+const ANIO_APROBACION_GRAFICO_EVENTO = 2026;
 // ============================ fin de la configuración ===================
 
 // ========================================================================
@@ -1977,8 +1979,9 @@ function renderResumen() {
 
   // Distribución por evento, separado por estado: gráfico de COLUMNAS
   // (barras verticales) apiladas por estado dentro de cada evento.
-  const proyectosConEvento = filtered.filter(d => d.evento && d.evento.trim() !== '');
+  const proyectosConEvento = filtered.filter(d => d.evento && d.evento.trim() !== '' && String(d.anio_aprobacion) === String(ANIO_APROBACION_GRAFICO_EVENTO));
   const eventosOrdenados = groupBy(proyectosConEvento, 'evento').sort((a,b)=>b.n-a.n).map(d=>d.key);
+  document.getElementById('titulo-chart-evento').textContent = `Distribución por evento — aprobados ${ANIO_APROBACION_GRAFICO_EVENTO}`;
   if (eventosOrdenados.length > 0) {
     const estadosEvento = unique(proyectosConEvento, 'estado');
     const datasetsEvento = estadosEvento.map((estado, i) => ({
@@ -2003,6 +2006,8 @@ function renderResumen() {
         multiselectState['f-evento-filtro'].add(eventosOrdenados[el.index]);
         multiselectState['f-estado'].clear();
         multiselectState['f-estado'].add(estadosEvento[el.datasetIndex]);
+        multiselectState['f-anio'].clear();      // la tabla debe mostrar lo mismo que la barra: aprobados ese año
+        multiselectState['f-anio'].add(String(ANIO_APROBACION_GRAFICO_EVENTO));
         refreshFilterOptions();
         applyFilters();
         const buscadorTabla = document.getElementById('tabla-search');
@@ -4537,7 +4542,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
 
   agregarImagenChart(doc, 'chartEstado', c1X, y, colW3, rowH, 'Distribución por estado');
   agregarImagenChart(doc, 'chartAportePorProvincia', c2X, y, colW3, rowH, 'Aporte SUBDERE por provincia');
-  agregarImagenChart(doc, 'chartEvento', c3X, y, colW3, rowH, 'Distribución por evento');
+  agregarImagenChart(doc, 'chartEvento', c3X, y, colW3, rowH, `Distribución por evento — aprobados ${ANIO_APROBACION_GRAFICO_EVENTO}`);
   y += rowH + 8;
 
   // Tabla de comunas a ancho completo: entran las 15 comunas de la región

@@ -96,3 +96,10 @@ def test_filtro_evento_tiene_opcion_sin_evento():
     assert "const SIN_EVENTO = 'Sin evento';" in html
     assert "[...eventosConProyectos, SIN_EVENTO]" in html
     assert "f.evento.has(d.evento && String(d.evento).trim() ? d.evento : SIN_EVENTO)" in html
+
+
+def test_grafico_evento_solo_aprobados_del_anio_configurado():
+    html = (Path(__file__).resolve().parent.parent / "docs" / "index.html").read_text(encoding="utf-8")
+    assert html.count("const ANIO_APROBACION_GRAFICO_EVENTO = ") == 1
+    assert "String(d.anio_aprobacion) === String(ANIO_APROBACION_GRAFICO_EVENTO)" in html
+    assert 'id="titulo-chart-evento"' in html
