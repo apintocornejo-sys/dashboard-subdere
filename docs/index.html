@@ -4541,21 +4541,6 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
     y += filas * (profH + 5) + 1;
   }
 
-  // ---- Gráficos ----
-  // Estado y Aporte por provincia, lado a lado y grandes; el gráfico por evento va debajo, a ancho completo
-  // (tiene leyenda y varias barras apiladas). Cada bloque pasa a una hoja nueva si no cabe, nunca se corta.
-  const gapChart = 10;
-  const colW2 = (contentW - gapChart) / 2;
-  const altoGraf = 82;
-  y = pdfEspacio(doc, y, altoGraf + 10);
-  agregarImagenChart(doc, 'chartEstado', marginX, y, colW2, altoGraf, 'Distribución por estado', true);
-  agregarImagenChart(doc, 'chartAportePorProvincia', marginX + colW2 + gapChart, y, colW2, altoGraf, 'Aporte SUBDERE por provincia ($)', true);
-  y += altoGraf + 12;
-
-  y = pdfEspacio(doc, y, altoGraf + 10);
-  agregarImagenChart(doc, 'chartEvento', marginX, y, contentW, altoGraf, `Distribución por evento — aprobados ${ANIO_APROBACION_GRAFICO_EVENTO}`, true);
-  y += altoGraf + 12;
-
   // Tabla de comunas a ancho completo (título + encabezado + al menos algunas filas juntos).
   y = pdfEspacio(doc, y, 50);
   y = agregarResumenComunaTabla(doc, marginX, y, contentW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica');
@@ -4570,6 +4555,29 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   // 2026", ordenados por estado.
   y = agregarListadoPorEvento(doc, marginX, y, contentW, 'Ficha Simplificada SUBDERE Catastrofe 2026');
   agregarListadoPorEvento(doc, marginX, y, contentW, 'Transferencia Gobierno Regional 2026');
+
+  // ---- Última hoja: los tres gráficos juntos, calzados en una sola página ----
+  // "Distribución por estado" se arma aparte para el informe, solo con los estados de gestión que interesan.
+  const ESTADOS_GRAFICO_PDF = ['Elegible', 'Observado URS', 'Observado Programa', 'En Revisión URS', 'En Corrección Municipal'];
+  doc.addPage();
+  const gapChart = 10, colW2 = (contentW - gapChart) / 2, altoGraf = 80;
+  let yG = 16;
+  const contenedorTmp = document.createElement('div');
+  contenedorTmp.style.cssText = 'position:fixed;left:-10000px;top:0;width:640px;height:340px;';
+  const canvasTmp = document.createElement('canvas'); canvasTmp.id = 'chartEstadoPDF';
+  contenedorTmp.appendChild(canvasTmp); document.body.appendChild(contenedorTmp);
+  try {
+    makeChart('chartEstadoPDF', 'bar', ESTADOS_GRAFICO_PDF,
+      [{ data: ESTADOS_GRAFICO_PDF.map(e => filtered.filter(d => d.estado === e).length), backgroundColor: palette[0], borderRadius: 4 }],
+      { indexAxis: 'y' });
+    agregarImagenChart(doc, 'chartEstadoPDF', marginX, yG, colW2, altoGraf, 'Distribución por estado', true);
+  } finally {
+    if (charts['chartEstadoPDF']) { charts['chartEstadoPDF'].destroy(); delete charts['chartEstadoPDF']; }
+    contenedorTmp.remove();
+  }
+  agregarImagenChart(doc, 'chartAportePorProvincia', marginX + colW2 + gapChart, yG, colW2, altoGraf, 'Aporte SUBDERE por provincia ($)', true);
+  yG += altoGraf + 14;
+  agregarImagenChart(doc, 'chartEvento', marginX, yG, contentW, altoGraf, `Distribución por evento — aprobados ${ANIO_APROBACION_GRAFICO_EVENTO}`, true);
 
   // Pie de página con numeración en todas las hojas
   const nPag = doc.getNumberOfPages();
