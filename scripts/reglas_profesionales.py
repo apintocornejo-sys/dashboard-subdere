@@ -53,6 +53,20 @@ COMUNAS_ROMINA_CANIHUANTE = {
     "COMBARBALÁ", "RÍO HURTADO",
 }
 
+# Yolanda Moya (desde oct-2026): se queda con las comunas de abajo, SOLO en estos programas
+# (los que se dividían por comuna entre Tamara y Romina y tienen proyectos). En el resto de los programas
+# sigue valiendo la regla de siempre (profesional fijo por programa).
+PROGRAMAS_YOLANDA_MOYA = [
+    "Emergencia",
+    "Tradicional",
+    "Emergencia Fondo Infraestructura Educacional",
+    "Subsecretaría Prevención del Delito",
+    "Ministerio de Transporte y Telecomunicación",
+]
+COMUNAS_YOLANDA_MOYA = {
+    "LOS VILOS", "ANDACOLLO", "LA HIGUERA", "PUNITAQUI", "MONTE PATRIA", "RÍO HURTADO", "RIO HURTADO",
+}
+
 # Programas explícitamente sin designar (no se les asigna nadie)
 PROGRAMAS_SIN_DESIGNAR = []
 
@@ -69,6 +83,8 @@ def calcular_profesional(programa: str, comuna: str):
 
     if programa in PROGRAMAS_DIVIDIDOS_POR_COMUNA:
         comuna_norm = (comuna or "").strip().upper()
+        if programa in PROGRAMAS_YOLANDA_MOYA and comuna_norm in COMUNAS_YOLANDA_MOYA:
+            return "Yolanda Moya"
         if comuna_norm in COMUNAS_TAMARA_HUERTA:
             return "Tamara Huerta"
         if comuna_norm in COMUNAS_ROMINA_CANIHUANTE:
