@@ -4300,6 +4300,13 @@ function descargarInformeResumenPDF() {
     '\n\nRevisa la Consola del navegador (F12) para más detalle, o avísame el mensaje de error.');
 }
 
+// Si no queda espacio suficiente en la hoja, pasa a una nueva y devuelve la Y desde donde seguir.
+const PDF_ALTO_HOJA = 215.9, PDF_MARGEN_INF = 14;
+function pdfEspacio(doc, y, necesario) {
+  if (y + necesario > PDF_ALTO_HOJA - PDF_MARGEN_INF) { doc.addPage(); return 16; }
+  return y;
+}
+
 function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
   doc.setFontSize(9);
   doc.setTextColor(70, 70, 70);
@@ -4317,7 +4324,7 @@ function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
   if (filasCompletas.length === 0) {
     doc.setFontSize(8);
     doc.text('(sin datos para estos estados en la vista actual)', x, yTabla + 4);
-    return;
+    return yTabla + 12;
   }
 
   // Ahora la tabla usa el ancho completo de la hoja: entran las comunas
@@ -4326,21 +4333,22 @@ function agregarResumenComunaTabla(doc, x, y, maxW, titulo) {
 
   doc.autoTable({
     startY: yTabla,
-    margin: { left: x },
     tableWidth: maxW,
     head: [['Comuna', 'Elegible', 'Obs. Programa', 'Obs. URS', 'En Revisión URS', 'Eval. Técnica']],
     body: filas,
     styles: { fontSize: 7, cellPadding: 1.2, halign: 'center' },
     columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
     headStyles: { fillColor: [35, 49, 108], fontSize: 7 },
+    margin: { left: x, bottom: PDF_MARGEN_INF, top: 16 },
   });
+  return doc.lastAutoTable.finalY + 10;
 }
 
 // Imagen de un gráfico para el PDF: en pantalla usa letra clara sobre fondo oscuro, que en una hoja blanca no se lee.
 // Se aplica un "tema de impresión" (letra oscura y más grande, fondo blanco, nítido) SOLO mientras se captura.
 // Chart.js regenera sus objetos de escala en cada update(), así que no se restaura "valor por valor": se guarda una copia
 // de las opciones antes de tocarlas y se repone completa al terminar.
-function imagenChartImpresion(chart, anchoMm) {
+function imagenChartImpresion(chart, anchoMm, altoMm) {
   if (!chart.width || !chart.height) return { data: chart.toBase64Image('image/png', 1.0), w: chart.canvas.width, h: chart.canvas.height, tipo: 'PNG' };
   const clonar = v => {
     if (Array.isArray(v)) return v.map(clonar);
@@ -4373,7 +4381,7 @@ function imagenChartImpresion(chart, anchoMm) {
   const w0 = chart.width, h0 = chart.height, wPx = Math.min(1100, Math.max(520, Math.round((anchoMm || 120) * 5.2)));
   o.devicePixelRatio = 2; o.animation = false;
   try {
-    chart.resize(wPx, Math.round(h0 * wPx / w0)); chart.update('none');
+    chart.resize(wPx, altoMm ? Math.round(wPx * altoMm / (anchoMm || 120)) : Math.round(h0 * wPx / w0)); chart.update('none');
     const c = chart.canvas, lienzo = document.createElement('canvas'); lienzo.width = c.width; lienzo.height = c.height;
     const ctx = lienzo.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, lienzo.width, lienzo.height); ctx.drawImage(c, 0, 0);
     return { data: lienzo.toDataURL('image/jpeg', 0.93), w: lienzo.width, h: lienzo.height, tipo: 'JPEG' };
@@ -4388,7 +4396,7 @@ function imagenChartImpresion(chart, anchoMm) {
   }
 }
 
-function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
+function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo, ajustarAlto) {
   const chart = charts[chartId];
   doc.setFontSize(9);
   doc.setTextColor(70, 70, 70);
@@ -4398,7 +4406,7 @@ function agregarImagenChart(doc, chartId, x, y, maxW, maxH, titulo) {
     doc.setFontSize(8); doc.text('(sin datos)', x + 2, y + maxH / 2);
     return;
   }
-  const img = imagenChartImpresion(chart, maxW);
+  const img = imagenChartImpresion(chart, maxW, ajustarAlto ? maxH : undefined);
   const pxW = img.w, pxH = img.h;
   let w = maxW, h = (pxH / pxW) * w;
   if (h > maxH) { h = maxH; w = (pxW / pxH) * h; }
@@ -4439,7 +4447,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
 
   // ---- Recuadro de contraste: filtros aplicados + KPIs (azul institucional) ----
   doc.setFontSize(8);
-  const filtrosLineas = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW - 8).slice(0, 2);
+  const filtrosLineas = doc.splitTextToSize(`Filtros aplicados: ${resumenFiltrosActivos()}`, contentW - 8);   // todas las líneas: nada se corta
   const alturaFiltrosCaja = 6 + filtrosLineas.length * 4;
 
   doc.setFillColor(24, 34, 74);
@@ -4477,7 +4485,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
     doc.setFont(undefined, 'normal');
     doc.setFontSize(7.5);
     doc.setTextColor(90, 90, 95);
-    doc.text(k.label, kx + 6, y + 16.5, { maxWidth: kpiW - 8 });
+    doc.text(doc.splitTextToSize(k.label, kpiW - 8).slice(0, 2), kx + 6, y + 16.5);
   });
   y += kpiH + 6;
 
@@ -4508,7 +4516,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
     const maxPorFila = 6;
     const nCols = Math.min(tarjetasProfesional.length, maxPorFila);
     const profW = (contentW - gapProf * (nCols - 1)) / nCols;
-    const profH = 20;
+    const profH = 22;
     const colorProf = [201, 87, 107];
     tarjetasProfesional.forEach(([nombre, n], i) => {
       const fila = Math.floor(i / maxPorFila);
@@ -4527,36 +4535,33 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
       doc.setFont(undefined, 'normal');
       doc.setFontSize(7);
       doc.setTextColor(90, 90, 95);
-      doc.text(nombre, px + 6, py + 16.5, { maxWidth: profW - 8 });
+      doc.text(doc.splitTextToSize(nombre, profW - 8).slice(0, 2), px + 6, py + 15.5);
     });
     const filas = Math.ceil(tarjetasProfesional.length / maxPorFila);
     y += filas * (profH + 5) + 1;
   }
 
-  // ---- Gráficos: 3 en una sola fila, a mayor tamaño (se quitó "Distribución
-  // por programa" para dejarles más espacio a los 3 restantes) ----
-  const gapChart = 8;
-  const colW3 = (contentW - gapChart * 2) / 3;
-  const rowH = 78;
-  const c1X = marginX, c2X = marginX + colW3 + gapChart, c3X = marginX + (colW3 + gapChart) * 2;
+  // ---- Gráficos ----
+  // Estado y Aporte por provincia, lado a lado y grandes; el gráfico por evento va debajo, a ancho completo
+  // (tiene leyenda y varias barras apiladas). Cada bloque pasa a una hoja nueva si no cabe, nunca se corta.
+  const gapChart = 10;
+  const colW2 = (contentW - gapChart) / 2;
+  const altoGraf = 82;
+  y = pdfEspacio(doc, y, altoGraf + 10);
+  agregarImagenChart(doc, 'chartEstado', marginX, y, colW2, altoGraf, 'Distribución por estado', true);
+  agregarImagenChart(doc, 'chartAportePorProvincia', marginX + colW2 + gapChart, y, colW2, altoGraf, 'Aporte SUBDERE por provincia ($)', true);
+  y += altoGraf + 12;
 
-  agregarImagenChart(doc, 'chartEstado', c1X, y, colW3, rowH, 'Distribución por estado');
-  agregarImagenChart(doc, 'chartAportePorProvincia', c2X, y, colW3, rowH, 'Aporte SUBDERE por provincia');
-  agregarImagenChart(doc, 'chartEvento', c3X, y, colW3, rowH, `Distribución por evento — aprobados ${ANIO_APROBACION_GRAFICO_EVENTO}`);
-  y += rowH + 8;
+  y = pdfEspacio(doc, y, altoGraf + 10);
+  agregarImagenChart(doc, 'chartEvento', marginX, y, contentW, altoGraf, `Distribución por evento — aprobados ${ANIO_APROBACION_GRAFICO_EVENTO}`, true);
+  y += altoGraf + 12;
 
-  // Tabla de comunas a ancho completo: entran las 15 comunas de la región
-  // sin necesidad de recortar ninguna. Si no alcanza el espacio para el
-  // título + la tabla completa en la página actual, se pasa a una hoja
-  // nueva para que ambos queden juntos (nunca el título solo).
-  const pageHLandscape = 215.9;
-  if (y > pageHLandscape - 110) { doc.addPage(); y = 15; }
-  agregarResumenComunaTabla(doc, marginX, y, contentW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica');
-  y = doc.lastAutoTable.finalY + 10;
+  // Tabla de comunas a ancho completo (título + encabezado + al menos algunas filas juntos).
+  y = pdfEspacio(doc, y, 50);
+  y = agregarResumenComunaTabla(doc, marginX, y, contentW, 'Resumen por comuna: Elegible, Observado Programa, Observado URS, En Revisión URS, En Evaluación Técnica');
 
   // Tabla PMB Tradicional / Tradicional, año de postulación 2026, por comuna y estado.
-  agregarTablaTradicional2026PDF(doc, marginX, y, contentW);
-  y = doc.lastAutoTable.finalY + 10;
+  y = agregarTablaTradicional2026PDF(doc, marginX, y, contentW);
 
   // Listado detallado: proyectos "En Revisión URS" por profesional.
   y = agregarListadoRevisionPorProfesional(doc, marginX, y, contentW);
@@ -4566,12 +4571,20 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
   y = agregarListadoPorEvento(doc, marginX, y, contentW, 'Ficha Simplificada SUBDERE Catastrofe 2026');
   agregarListadoPorEvento(doc, marginX, y, contentW, 'Transferencia Gobierno Regional 2026');
 
+  // Pie de página con numeración en todas las hojas
+  const nPag = doc.getNumberOfPages();
+  for (let i = 1; i <= nPag; i++) {
+    doc.setPage(i);
+    doc.setFont(undefined, 'normal'); doc.setFontSize(7.5); doc.setTextColor(130, 130, 135);
+    doc.text('SUBDERE en Línea — Informe de Resumen, Región de Coquimbo', marginX, PDF_ALTO_HOJA - 7);
+    doc.text(`Página ${i} de ${nPag}`, pageW - marginX, PDF_ALTO_HOJA - 7, { align: 'right' });
+  }
+
   doc.save(`informe_resumen_subdere_${new Date().toISOString().slice(0,10)}.pdf`);
 }
 
 function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
-  const pageH = 215.9;
-  if (y > pageH - 30) { doc.addPage(); y = 15; }
+  y = pdfEspacio(doc, y, 40);
 
   doc.setFontSize(10);
   doc.setTextColor(35, 49, 108);
@@ -4603,7 +4616,7 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
 
   doc.autoTable({
     startY: y,
-    margin: { left: x },
+    margin: { left: x, bottom: PDF_MARGEN_INF, top: 16 },
     tableWidth: maxW,
     head: [['Días', '', 'Profesional', 'ID', 'Proyecto', 'Comuna', 'Programa']],
     body: proyectosRevision.map(d => [
@@ -4635,8 +4648,7 @@ function agregarListadoRevisionPorProfesional(doc, x, y, maxW) {
 }
 
 function agregarListadoPorEvento(doc, x, y, maxW, nombreEvento) {
-  const pageH = 215.9;
-  if (y > pageH - 30) { doc.addPage(); y = 15; }
+  y = pdfEspacio(doc, y, 40);
 
   doc.setFontSize(10);
   doc.setTextColor(35, 49, 108);
@@ -4656,7 +4668,7 @@ function agregarListadoPorEvento(doc, x, y, maxW, nombreEvento) {
 
   doc.autoTable({
     startY: y,
-    margin: { left: x },
+    margin: { left: x, bottom: PDF_MARGEN_INF, top: 16 },
     tableWidth: maxW,
     head: [['Estado', 'ID', 'Proyecto', 'Comuna', 'Programa']],
     body: proyectosEvento.map(d => [d.estado ?? '', d.id_proyecto ?? '', d.nombre_proyecto ?? '', d.comuna ?? '', d.programa ?? '']),
@@ -4682,8 +4694,7 @@ function agregarListadoPorEvento(doc, x, y, maxW, nombreEvento) {
 }
 
 function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
-  const pageH = 215.9;
-  if (y > pageH - 30) { doc.addPage(); y = 15; }
+  y = pdfEspacio(doc, y, 60);
 
   doc.setFontSize(9);
   doc.setTextColor(70, 70, 70);
@@ -4701,7 +4712,7 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
   if (estadosTrad.length === 0) {
     doc.setFontSize(8);
     doc.text('(sin proyectos PMB Tradicional / Tradicional con año de postulación 2026 en la vista actual)', x, yTabla + 4);
-    return;
+    return yTabla + 12;
   }
 
   const COLOR_PROGRAMA_PDF = { 'PMB Tradicional': [91,141,255], 'Tradicional': [230,159,0] };
@@ -4748,7 +4759,9 @@ function agregarTablaTradicional2026PDF(doc, x, y, maxW) {
     styles: { fontSize: 6.3, cellPadding: 1, halign: 'center' },
     columnStyles: Object.assign({ 0: { halign: 'left', fontStyle: 'bold' } }, columnStylesTrad),
     headStyles: { fillColor: [35, 49, 108], fontSize: 6.3 },
+    margin: { left: x, bottom: PDF_MARGEN_INF, top: 16 },
   });
+  return doc.lastAutoTable.finalY + 10;
 }
 
 function descargarResumenXLS() {
