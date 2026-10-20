@@ -1177,7 +1177,7 @@ const EVENTOS = [
   "SPD",
   "SPD 2023",
   "SPD 2022",
-  "Ficha Simplificada SUBDERE Catastrofe 2026",
+  "Transferencia SUBDERE Catastrofe 2026",
   "EMO 2019",
   "MM600",
   "MTT 2020",
@@ -4289,7 +4289,7 @@ function descargarInformeResumenXLS() {
     ws['!cols'] = [{ wch: 25 }, { wch: 16 }, { wch: 55 }, { wch: 16 }, { wch: 35 }];
     XLSX.utils.book_append_sheet(wb, ws, nombreHoja);
   };
-  hojaListadoEvento('Ficha Simplificada SUBDERE Catastrofe 2026', 'Ficha Simplificada Catastrofe');
+  hojaListadoEvento('Transferencia SUBDERE Catastrofe 2026', 'Transf SUBDERE Catastrofe');
   hojaListadoEvento('Transferencia Gobierno Regional 2026', 'Transferencia GR 2026');
 
   guardarXLS(wb, 'informe_resumen_subdere');
@@ -4553,7 +4553,7 @@ function generarInformeResumenConLogo(jsPDF, logoW, logoH) {
 
   // Listado detallado: proyectos del evento "Transferencia Gobierno Regional
   // 2026", ordenados por estado.
-  y = agregarListadoPorEvento(doc, marginX, y, contentW, 'Ficha Simplificada SUBDERE Catastrofe 2026');
+  y = agregarListadoPorEvento(doc, marginX, y, contentW, 'Transferencia SUBDERE Catastrofe 2026');
   agregarListadoPorEvento(doc, marginX, y, contentW, 'Transferencia Gobierno Regional 2026');
 
   // ---- Última hoja: los tres gráficos juntos, calzados en una sola página ----

@@ -17,13 +17,13 @@ Uso (desde la carpeta del proyecto):
     python3 scripts/asignar_evento_listado.py ficha              # aplicar (pregunta antes)
     python3 scripts/asignar_evento_listado.py tgr2026 --simular
 
-  "ficha"   = Ficha Simplificada SUBDERE Catastrofe 2026   (usa scripts/listados/ficha.txt)
+  "ficha"   = Transferencia SUBDERE Catastrofe 2026   (usa scripts/listados/ficha.txt)
   "tgr2026" = Transferencia Gobierno Regional 2026         (usa scripts/listados/tgr2026.txt)
 
 Para otro evento o listado:
     python3 scripts/asignar_evento_listado.py "FET 2022" --lista mi_listado.txt
 
-Evento "MM 1.894" (antes "Transferencia Gobierno Regional 2025 Arrastre"; atajo: tgr2025arrastre). Sus proyectos se indican por ID
+Evento "Transferencia Gobierno Regional 2025 Arrastre" (atajo: tgr2025arrastre). Sus proyectos se indican por ID
 (scripts/listados/tgr2025_arrastre_ids.txt); los ID se aceptan en mayúsculas o minúsculas y con espacios de más:
     python3 scripts/asignar_evento_listado.py tgr2025arrastre --simular
     python3 scripts/asignar_evento_listado.py tgr2025arrastre
@@ -71,7 +71,7 @@ EVENTOS_VALIDOS = [
     "FET 2021", "FET 2022", "FRC", "Transferencia Gobierno Regional 2024",
     "Transferencia Gobierno Regional 2025", "Transferencia Gobierno Regional 2026",
     "Transferencia Gobierno Regional 2026 AT", "SATE 2023", "SPD",
-    "Ficha Simplificada SUBDERE Catastrofe 2026", "MM 1.894",
+    "Transferencia SUBDERE Catastrofe 2026", "Transferencia Gobierno Regional 2025 Arrastre",
 ]
 INDEX_HTML = BASE_DIR / "docs" / "index.html"
 
@@ -88,9 +88,9 @@ def eventos_del_dashboard() -> list:
 EVENTOS_VALIDOS = list(dict.fromkeys(EVENTOS_VALIDOS + eventos_del_dashboard()))
 # Atajos para no escribir el nombre completo
 ALIAS = {
-    "ficha": "Ficha Simplificada SUBDERE Catastrofe 2026",
+    "ficha": "Transferencia SUBDERE Catastrofe 2026",
     "tgr2026": "Transferencia Gobierno Regional 2026",
-    "tgr2025arrastre": "MM 1.894",   # el evento "... 2025 Arrastre" pasó a llamarse "MM 1.894" (13-oct-2026)
+    "tgr2025arrastre": "Transferencia Gobierno Regional 2025 Arrastre",
 }
 # Eventos cuyos proyectos se indican por ID (archivo en scripts/listados/)
 LISTADOS_IDS = {"tgr2025arrastre": "tgr2025_arrastre_ids.txt"}
