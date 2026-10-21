@@ -5,6 +5,7 @@ escritos donde corresponde:
     visitas.json           -> Despliegue Territorial (visitas del calendario; parte con para_subir_a_drive/visitas.json)  -> docs/index.html
     visitas_manuales.json  -> Despliegue Territorial (registros ingresados a mano)   -> docs/index.html
     rendiciones.json       -> Rendiciones (lo escribe el agente)                      -> docs/index.html y scripts/rendiciones_financiero.py
+    historial_estados.json -> Trazabilidad (cambios de estado; lo escribe el agente)   -> docs/index.html y scripts/agente_actualizacion.py
 
 Los archivos nuevos se crean PRIVADOS (solo tu cuenta): el dashboard exige iniciar sesión con Google y solo lo ve quien
 tenga permiso (ver scripts/acceso_dashboard.py). Si ya existe uno con ese nombre, NO crea otro: usa el existente.
@@ -23,6 +24,7 @@ TOKEN_PATH = BASE_DIR / "token.json"
 DRIVE_SCOPES = ["https://www.googleapis.com/auth/drive"]
 HTML = BASE_DIR / "docs" / "index.html"
 MODULO_RENDICIONES = BASE_DIR / "scripts" / "rendiciones_financiero.py"
+AGENTE = BASE_DIR / "scripts" / "agente_actualizacion.py"
 VISITAS_LOCAL = BASE_DIR / "para_subir_a_drive" / "visitas.json"                       # el que genera visitas_desde_calendario.py
 VISITAS_INICIAL = BASE_DIR / "para_subir_a_drive" / "visitas_snapshot_inicial.json"      # copia de las visitas que iban dentro de la página
 PRIVADO = True      # los archivos nuevos NO se comparten con "cualquiera con el enlace"
@@ -41,6 +43,8 @@ ARCHIVOS = [
     ("visitas_manuales.json", b'{"entradas": []}', [(HTML, '"PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_VISITAS_MANUALES"')]),
     ("rendiciones.json", b'{"proyectos": []}', [(HTML, '"PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_RENDICIONES"'),
                                                 (MODULO_RENDICIONES, '"PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_RENDICIONES"')]),
+    ("historial_estados.json", b'{}', [(HTML, '"PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_HISTORIAL_ESTADOS"'),
+                                       (AGENTE, '"PEGA_AQUI_EL_ID_DEL_ARCHIVO_DE_HISTORIAL_ESTADOS"')]),
 ]
 
 
