@@ -1312,9 +1312,14 @@ function accesoMostrar(estado, d = {}) {
     sin_acceso: `${logo}<h1 class="gate-titulo">Sin acceso</h1><div class="gate-sub" style="margin-bottom:22px">Esta cuenta aún no está autorizada</div>
       ${error(`La cuenta <b>${accesoEsc(d.email || 'desconocida')}</b> no tiene permiso para ver este dashboard.`)}
       ${d.tecnico ? `<div class="gate-nota" style="margin-bottom:12px;font-size:0.7rem;opacity:0.7">Detalle técnico: ${accesoEsc(d.tecnico)}</div>` : ''}
-      <a class="gate-btn gate-btn-lleno" href="${accesoMailto(d.email)}">Solicitar acceso</a>
+      ${/insufficientPermissions/.test(d.tecnico || '') ? `<button class="gate-btn gate-btn-lleno" onclick="accesoPedirPermiso()">Dar permiso de Drive</button><div class="gate-nota" style="margin:8px 0 14px">Si tu cuenta ya fue autorizada, probablemente en la pantalla de Google no se marcó el permiso de Drive. Pulsa el botón y deja todas las casillas marcadas.</div>` : ''}
+      <a class="gate-btn ${/insufficientPermissions/.test(d.tecnico || '') ? '' : 'gate-btn-lleno'}" href="${accesoMailto(d.email)}">Solicitar acceso</a>
       <button class="gate-btn" onclick="accesoLogin(true)">Usar otra cuenta</button>
       <div class="gate-sep"></div><div class="gate-nota">La solicitud se envía por correo a quien administra el acceso. Cuando te autoricen, vuelve a ingresar con esta misma cuenta.</div>`,
+    permiso_incompleto: `${logo}<h1 class="gate-titulo">Falta un permiso</h1><div class="gate-sub" style="margin-bottom:22px">Google no entregó el acceso a Drive</div>
+      ${error(`Al iniciar sesión con <b>${accesoEsc(d.email || 'tu cuenta')}</b> no se marcó el permiso para <b>ver archivos de Google Drive</b>. Sin él, el dashboard no puede leer los datos aunque tu cuenta esté autorizada.`)}
+      <button class="gate-btn gate-btn-lleno" onclick="accesoPedirPermiso()">Dar permiso de Drive</button>
+      <div class="gate-sep"></div><div class="gate-nota">En la pantalla de Google, deja <b>marcadas todas las casillas</b> y pulsa «Continuar».</div>`,
     error: `${logo}<h1 class="gate-titulo">No pudimos ingresar</h1><div class="gate-sub" style="margin-bottom:22px">Ocurrió un problema al verificar tu acceso</div>
       ${error(accesoEsc(d.detalle || 'Error desconocido'))}<button class="gate-btn gate-btn-lleno" onclick="accesoLogin()">Reintentar</button>`,
     expirada: `${logo}<h1 class="gate-titulo">Tu sesión expiró</h1><div class="gate-sub" style="margin-bottom:26px">Por seguridad, vuelve a conectarte</div>
@@ -1326,6 +1331,11 @@ function accesoLogin(otraCuenta) {
   if (!accesoClient) { accesoMostrar('error', { detalle: 'No se pudo cargar el inicio de sesión de Google. Revisa tu conexión y recarga la página.' }); return; }
   const pista = accesoLS.get(ACCESO_EMAIL_KEY) || undefined;
   accesoClient.requestAccessToken(otraCuenta ? { prompt: 'select_account' } : (pista ? { hint: pista } : {}));
+}
+function accesoPedirPermiso() {   // vuelve a mostrar la pantalla de permisos de Google (por si no se marcó la casilla de Drive)
+  if (!accesoClient) { accesoMostrar('error', { detalle: 'No se pudo cargar el inicio de sesión de Google. Recarga la página.' }); return; }
+  const pista = accesoLS.get(ACCESO_EMAIL_KEY) || emailActual || undefined;
+  accesoClient.requestAccessToken(Object.assign({ prompt: 'consent' }, pista ? { hint: pista } : {}));
 }
 function accesoGuardarToken(resp) { tokenLectura = resp.access_token; tokenLecturaExpira = Date.now() + (Number(resp.expires_in || 3600) - 90) * 1000; }
 async function accesoObtenerEmail() {
@@ -1347,6 +1357,10 @@ async function accesoCallback(resp) {
   accesoGuardarToken(resp);
   accesoMostrar('verificando');
   emailActual = await accesoObtenerEmail();
+  try {   // si Google no entregó el permiso de Drive (casilla desmarcada), se avisa antes de intentar leer
+    const o = window.google && google.accounts && google.accounts.oauth2;
+    if (o && o.hasGrantedAllScopes && !o.hasGrantedAllScopes(resp, 'https://www.googleapis.com/auth/drive.readonly')) { accesoMostrar('permiso_incompleto', { email: emailActual }); return; }
+  } catch (e) { /* si no se puede verificar, se sigue con la lectura normal */ }
   try { await iniciarDashboard(); }
   catch (e) {
     if (e && (e.status === 403 || e.status === 404)) accesoMostrar('sin_acceso', { email: emailActual, tecnico: e.detalleDrive || ('HTTP ' + e.status) });
