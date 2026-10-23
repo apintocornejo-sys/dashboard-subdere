@@ -1363,7 +1363,7 @@ async function accesoCallback(resp) {
   } catch (e) { /* si no se puede verificar, se sigue con la lectura normal */ }
   try { await iniciarDashboard(); }
   catch (e) {
-    if (e && (e.status === 403 || e.status === 404)) accesoMostrar('sin_acceso', { email: emailActual, tecnico: e.detalleDrive || ('HTTP ' + e.status) });
+    if (e && (e.status === 403 || e.status === 404)) accesoMostrar('sin_acceso', { email: emailActual, tecnico: (e.detalleDrive || ('HTTP ' + e.status)) + ' · permisos concedidos: ' + (String(resp.scope || '?').replace(/https:\/\/www\.googleapis\.com\/auth\//g, '')) });
     else accesoMostrar('error', { detalle: (e && e.message) || String(e) });
     return;
   }
