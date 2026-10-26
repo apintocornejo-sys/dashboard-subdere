@@ -864,11 +864,6 @@ canvas { max-width:100%; }   /* un canvas sin gráfico (sin datos para el filtro
     <div class="kpis" id="kpis-gr2026"></div>
 
     <div class="panel wide">
-      <h2>Asignado vs. Postulado por comuna</h2>
-      <canvas id="chartGR2026" style="height:600px !important"></canvas>
-    </div>
-
-    <div class="panel wide">
       <h2>Comparativo por comuna (monto y porcentaje)</h2>
       <div style="overflow-x:auto">
         <table id="tbl-gr2026">
@@ -2388,24 +2383,6 @@ function renderGR2026() {
     <div class="kpi"><div class="value">${totales.n.toLocaleString('es-CL')}</div><div class="label">Proyectos</div></div>
   `;
 
-  // ---- Gráfico: asignado vs. postulado por comuna ----
-  makeChart('chartGR2026', 'bar', filas.map(f => f.comuna), [
-    { label: 'Asignado', data: filas.map(f => f.asignado), backgroundColor: palette[3], borderRadius: 3 },
-    { label: 'Postulado', data: filas.map(f => f.postulado), backgroundColor: palette[0], borderRadius: 3 },
-  ], {
-    indexAxis: 'y',
-    layout: { padding: { right: 46 } },
-    scales: {
-      x: { grid: { color: '#4f3f33' }, beginAtZero: true, ticks: { callback: v => fmtMillonesGR(v) } },
-      y: { grid: { display: false } },
-    },
-    plugins: {
-      legend: { display: true, position: 'bottom' },
-      tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: ${fmtCLP(ctx.parsed.x)}` } },
-      datalabels: { font: { size: 8, weight: '600' }, formatter: v => v > 0 ? fmtMillonesGR(v) : '' },
-    },
-  });
-
   // ---- Tabla comparativa por comuna ----
   const filaHtml = f => `
     <tr class="fila-clic" onclick="irATablaGR2026(${accesoEsc(JSON.stringify(f.comuna))})" title="Ver los proyectos de ${accesoEsc(f.comuna)}">
@@ -2577,13 +2554,9 @@ function generarInformeGR2026ConLogo(jsPDF, logoW, logoH) {
     didParseCell: (data) => { if (data.column.index === 0) data.cell.styles.halign = 'left'; },
   });
 
-  // Gráfico en hoja propia (para que se lea bien)
-  doc.addPage();
-  agregarImagenChart(doc, 'chartGR2026', marginX, 14, contentW, pageH - 40, 'Asignado vs. Postulado por comuna');
-
-  // Monto postulado por estado
-  doc.addPage();
-  y = 14;
+  // Monto postulado por estado (sigue a la tabla de comunas; pasa a hoja nueva solo si no cabe)
+  y = doc.lastAutoTable.finalY + 10;
+  if (y > pageH - 60) { doc.addPage(); y = 14; }
   doc.setFontSize(10);
   doc.setTextColor(35, 49, 108);
   doc.setFont(undefined, 'bold');
