@@ -502,6 +502,7 @@ input[type=text] { background:var(--panel-2); border:1px solid var(--border); co
   .btn { padding:10px 14px; font-size:0.8rem; }
 }
 
+#chartR26Comuna { height:560px !important; }
 canvas { max-width:100%; }   /* un canvas sin gráfico (sin datos para el filtro) no debe ensanchar la página en el celular */
 .tab:focus-visible, [role="region"]:focus-visible, button:focus-visible, a:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid #D9A441; outline-offset:2px; }
 
@@ -658,6 +659,7 @@ th{ background:rgba(110,160,255,.10) !important; color:#CFE0FF !important; }
 <div class="app-layout">
 <nav class="sidebar">
     <div class="tab active" data-view="resumen">Resumen</div>
+    <div class="tab" data-view="resumen26">📌 Resumen 2026</div>
     <div class="tab" data-view="provincias">Provincias / Comunas</div>
     <div class="tab" data-view="programas">Programas</div>
     <div class="tab" data-view="evolucion">Evolución</div>
@@ -795,6 +797,22 @@ th{ background:rgba(110,160,255,.10) !important; color:#CFE0FF !important; }
         <h2>Aporte por provincia y comuna</h2>
         <div style="overflow-x:auto"><table id="tbl-provincia"><thead><tr><th>Provincia / Comuna</th><th class="num">N° Proyectos</th><th class="num">Aporte Total ($)</th><th class="num">Promedio ($)</th><th class="num">%</th></tr></thead><tbody></tbody></table></div>
       </div>
+    </div>
+  </div>
+
+  <div class="view" id="view-resumen26">
+    <div class="panel wide panel-gr2026">
+      <h2>📌 Resumen 2026 — Financiamiento aprobado desde marzo 2026</h2>
+      <p>Proyectos <strong>aprobados en 2026</strong> (desde marzo). Esta pestaña muestra siempre la cartera completa: <strong>no usa los filtros</strong> de arriba. Haz clic en una barra para ver sus proyectos en la Tabla dinámica.</p>
+    </div>
+    <div class="panel wide" id="r26-totales"></div>
+    <div class="kpis" id="kpis-r26" style="display:none"></div>
+    <div class="grid">
+      <div class="panel wide"><h2>a. Financiado 2026 por comuna ($)</h2><div id="r26-comuna-total" style="display:flex;gap:28px;flex-wrap:wrap;align-items:baseline;margin:2px 0 8px"></div><div style="position:relative;height:560px"><canvas id="chartR26Comuna" style="height:100% !important"></canvas></div></div>
+      <div class="panel"><h2>b. Financiado por evento 2026 ($)</h2><canvas id="chartR26Evento" style="height:300px !important"></canvas><div id="r26-evento-tabla" style="margin-top:10px;overflow-x:auto"></div></div>
+      <div class="panel"><h2>c. Tradicional y PMB Tradicional 2026</h2><div class="kpis" id="r26-trad-kpis"></div><div id="r26-trad-tabla" style="overflow-x:auto"></div></div>
+      <div class="panel"><h2>d. Royalty por comuna y total</h2><div id="r26-royalty"></div></div>
+      <div class="panel"><h2>e. Tenencia Responsable 2026 — por etapa</h2><div class="kpis" id="r26-trac-kpis"></div><div id="r26-trac-tabla" style="overflow-x:auto"></div></div>
     </div>
   </div>
 
@@ -1685,6 +1703,8 @@ function activarTab(t, enfocar) {
   t.classList.add('active'); t.setAttribute('aria-selected', 'true'); t.tabIndex = 0;
   document.getElementById('view-' + t.dataset.view).classList.add('active');
   if (enfocar) t.focus();
+  // al entrar a Resumen se quitan todos los filtros para ver los datos generales
+  if (t.dataset.view === 'resumen') { try { clearFilters(); } catch (e) {} }
   // los gráficos dibujados mientras la pestaña estaba oculta toman un tamaño erróneo: se recalculan al mostrarla
   try { Object.values(charts).forEach(c => { try { c.resize(); } catch (e) {} }); } catch (e) {}
 }
@@ -2429,6 +2449,162 @@ function renderTabla() {
   document.getElementById('pager-info').textContent = `Página ${tablaPage+1} de ${totalPages} (${rows.length.toLocaleString('es-CL')} filas)`;
 }
 
+
+
+// ---------- Barras horizontales 3D (plugin propio) ----------
+function r26Sombra(hex, k) { const n = parseInt(hex.slice(1), 16); const f = c => Math.max(0, Math.min(255, Math.round(c * k))); return `rgb(${f(n >> 16)},${f((n >> 8) & 255)},${f(n & 255)})`; }
+Chart.register({
+  id: 'bar3d',
+  beforeDatasetsDraw(chart) {
+    const o = chart.options.plugins && chart.options.plugins.bar3d; if (!o || !o.enabled) return;
+    const ctx = chart.ctx, d = o.depth || 9, ds = chart.data.datasets[0], meta = chart.getDatasetMeta(0);
+    meta.data.forEach((el, i) => {
+      const L = el.base, R = el.x, T = el.y - el.height / 2 + 1, B = el.y + el.height / 2 - 1;
+      if (!(R - L > 1)) return;
+      const c = (ds.bar3dColors || [])[i] || '#3F7BE0';
+      ctx.save();
+      const gf = ctx.createLinearGradient(0, T, 0, B); gf.addColorStop(0, r26Sombra(c, 1.15)); gf.addColorStop(1, r26Sombra(c, 0.85));
+      ctx.fillStyle = gf; ctx.fillRect(L, T, R - L, B - T);                       // cara frontal
+      ctx.fillStyle = r26Sombra(c, 1.4); ctx.beginPath(); ctx.moveTo(L, T); ctx.lineTo(R, T); ctx.lineTo(R + d, T - d); ctx.lineTo(L + d, T - d); ctx.closePath(); ctx.fill(); // cara superior
+      ctx.fillStyle = r26Sombra(c, 0.6); ctx.beginPath(); ctx.moveTo(R, T); ctx.lineTo(R + d, T - d); ctx.lineTo(R + d, B - d); ctx.lineTo(R, B); ctx.closePath(); ctx.fill(); // cara lateral
+      ctx.restore();
+    });
+  }
+});
+
+// ---------- Resumen 2026 ----------
+const R26_ANIO = 2026;
+const R26_ROYALTY = [
+  ['Elqui','La Serena',0,1823207765],['Elqui','La Higuera',344509205,731325253],['Elqui','Coquimbo',0,1528037306],
+  ['Elqui','Andacollo',360944383,1676732586],['Elqui','Vicuña',494340028,0],['Elqui','Paiguano',318377540,0],
+  ['Limarí','Ovalle',1287373977,0],['Limarí','Monte Patria',747987689,931612912],['Limarí','Punitaqui',429367870,746672545],
+  ['Limarí','Combarbalá',499114878,812386087],['Limarí','Río Hurtado',328153554,0],
+  ['Choapa','Illapel',564843002,1162083297],['Choapa','Salamanca',464035863,999278007],['Choapa','Los Vilos',429936681,800623174],['Choapa','Canela',356108210,615845855]
+]; // [provincia, comuna, FET, FCMI] — Fondos Royalty 2026 (planilla entregada por el usuario)
+function r26Esc(t) { return String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function r26Tit(c) { return String(c || '').toLowerCase().replace(/(^|[\s-])\S/g, m => m.toUpperCase()); }
+const r26M = v => '$ ' + (v / 1e6).toLocaleString('es-CL', { maximumFractionDigits: 1 }) + ' M';
+function renderResumen26() {
+  const el = document.getElementById('view-resumen26');
+  if (!el) return;
+  const base = RAW_DATA;
+  const aprob = base.filter(d => Number(d.anio_aprobacion) === R26_ANIO);
+  const totalMonto = aprob.reduce((s, d) => s + (d.monto_subdere || 0), 0);
+
+  // comunas de la región (las 15) tomadas de la cartera
+  const comunas = [...new Set(base.filter(d => PROVINCIAS_REGION.includes(d.provincia)).map(d => d.comuna))];
+  const porCom = comunas.map(c => {
+    const xs = aprob.filter(d => d.comuna === c);
+    return { c, n: xs.length, monto: xs.reduce((s, d) => s + (d.monto_subdere || 0), 0) };
+  }).sort((x, y) => y.monto - x.monto || x.c.localeCompare(y.c));
+  const conFin = porCom.filter(x => x.n > 0).length;
+
+  // --- KPIs ---
+  const ev = aprob.filter(d => d.evento && String(d.evento).trim() !== '');
+  document.getElementById('kpis-r26').innerHTML = `
+    <div class="kpi kpi-monto"><div class="value">${fmtCLP(totalMonto)}</div><div class="label">Financiado 2026 (desde marzo)</div></div>
+    <div class="kpi"><div class="value">${aprob.length}</div><div class="label">Proyectos aprobados</div></div>
+    <div class="kpi"><div class="value">${conFin} de ${comunas.length}</div><div class="label">Comunas con financiamiento</div></div>
+    <div class="kpi"><div class="value">${ev.length}</div><div class="label">Con evento asignado</div></div>`;
+
+  // --- a. por comuna ---
+  document.getElementById('r26-comuna-total').innerHTML = `<span style="font-size:1.7rem;font-weight:800">${fmtCLP(totalMonto)}</span><span style="opacity:.8">TOTAL financiado 2026 (desde marzo) · ${aprob.length} proyectos · ${conFin} de ${comunas.length} comunas</span>`;
+  makeChart('chartR26Comuna', 'bar', porCom.map(x => r26Tit(x.c)),
+    [{ label: 'Financiado 2026', data: porCom.map(x => x.monto), backgroundColor: 'rgba(0,0,0,0)', bar3dColors: porCom.map(x => x.n ? palette[0] : 'rgba(255,255,255,0.12)'.replace(/.*/, '#3b4570')), barPercentage: 0.55, categoryPercentage: 0.85 }],
+    { indexAxis: 'y', plugins: { bar3d: { enabled: true, depth: 9 }, legend: { display: false },
+        datalabels: { color: '#F2F4FA', anchor: 'end', align: 'right', formatter: (v, ctx) => porCom[ctx.dataIndex].n ? r26M(v) + ' · ' + porCom[ctx.dataIndex].n + ' proy.' : 'sin proyectos', font: { size: 10, weight: '600' } },
+        tooltip: { callbacks: { label: c => fmtCLP(c.parsed.x) + ' · ' + porCom[c.dataIndex].n + ' proyecto(s)' } } },
+      layout: { padding: { right: 150, top: 12 } },
+      scales: { x: { grid: { color: 'rgba(255,255,255,0.08)' }, beginAtZero: true, ticks: { callback: v => '$ ' + Math.round(v / 1e6).toLocaleString('es-CL') + ' M' } }, y: { grid: { display: false } } },
+      onClick: (e, els) => { if (els.length) { const x = porCom[els[0].index]; if (x.n) aplicarDrilldown('comuna', x.c); } } });
+
+  // --- b. por evento ---
+  const mapEv = new Map();
+  aprob.forEach(d => { const k = (d.evento && String(d.evento).trim()) || 'Sin evento asignado'; const o = mapEv.get(k) || { k, n: 0, monto: 0 }; o.n++; o.monto += d.monto_subdere || 0; mapEv.set(k, o); });
+  const porEv = [...mapEv.values()].sort((x, y) => (x.k === 'Sin evento asignado') - (y.k === 'Sin evento asignado') || y.monto - x.monto);
+  const colEv = x => x.k === 'Sin evento asignado' ? 'rgba(255,255,255,0.28)' : palette[porEv.indexOf(x) % palette.length];
+  makeChart('chartR26Evento', 'doughnut', porEv.map(x => x.k), [{ data: porEv.map(x => x.monto), backgroundColor: porEv.map(colEv), borderWidth: 0 }],
+    { plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } },
+        datalabels: { color: '#0b1230', backgroundColor: 'rgba(242,244,250,0.92)', borderRadius: 4, padding: 3, font: { size: 10, weight: '700' }, formatter: (v) => totalMonto ? Math.round(v / totalMonto * 100) + '%' : '' },
+        tooltip: { callbacks: { label: c => c.label + ': ' + fmtCLP(c.parsed) + ' · ' + porEv[c.dataIndex].n + ' proy.' } } } });
+  document.getElementById('r26-evento-tabla').innerHTML = `<table><thead><tr><th>Evento</th><th class="num">Proy.</th><th class="num">Aporte SUBDERE</th></tr></thead><tbody>${
+    porEv.map(x => `<tr><td>${r26Esc(x.k)}</td><td class="num">${x.n}</td><td class="num">${fmtCLP(x.monto)}</td></tr>`).join('')}</tbody></table>`;
+
+
+  // --- Totales 2026 ---
+  const nombrePrograma = p => ({ 'Programa Mejoramiento de Barrios': 'PMB', 'Programa Tenencia Responsable de Animales de Compañía': 'Tenencia Responsable (TRAC)' }[p] || p);
+  const mapP = new Map();
+  aprob.forEach(d => { const k = nombrePrograma(d.programa); const o = mapP.get(k) || { k, n: 0, monto: 0 }; o.n++; o.monto += d.monto_subdere || 0; mapP.set(k, o); });
+  const porProg = [...mapP.values()].sort((x, y) => y.monto - x.monto);
+  const tRoy = R26_ROYALTY.reduce((a, r) => a + r[2] + r[3], 0), tFET = R26_ROYALTY.reduce((a, r) => a + r[2], 0), tFCMI = R26_ROYALTY.reduce((a, r) => a + r[3], 0);
+  const granTotal = totalMonto + tRoy;
+  const filaT = (x, tot, col) => `<div style="display:grid;grid-template-columns:minmax(120px,1.3fr) 2fr 34px minmax(104px,auto);gap:10px;align-items:center;padding:5px 0;font-size:.82rem">
+      <span>${r26Esc(x.k)}</span>
+      <span style="background:rgba(255,255,255,.08);border-radius:6px;height:10px;overflow:hidden"><span style="display:block;height:100%;width:${tot ? Math.max(2, x.monto / tot * 100) : 0}%;background:${col}"></span></span>
+      <span style="text-align:right;opacity:.85">${x.n}</span><span style="text-align:right;font-weight:700">${fmtCLP(x.monto)}</span></div>`;
+  const bloque = (tit, sub, filas, tot, col, totN) => `<div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px 16px">
+      <div style="font-weight:700">${tit}</div><div style="font-size:.72rem;opacity:.7;margin-bottom:6px">${sub}</div>
+      ${filas.map(x => filaT(x, tot, col(x))).join('')}
+      <div style="display:grid;grid-template-columns:minmax(120px,1.3fr) 2fr 34px minmax(104px,auto);gap:10px;border-top:1px solid rgba(255,255,255,.18);margin-top:6px;padding-top:7px;font-size:.84rem;font-weight:800"><span>Total</span><span></span><span style="text-align:right">${totN ?? filas.reduce((a, x) => a + x.n, 0)}</span><span style="text-align:right">${fmtCLP(filas.reduce((a, x) => a + x.monto, 0))}</span></div></div>`;
+  const colP = x => palette[porProg.indexOf(x) % palette.length];
+  const colE = x => x.k === 'Sin evento asignado' ? 'rgba(255,255,255,.35)' : palette[porEv.indexOf(x) % palette.length];
+  document.getElementById('r26-totales').innerHTML = `
+    <h2>Totales 2026 — cuánto se ha financiado, por ítem</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:6px 0 16px">
+      <div class="kpi kpi-monto"><div class="value" style="font-size:1.9rem">${fmtCLP(granTotal)}</div><div class="label">TOTAL FINANCIADO 2026 · proyectos SUBDERE + Royalty</div></div>
+      <div class="kpi kpi-monto"><div class="value">${aprob.length}</div><div class="label">Iniciativas aprobadas (proyectos SUBDERE) · ${fmtCLP(totalMonto)}</div></div>
+      <div class="kpi kpi-monto"><div class="value">${fmtCLP(tRoy)}</div><div class="label">Fondos Royalty · 15 comunas · n° de iniciativas no informado</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px">
+      ${bloque('Por programa', 'Proyectos aprobados desde marzo 2026 · n° y monto', porProg, totalMonto, colP)}
+      ${bloque('Por evento', 'Los mismos ' + aprob.length + ' proyectos, agrupados por evento', porEv, totalMonto, colE)}
+      ${bloque('Royalty 2026', 'FET y FCMI · monto por fondo', [{ k: 'FET', n: R26_ROYALTY.filter(r => r[2]).length, monto: tFET }, { k: 'FCMI', n: R26_ROYALTY.filter(r => r[3]).length, monto: tFCMI }], tRoy, () => palette[1], 15)}
+    </div>
+    <p style="font-size:.74rem;opacity:.7;margin-top:12px">“Por programa” y “Por evento” son dos cortes de los mismos proyectos: no se suman entre sí. En Royalty, la columna n° indica cuántas comunas reciben cada fondo. El total 2026 = proyectos SUBDERE aprobados + Royalty.</p>`;
+
+  // --- c. Tradicional y PMB Tradicional ---
+  const trad = aprob.filter(d => d.programa === 'Tradicional' || d.programa === 'PMB Tradicional');
+  const kt = p => { const xs = trad.filter(d => d.programa === p); return { n: xs.length, m: xs.reduce((s, d) => s + (d.monto_subdere || 0), 0) }; };
+  const kT = kt('Tradicional'), kP = kt('PMB Tradicional');
+  document.getElementById('r26-trad-kpis').innerHTML = `
+    <div class="kpi kpi-monto"><div class="value">${fmtCLP(kT.m)}</div><div class="label">Tradicional · ${kT.n} proy.</div></div>
+    <div class="kpi kpi-monto"><div class="value">${fmtCLP(kP.m)}</div><div class="label">PMB Tradicional · ${kP.n} proy.</div></div>
+    <div class="kpi kpi-monto"><div class="value">${fmtCLP(kT.m + kP.m)}</div><div class="label">Total · ${kT.n + kP.n} proy.</div></div>`;
+  document.getElementById('r26-trad-tabla').innerHTML = trad.length ? `<table><thead><tr><th>Programa</th><th>Comuna</th><th>Proyecto</th><th>Estado</th><th class="num">Aporte</th></tr></thead><tbody>${
+    trad.sort((x, y) => (y.monto_subdere || 0) - (x.monto_subdere || 0)).map(d => `<tr><td>${r26Esc(d.programa)}</td><td>${r26Esc(r26Tit(d.comuna))}</td><td>${r26Esc(d.nombre_proyecto)}</td><td>${r26Esc(d.estado)}</td><td class="num">${fmtCLP(d.monto_subdere || 0)}</td></tr>`).join('')}</tbody></table>`
+    : '<p>Sin proyectos aprobados de estos programas en 2026.</p>';
+
+  // --- d. Royalty ---
+  const roy = document.getElementById('r26-royalty');
+  const tR = R26_ROYALTY.reduce((a, r) => [a[0] + r[2], a[1] + r[3]], [0, 0]);
+  let filasR = '';
+  PROVINCIAS_REGION.forEach(p => {
+    const rs = R26_ROYALTY.filter(r => r[0] === p); const sp = rs.reduce((a, r) => [a[0] + r[2], a[1] + r[3]], [0, 0]);
+    filasR += rs.map(r => `<tr><td>${r26Esc(r[1])}</td><td class="num">${r[2] ? fmtCLP(r[2]) : '—'}</td><td class="num">${r[3] ? fmtCLP(r[3]) : '—'}</td><td class="num">${fmtCLP(r[2] + r[3])}</td></tr>`).join('');
+    filasR += `<tr style="background:rgba(110,160,255,.12)"><td><strong>Total ${p}</strong></td><td class="num"><strong>${fmtCLP(sp[0])}</strong></td><td class="num"><strong>${fmtCLP(sp[1])}</strong></td><td class="num"><strong>${fmtCLP(sp[0] + sp[1])}</strong></td></tr>`;
+  });
+  roy.innerHTML = `<div style="margin:2px 0 8px"><span style="font-size:1.5rem;font-weight:800">${fmtCLP(tR[0] + tR[1])}</span> <span style="opacity:.8">total Royalty 2026 · FET ${r26M(tR[0])} · FCMI ${r26M(tR[1])}</span></div>
+    <div style="overflow-x:auto"><table><thead><tr><th>Comuna</th><th class="num">FET</th><th class="num">FCMI</th><th class="num">Total</th></tr></thead><tbody>${filasR}
+    <tr><td><strong>TOTAL REGIONAL</strong></td><td class="num"><strong>${fmtCLP(tR[0])}</strong></td><td class="num"><strong>${fmtCLP(tR[1])}</strong></td><td class="num"><strong>${fmtCLP(tR[0] + tR[1])}</strong></td></tr></tbody></table></div>`;
+
+  // --- e. Tenencia Responsable (postulados 2026, por etapa) ---
+  const trac = base.filter(d => /Tenencia Responsable/i.test(d.programa || '') && Number(d.anio_postulacion) === R26_ANIO);
+  const etapas = [
+    { t: 'Elegible', f: d => d.estado === 'Elegible' },
+    { t: 'Con anticipo', f: d => /anticipo/i.test(d.estado || '') && !/T[eé]rmino Anticipado/i.test(d.estado || '') },
+    { t: 'En ejecución', f: d => d.estado === 'En Ejecución' },
+    { t: 'Girado', f: d => d.estado === '100% Girado' },
+  ];
+  const sum = xs => xs.reduce((s, d) => s + (d.monto_subdere || 0), 0);
+  document.getElementById('r26-trac-kpis').innerHTML = etapas.map(e => { const xs = trac.filter(e.f); return `<div class="kpi kpi-monto"><div class="value">${xs.length}</div><div class="label">${e.t} · ${fmtCLP(sum(xs))}</div></div>`; }).join('');
+  const enEtapa = new Set(etapas.flatMap(e => trac.filter(e.f)));
+  const otros = trac.filter(d => !enEtapa.has(d));
+  const filasT = [...trac].sort((x, y) => etapas.findIndex(e => e.f(x)) - etapas.findIndex(e => e.f(y)) || x.comuna.localeCompare(y.comuna));
+  document.getElementById('r26-trac-tabla').innerHTML = `<table><thead><tr><th>Comuna</th><th>Proyecto</th><th>Estado</th><th class="num">Aporte</th></tr></thead><tbody>${
+    filasT.map(d => `<tr><td>${r26Esc(r26Tit(d.comuna))}</td><td>${r26Esc(d.nombre_proyecto)}</td><td>${r26Esc(d.estado)}</td><td class="num">${fmtCLP(d.monto_subdere || 0)}</td></tr>`).join('')}
+    <tr><td colspan="3"><strong>Total ${trac.length} proyectos postulados 2026</strong>${otros.length ? ' (' + otros.length + ' en otros estados, aún en revisión)' : ''}</td><td class="num"><strong>${fmtCLP(sum(trac))}</strong></td></tr></tbody></table>`;
+}
+
 function renderAll() {
   renderKPIs();
   renderResumen();
@@ -2438,6 +2614,7 @@ function renderAll() {
   renderTabla();
   renderTrazabilidad();
   renderGR2026();
+  renderResumen26();
   if (typeof renderDespliegue === 'function') renderDespliegue();
 }
 
