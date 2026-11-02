@@ -1503,6 +1503,29 @@ async function accesoDetectarEditor() {   // editor = Drive le permite modificar
     return r.ok ? !!(((await r.json()).capabilities || {}).canEdit) : false;
   } catch (e) { return false; }
 }
+
+// ---------- Aviso de acceso al administrador ----------
+// Cada ingreso de un usuario distinto de los administradores se informa por correo a carlos.pinto@subdere.gov.cl
+// (lo envía un Google Apps Script propio; ver scripts/aviso_acceso.gs). Pegar aquí la URL del despliegue «Aplicación web».
+const URL_AVISO_ACCESO = '';
+function avisoDescribirDispositivo() {
+  const ua = navigator.userAgent || '', uad = navigator.userAgentData || null;
+  let so = 'Desconocido', nav = 'Desconocido', tipo = /iPad|Tablet/i.test(ua) ? 'Tablet' : /Mobi|iPhone|Android.*Mobile/i.test(ua) ? 'Celular' : 'Computador';
+  if (/Windows NT 10/.test(ua)) so = 'Windows 10/11'; else if (/Windows/.test(ua)) so = 'Windows'; else if (/iPhone|iPad|iPod/.test(ua)) so = 'iOS'; else if (/Android/.test(ua)) so = 'Android';
+  else if (/Mac OS X|Macintosh/.test(ua)) so = (navigator.maxTouchPoints > 1) ? 'iPadOS' : 'macOS'; else if (/CrOS/.test(ua)) so = 'ChromeOS'; else if (/Linux/.test(ua)) so = 'Linux';
+  if (/Edg\//.test(ua)) nav = 'Edge'; else if (/OPR\//.test(ua)) nav = 'Opera'; else if (/Firefox\//.test(ua)) nav = 'Firefox'; else if (/Chrome\//.test(ua)) nav = 'Chrome'; else if (/Safari\//.test(ua)) nav = 'Safari';
+  if (uad && uad.mobile === true) tipo = 'Celular';
+  return { tipo, so: (uad && uad.platform) ? uad.platform + (so !== 'Desconocido' ? ' (' + so + ')' : '') : so, navegador: nav };
+}
+function avisarAcceso(estado, detalle) {
+  try {
+    if (!URL_AVISO_ACCESO || !tokenLectura) return;
+    const d = avisoDescribirDispositivo();
+    const cuerpo = { token: tokenLectura, estado, detalle: detalle || '', dispositivo: d, ua: navigator.userAgent || '', idioma: navigator.language || '',
+      zona: (Intl.DateTimeFormat().resolvedOptions().timeZone || ''), pantalla: (screen.width + '×' + screen.height + ' @' + (window.devicePixelRatio || 1)), tactil: navigator.maxTouchPoints || 0, hora: new Date().toISOString() };
+    fetch(URL_AVISO_ACCESO, { method: 'POST', mode: 'no-cors', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(cuerpo) }).catch(() => {});
+  } catch (e) { /* el aviso nunca debe afectar al dashboard */ }
+}
 async function accesoCallback(resp) {
   if (accesoPendiente) {   // renovación silenciosa pedida por una lectura
     const p = accesoPendiente; accesoPendiente = null;
@@ -1519,12 +1542,14 @@ async function accesoCallback(resp) {
   } catch (e) { /* si no se puede verificar, se sigue con la lectura normal */ }
   try { await iniciarDashboard(); }
   catch (e) {
+    if (e && (e.status === 403 || e.status === 404)) avisarAcceso('SIN PERMISO sobre los datos (Drive respondió ' + e.status + ')');
     if (e && (e.status === 403 || e.status === 404)) accesoMostrar('sin_acceso', { email: emailActual, tecnico: (e.detalleDrive || ('HTTP ' + e.status)) + ' · permisos concedidos: ' + (String(resp.scope || '?').replace(/https:\/\/www\.googleapis\.com\/auth\//g, '')) });
     else accesoMostrar('error', { detalle: (e && e.message) || String(e) });
     return;
   }
   if (emailActual) accesoLS.set(ACCESO_EMAIL_KEY, emailActual);
   ROL_EDITOR = await accesoDetectarEditor();
+  avisarAcceso('Ingresó al dashboard', ROL_EDITOR ? 'Rol: editor' : 'Rol: lector');
   accesoEntrar();
 }
 function accesoEntrar() {
