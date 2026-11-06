@@ -1316,6 +1316,7 @@ const EVENTOS = [
   "Transferencia Gobierno Regional 2024",
   "Transferencia Gobierno Regional 2025",
   "MM 1.894",
+  "GORE MM 1458 2026",
   "Transferencia Gobierno Regional 2026",
   "Transferencia Gobierno Regional 2026 AT",
   "SATE 2023",
@@ -1861,7 +1862,7 @@ function refreshFilterOptions() {
   populateMultiselect('f-comuna', unique(base, 'comuna'));
   populateMultiselect('f-programa', unique(RAW_DATA, 'programa'));
   populateMultiselect('f-estado', unique(RAW_DATA, 'estado'));
-  const eventosConProyectos = unique(RAW_DATA.filter(d => d.evento && String(d.evento).trim()), 'evento');
+  const eventosConProyectos = [...new Set([...unique(RAW_DATA.filter(d => d.evento && String(d.evento).trim()), 'evento'), ...EVENTOS])].sort((x, y) => String(x).localeCompare(String(y), 'es'));
   const haySinEvento = RAW_DATA.some(d => !d.evento || String(d.evento).trim() === '');
   populateMultiselect('f-evento-filtro', haySinEvento ? [...eventosConProyectos, SIN_EVENTO] : eventosConProyectos);
   populateMultiselect('f-anio', unique(RAW_DATA, 'anio_aprobacion').map(String));
